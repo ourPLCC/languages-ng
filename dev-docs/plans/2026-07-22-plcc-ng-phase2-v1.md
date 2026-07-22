@@ -34,11 +34,11 @@
 - [ ] **Step 1: Generate the issue file**
 
 Run: `bin/issues/new.bash migrate-v1-to-plcc-ng feat`
-Expected output: `dev-docs/issues/005-migrate-v1-to-plcc-ng.md`
+Expected output: `dev-docs/issues/done/005-migrate-v1-to-plcc-ng.md`
 
 - [ ] **Step 2: Fill in the issue's Description and Notes**
 
-Edit `dev-docs/issues/005-migrate-v1-to-plcc-ng.md`:
+Edit `dev-docs/issues/done/005-migrate-v1-to-plcc-ng.md`:
 
 ```markdown
 ## Description
@@ -69,7 +69,7 @@ Edit `dev-docs/roadmap.md`. Add a `### Feat` group before the existing `### Docs
 
 ### Feat
 
-- **[#5](issues/005-migrate-v1-to-plcc-ng.md) — Migrate V1 to plcc-ng**
+- **[#5](issues/done/005-migrate-v1-to-plcc-ng.md) — Migrate V1 to plcc-ng**
   Ports V1's grammar and Java semantics to plcc-ng syntax, adds Python and JavaScript semantics, and ports the envRN Env variant into the shared src/Env/envRN/ location.
 
 ### Docs
@@ -83,7 +83,7 @@ Edit `dev-docs/roadmap.md`. Add a `### Feat` group before the existing `### Docs
 - [ ] **Step 4: Commit**
 
 ```bash
-git add dev-docs/issues/005-migrate-v1-to-plcc-ng.md dev-docs/roadmap.md
+git add dev-docs/issues/done/005-migrate-v1-to-plcc-ng.md dev-docs/roadmap.md
 git commit -m "docs(issues): file 005 - migrate V1 to plcc-ng"
 ```
 
