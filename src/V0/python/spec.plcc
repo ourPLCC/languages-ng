@@ -1,0 +1,57 @@
+%include ../grammar.plcc
+%
+Python
+
+Program
+%%%
+def _run(self):
+    print(self.exp)
+%%%
+
+PrimappExp
+%%%
+def __str__(self):
+    return f"{self.prim}({self.rands})"
+%%%
+
+Rands
+%%%
+def __str__(self):
+    return ",".join(str(e) for e in self.expList)
+%%%
+
+LitExp
+%%%
+def __str__(self):
+    return self.lit.lexeme
+%%%
+
+VarExp
+%%%
+def __str__(self):
+    return self.name.lexeme
+%%%
+
+AddPrim
+%%%
+def __str__(self):
+    return "+"
+%%%
+
+SubPrim
+%%%
+def __str__(self):
+    return "-"
+%%%
+
+Add1Prim
+%%%
+def __str__(self):
+    return "add1"
+%%%
+
+Sub1Prim
+%%%
+def __str__(self):
+    return "sub1"
+%%%
