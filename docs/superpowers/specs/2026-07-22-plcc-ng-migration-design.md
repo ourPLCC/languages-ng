@@ -1,0 +1,87 @@
+# plcc-ng Migration — High-Level Design
+
+## Background
+
+This repository (`languages-ng`) was forked from the original PLCC `languages` repository. It needs to be reimplemented against [plcc-ng](https://github.com/ourPLCC/plcc-ng), the successor to PLCC, using the syntax and CLI documented in its [migration guide](https://raw.githubusercontent.com/ourPLCC/plcc-ng/refs/heads/main/docs/migration.md).
+
+The current `src/` contains many languages accumulated over the life of the original repository, most of which are not used in the courses this repository actually supports. Only a subset is in active use, and that subset should get semantics in three target languages (Python, Java, JavaScript) instead of the single Java implementation each has today, since `plcc-ng` supports Python, Java, JavaScript, and Haskell as target languages (Haskell is explicitly out of scope for this effort).
+
+`Env` is not itself a language — it's a shared library providing an environment/symbol-table data structure (bindings, scoping, lookup) that several of the kept languages depend on.
+
+The existing `.bats` test suite (17 of its 31 tests belong to the kept languages) is this repository's comprehensive regression suite: it exists to make sure the languages used in course materials keep working as `plcc-ng` itself evolves. It needs to be ported and, where a language's current coverage is thin, extended.
+
+## Scope
+
+**Keep and migrate (14 languages + Env):** V0, V1, V2, V3, V4, V5, V6, SET, REF, NAME, NEED, TYPE0, TYPE1, OBJ.
+
+**Remove entirely** (recoverable from the original PLCC `languages` repo's history if ever needed): ABC, ARRAY, BF, CHAR, CONT, GINGER, HANDLER, INFIX, LAMBDA, LAMBDAQ, LIST, LON, LON2, LONN, Misc, PROP, RANDSCONT, REFCONT, THREADCONT, and the top-level `src/Examples/` scratch directory. (`src/OBJ/Examples/` is unaffected — that directory holds OBJ's own example programs and is part of the OBJ language being kept.)
+
+Of `Env`'s five existing variants (`envSimple`, `envRef`, `envRefCD`, `envRN`, `envVal`), only three are actually used by a kept language — `envRN` (V1, V2), `envVal` (V3–V6), and `envRef` (SET, REF, NAME, NEED, TYPE0, TYPE1, OBJ). `envSimple` and `envRefCD` are dropped along with the languages that would have used them.
+
+## Phasing
+
+Work proceeds **language-first**: for a given language, its grammar port and all three semantic implementations (Python, Java, JavaScript) are built and tested together, and the language's issue closes only once all three targets pass. One issue and one roadmap entry per language keeps the roadmap at a manageable ~14 entries instead of ~42.
+
+1. **Phase 0 — Repository cleanup and tooling prep** (single PR)
+   - Delete all languages/directories not in the keep list, along with their `.bats` tests.
+   - Add a `Target` field to the issue template and document it in `issue-conventions.md` (see [Defect Tracking](#defect-tracking-for-plcc-ng--migration-guide-issues) below).
+
+2. **Phase 1 — V0 syntax spike**
+   - V0 has no semantic actions and no `Env` dependency, making it the cheapest place to work out real, validated `plcc-ng` spec syntax (lexical/syntactic/semantic section conventions, `%include` behavior, per-target `spec.plcc` structure) before that pattern fans out to 13 more languages.
+   - Any `plcc-ng` bugs or migration-guide inaccuracies found here are filed per the Defect Tracking process, not just worked around silently.
+
+3. **Phase 2 — V1 through V6, in order**
+   - V1/V2 introduce the `envRN` Env variant; V3–V6 introduce `envVal`. Each is ported once, the first time it's needed, and reused afterward.
+
+4. **Phase 3 — SET, REF, NAME, NEED**
+   - Introduces the `envRef` Env variant, ported once and reused by all four.
+
+5. **Phase 4 — TYPE0, TYPE1**
+
+6. **Phase 5 — OBJ**
+   - OBJ currently forks `envRef` with additional reserved-identifier checks (`self`, `myclass`, `superclass`, `this`, `super`) whose `checkDuplicates` signature also diverges from canonical `envRef`, not just adds to it. This phase ports OBJ's fork as a documented, explicit extension of the canonical `envRef` (in each of the 3 targets) rather than continuing the current silent copy-paste divergence — with a check on whether OBJ's exact divergence is still needed or was accidental drift.
+
+## File/Directory Architecture
+
+`plcc-scan`, `plcc-parse`, and `plcc-rep` all default to a `spec.plcc` file in the current directory, and a spec's semantic section names exactly one target language. Since each language needs three semantic implementations, each language gets one shared grammar file plus three target subdirectories, each holding its own `spec.plcc`:
+
+```
+src/V1/
+  grammar.plcc          # shared lexical + syntactic sections (plcc-ng syntax)
+  python/spec.plcc       # %include ../grammar.plcc, then the Python semantic section
+  java/spec.plcc         # %include ../grammar.plcc, then the Java semantic section
+  javascript/spec.plcc   # %include ../grammar.plcc, then the JavaScript semantic section
+  tests/
+    <case>/V1.input
+    <case>/V1.expected    # one shared expected output — all 3 targets must agree
+    <case>/V1.bats        # one @test per target, each cd's into python/, java/, or javascript/
+```
+
+`%include` is confirmed to still exist in `plcc-ng` (relative-path based, same idea as old PLCC), so the grammar stays DRY across the three targets instead of being triplicated.
+
+`Env`'s three needed variants live under `src/Env/<variant>/<target>/env.plcc`, each ported once — the first time a language in the phase order needs it — and `%include`'d by every language that shares that variant afterward.
+
+## Structural Fidelity Across Targets
+
+The existing Java implementations are the reference shape: one class per grammar alternative, `eval(Env)` / `toString()` methods, `$run()` (renamed `_run()` under `plcc-ng`) as the program entry point. Porting to `plcc-ng` syntax should preserve that structure as closely as the new syntax allows, and the Python and JavaScript implementations should mirror the same class boundaries, method names, and control flow — rather than being rewritten in a more idiomatic style native to each language.
+
+This is deliberate: the goal is a single textbook that discusses "how `LetExp.eval` works" once, with the reader able to follow along in whichever of the three target-language appendices they're using, rather than three differently-structured explanations.
+
+## Testing Strategy
+
+- Keep `bin/test.bash` (`bats --recursive`) as the runner; no new test framework.
+- Each existing test case keeps one shared `<LANG>.input` / `<LANG>.expected` pair (not one per target), since all three targets must produce identical output for the same input. Each case's `.bats` file holds three `@test` blocks, one per target directory, each asserting against the same expected file.
+- Expected outputs need updating independent of the multi-target work, because `plcc-ng`'s scan/parse output format differs from old PLCC (`source:line:col TOKEN 'lexeme'` instead of `TOKEN(lexeme)`; full parse tree always shown; no `-t` trace flag on `plcc-parse`).
+- Where a language's current test coverage is thin, add cases during that language's phase — not as a separate catch-all pass.
+
+## Defect Tracking for plcc-ng / Migration Guide Issues
+
+A live smoke test against the installed `plcc-ng` CLI (during design) already turned up gaps in the migration guide's summary (lexical rules require an explicit `token`/`skip` keyword per line, not just `NAME 'regex'`) and a `plcc-ng` parser error that emitted an unformatted template string (`{blockLines[0].file}:{blockLines[0].number}`) instead of a real message — a likely tooling bug, not just a spec mistake. This confirms the Phase 1 spike is necessary, not optional.
+
+Any `plcc-ng` bug or migration-guide inaccuracy found during this work is filed as an issue in **this** repository (`languages-ng`), using the normal `bin/issues/new.bash` workflow, type `docs` or `chore` (it's not a defect in our own shipped `src/` languages). The issue template gains a `**Target:**` field identifying which repository the defect actually belongs to (e.g. `languages-ng` or `ourPLCC/plcc-ng`), defaulting to this repo. This lets every defect be tracked in one place now, and migrated to its real upstream home later — with explicit confirmation before anything is filed publicly outside this repo.
+
+## Out of Scope
+
+- Haskell semantics (explicitly excluded by course usage).
+- Any language not in the keep list (removed in Phase 0, recoverable from the original `languages` repo).
+- Redesigning `Env`'s variants beyond what's needed to port them faithfully (e.g., no attempt to unify `envRN`/`envVal`/`envRef` into a single variant).
