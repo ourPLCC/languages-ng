@@ -2,3 +2,4 @@ Java/
 *.class
 plcc-ng/
 __pycache__/
+.claude/worktrees/
