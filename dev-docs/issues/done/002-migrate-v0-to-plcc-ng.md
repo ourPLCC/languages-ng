@@ -27,7 +27,7 @@ against by all three targets) before they fan out to 13 more languages.
 
 ## Notes
 
-See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../specs/2026-07-22-plcc-ng-migration-design.md),
+See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../../specs/2026-07-22-plcc-ng-migration-design.md),
 including its "Addendum: Validated Syntax Facts" section, for concrete
 syntax rules this migration must follow (the `_run()` print-vs-return
 split between targets, and the `VAR` field-rename rule for JavaScript

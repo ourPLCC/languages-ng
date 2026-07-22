@@ -355,17 +355,17 @@ V0 has no `Env` dependency and (today) no semantics beyond printing the parsed e
 ### Task 5: File the Phase 1 issue
 
 **Files:**
-- Create: `dev-docs/issues/002-migrate-v0-to-plcc-ng.md` (generated)
+- Create: `dev-docs/issues/done/002-migrate-v0-to-plcc-ng.md` (generated)
 - Modify: `dev-docs/roadmap.md`
 
 - [ ] **Step 1: Generate the issue file**
 
 Run: `bin/issues/new.bash migrate-v0-to-plcc-ng feat`
-Expected output: `dev-docs/issues/002-migrate-v0-to-plcc-ng.md`
+Expected output: `dev-docs/issues/done/002-migrate-v0-to-plcc-ng.md`
 
 - [ ] **Step 2: Fill in the issue's Description and Notes**
 
-Edit `dev-docs/issues/002-migrate-v0-to-plcc-ng.md`:
+Edit `dev-docs/issues/done/002-migrate-v0-to-plcc-ng.md`:
 
 ```markdown
 ## Description
@@ -401,14 +401,14 @@ Edit `dev-docs/roadmap.md`. Add a new `### Feat` group under `## Open Issues`, a
 
 ### Feat
 
-- **[#2](issues/002-migrate-v0-to-plcc-ng.md) — Migrate V0 to plcc-ng**
+- **[#2](issues/done/002-migrate-v0-to-plcc-ng.md) — Migrate V0 to plcc-ng**
   Ports V0's grammar and Java semantics to plcc-ng syntax and adds Python and JavaScript semantics; serves as the syntax pathfinder for the rest of the migration.
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add dev-docs/issues/002-migrate-v0-to-plcc-ng.md dev-docs/roadmap.md
+git add dev-docs/issues/done/002-migrate-v0-to-plcc-ng.md dev-docs/roadmap.md
 git commit -m "docs(issues): file 002 - migrate V0 to plcc-ng"
 ```
 
