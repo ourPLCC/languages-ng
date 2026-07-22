@@ -1,0 +1,72 @@
+%include ../grammar.plcc
+%
+Java
+
+Program
+%%%
+public void _run() {
+    System.out.println(exp.toString());
+}
+%%%
+
+PrimappExp
+%%%
+public String toString() {
+    return prim + "(" + rands + ")";
+}
+%%%
+
+Rands
+%%%
+public String toString() {
+    String s = "";
+    String sep = "";
+    for (Exp e : expList) {
+        s += sep + e;
+        sep = ",";
+    }
+    return s;
+}
+%%%
+
+LitExp
+%%%
+public String toString() {
+    return lit.lexeme;
+}
+%%%
+
+VarExp
+%%%
+public String toString() {
+    return name.lexeme;
+}
+%%%
+
+AddPrim
+%%%
+public String toString() {
+    return "+";
+}
+%%%
+
+SubPrim
+%%%
+public String toString() {
+    return "-";
+}
+%%%
+
+Add1Prim
+%%%
+public String toString() {
+    return "add1";
+}
+%%%
+
+Sub1Prim
+%%%
+public String toString() {
+    return "sub1";
+}
+%%%
