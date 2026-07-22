@@ -1,3 +1,0 @@
-bear(fuzzy).
-bear(wuzzy).
-bear(X)?    % yields "bear(fuzzy)" and "bear(wuzzy)"

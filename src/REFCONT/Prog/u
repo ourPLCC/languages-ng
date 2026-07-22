@@ -1,3 +1,0 @@
-define uu = proc(x,y) if x then .uu(sub1(x), add1(y)) else y
-define u = proc(x) .uu(x,0)
-.u(1000)

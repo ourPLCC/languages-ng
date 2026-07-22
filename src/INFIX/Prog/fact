@@ -1,4 +1,0 @@
-define fact = proc(x)
-  { if x then x*fact(x-1) else one endif };
-define one = 1;
-fact(5);

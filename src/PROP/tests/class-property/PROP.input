@@ -1,8 +1,0 @@
-define c =
-class
-field x
-  property x = prop x:set x=$
-end
-define cc = new c
-<cc>set x = 5 % ok - sets the field value to 5
-<cc>x         % returns 5

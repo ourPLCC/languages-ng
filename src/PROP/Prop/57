@@ -1,7 +1,0 @@
-let
-  x = 3
-in
-  letprop
-    x = prop x : set x = 5
-  in
-    {set x = 42 ; x} % => 5
