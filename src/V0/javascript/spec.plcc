@@ -1,0 +1,66 @@
+%include ../grammar.plcc
+%
+javascript
+
+Program
+%%%
+_run() {
+    return String(this.exp);
+}
+%%%
+
+PrimappExp
+%%%
+toString() {
+    return `${this.prim}(${this.rands})`;
+}
+%%%
+
+Rands
+%%%
+toString() {
+    return this.expList.map(e => String(e)).join(",");
+}
+%%%
+
+LitExp
+%%%
+toString() {
+    return this.lit.lexeme;
+}
+%%%
+
+VarExp
+%%%
+toString() {
+    return this.name.lexeme;
+}
+%%%
+
+AddPrim
+%%%
+toString() {
+    return "+";
+}
+%%%
+
+SubPrim
+%%%
+toString() {
+    return "-";
+}
+%%%
+
+Add1Prim
+%%%
+toString() {
+    return "add1";
+}
+%%%
+
+Sub1Prim
+%%%
+toString() {
+    return "sub1";
+}
+%%%
