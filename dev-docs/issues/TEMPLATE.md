@@ -1,6 +1,7 @@
 # NNN - Short descriptive title
 
 **Type:** (conventional commit type: fix, feat, refactor, perf, docs, test, …)
+**Target:** (this repo by default; set to the upstream repo, e.g. ourPLCC/plcc-ng, if this issue is actually about a defect found there)
 **Date:** YYYY-MM-DD
 
 <!--

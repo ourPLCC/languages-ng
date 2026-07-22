@@ -30,6 +30,7 @@ sed \
     -e "s/NNN/${padded}/" \
     -e "s/Short descriptive title/${SLUG}/" \
     -e "s/(conventional commit type: fix, feat, refactor, perf, docs, test, …)/${TYPE}/" \
+    -e "s|(this repo by default; set to the upstream repo, e.g. ourPLCC/plcc-ng, if this issue is actually about a defect found there)|this repo|" \
     -e "s/YYYY-MM-DD/${DATE}/" \
     "${TEMPLATE}" > "${filename}"
 
