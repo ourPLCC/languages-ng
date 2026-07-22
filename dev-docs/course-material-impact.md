@@ -20,3 +20,17 @@ headings are added in the order each language is migrated.
   JavaScript code. Semantics code and any course material walking through
   V0's implementation should refer to the `name` field (`self.name` /
   `name` / `this.name`), not `var`.
+
+## V1
+
+- Same `VAR`-field rename as V0, applied to V1's grammar: the captured
+  field is `name`, not `var`. V1's semantics now read it as
+  `env.applyEnv(self.name.lexeme)` / `env.applyEnv(name.lexeme)` /
+  `env.applyEnv(this.name.lexeme)`, so course material walking through
+  V1's `VarExp` evaluation should refer to `name`, not `var`.
+- Nonterminals are PascalCased (`<program>` → `<Program>`, `<exp>` →
+  `<Exp>`, `<prim>` → `<Prim>`, `<rands>` → `<Rands>`), following the same
+  convention V0 established. V1 is the first language with real semantics
+  (Env-based evaluation) to carry it, so course material walking through
+  V1's grammar or its Env-lookup semantics should use the PascalCased
+  nonterminal names.
