@@ -8,7 +8,9 @@ The current `src/` contains many languages accumulated over the life of the orig
 
 `Env` is not itself a language — it's a shared library providing an environment/symbol-table data structure (bindings, scoping, lookup) that several of the kept languages depend on.
 
-The existing `.bats` test suite (17 of its 31 tests belong to the kept languages) is this repository's comprehensive regression suite: it exists to make sure the languages used in course materials keep working as `plcc-ng` itself evolves. It needs to be ported and, where a language's current coverage is thin, extended.
+The existing `.bats` test suite (14 of its 31 tests belong to the kept languages, one per language) is this repository's comprehensive regression suite: it exists to make sure the languages used in course materials keep working as `plcc-ng` itself evolves. It needs to be ported and, where a language's current coverage is thin, extended.
+
+Note: this devcontainer only has `plcc-ng` installed, not the original PLCC (`plcc`/`plccmk`). All 31 existing tests currently fail here with `command not found` — a pre-existing environment gap, not something this migration introduces. Every test for a language stays broken until that language is actually migrated to plcc-ng; there's no way to "keep the lights on" for the old-syntax languages in the meantime.
 
 ## Scope
 
@@ -79,6 +81,18 @@ This is deliberate: the goal is a single textbook that discusses "how `LetExp.ev
 A live smoke test against the installed `plcc-ng` CLI (during design) already turned up gaps in the migration guide's summary (lexical rules require an explicit `token`/`skip` keyword per line, not just `NAME 'regex'`) and a `plcc-ng` parser error that emitted an unformatted template string (`{blockLines[0].file}:{blockLines[0].number}`) instead of a real message — a likely tooling bug, not just a spec mistake. This confirms the Phase 1 spike is necessary, not optional.
 
 Any `plcc-ng` bug or migration-guide inaccuracy found during this work is filed as an issue in **this** repository (`languages-ng`), using the normal `bin/issues/new.bash` workflow, type `docs` or `chore` (it's not a defect in our own shipped `src/` languages). The issue template gains a `**Target:**` field identifying which repository the defect actually belongs to (e.g. `languages-ng` or `ourPLCC/plcc-ng`), defaulting to this repo. This lets every defect be tracked in one place now, and migrated to its real upstream home later — with explicit confirmation before anything is filed publicly outside this repo.
+
+## Addendum: Validated Syntax Facts (from live smoke testing)
+
+The summary above undersold several concrete details, confirmed by round-tripping a full V0 grammar through the installed `plcc-ng` CLI (`plcc-scan`, `plcc-parse`, `plcc-rep`) for all three targets:
+
+- **Section separators are bare `%` lines** — lexical % syntactic % semantic. `token`/`skip` lines take their pattern inline (`token NAME 'pattern'`), same as old PLCC.
+- **The semantic section's language header is a bare line, not a code block** — `Python` (or `Java` / `javascript`), then a blank line, then `ClassName` / `%%%` blocks. Putting `%%%` directly after the language name is a syntax error.
+- **`_run()`'s contract differs by target, necessarily.** Python and Java should call `print()` / `System.out.println()` directly inside `_run()` (returning `None`/`void`). JavaScript's `_run()` must `return` the string instead — writing to stdout directly from JS `_run()` corrupts the output protocol per its own docs. This is an intentional, unavoidable asymmetry in the otherwise-uniform structure described above.
+- **Returning a plain string from Python's `_run()` prints it with quotes** (e.g. `'hello'` instead of `hello`), contradicting the official quick-start example. Reproduced cleanly and isolated from any other code. Using `print()` instead of `return` avoids it entirely. Filed as a candidate upstream defect (see below).
+- **A token named `VAR` auto-captured as `<VAR>` breaks JavaScript code generation** — the auto-generated field name `var` collides with the reserved word `var`, producing invalid JS (`constructor(var) {`) that fails to load. Every language in the keep list uses a `VAR` token for identifiers, so **every grammar must rename this capture** (e.g. `<VAR:name>`) in the one shared `grammar.plcc`, which fixes it uniformly across all three targets at no extra cost. This is a load-bearing rule for every remaining phase, not just V0.
+- **`%include` works exactly as documented**, resolved relative to the file containing the directive — validated by splitting V0 into `grammar.plcc` + `python/spec.plcc` with `%include ../grammar.plcc`.
+- **`plcc-rep` writes build artifacts to a `plcc-ng/` subdirectory** next to `spec.plcc` (generated/compiled code, `spec.json`, `ll1.json`, `model.json`, `__pycache__/`, etc.), regenerated on every run. This needs a `.gitignore` entry (`plcc-ng/`, `__pycache__/`) so it never gets committed.
 
 ## Out of Scope
 
