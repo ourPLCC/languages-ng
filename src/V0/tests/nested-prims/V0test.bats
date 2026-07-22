@@ -2,12 +2,26 @@
 
 load '../../../../bin/relocate.bash'
 
-@test "V0 nested-prims" {
+@test "V0 nested-prims (python)" {
   relocate
-  plccmk -c grammar > /dev/null
-  RESULT="$(rep -n < ./tests/nested-prims/V0.input)"
-
-  expected_output=$(< "./tests/nested-prims/V0.expected")
+  cd python
+  RESULT="$(plcc-rep < ../tests/nested-prims/V0.input)"
+  expected_output=$(< "../tests/nested-prims/V0.expected")
   [[ "$RESULT" == "$expected_output" ]]
+}
 
+@test "V0 nested-prims (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/nested-prims/V0.input)"
+  expected_output=$(< "../tests/nested-prims/V0.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
+
+@test "V0 nested-prims (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/nested-prims/V0.input)"
+  expected_output=$(< "../tests/nested-prims/V0.expected")
+  [[ "$RESULT" == "$expected_output" ]]
 }
