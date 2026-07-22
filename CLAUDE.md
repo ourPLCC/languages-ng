@@ -13,3 +13,10 @@ bin/issues/new.bash <slug> [type]
 This reads [dev-docs/issues/.next-id.txt](dev-docs/issues/.next-id.txt) for the next ID, creates the file from the template with the date filled in, and increments the ID. Never assign issue numbers by hand or by scanning the directory. Add a roadmap entry in the same commit.
 
 To close an issue, always use [bin/issues/close.bash](bin/issues/close.bash) — as the final commit of the branch that does the work. It moves the file to `done/` and updates [dev-docs/roadmap.md](dev-docs/roadmap.md). Verify consistency any time with [bin/issues/check.bash](bin/issues/check.bash).
+
+## Design specs and implementation plans
+
+This project keeps design specs and implementation plans under [dev-docs/](dev-docs/), not the tool-default `docs/superpowers/`:
+
+- Specs (from brainstorming) go in `dev-docs/specs/`, named `YYYY-MM-DD-<topic>-design.md`.
+- Plans (from writing-plans) go in `dev-docs/plans/`.
