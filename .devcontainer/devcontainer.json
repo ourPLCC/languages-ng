@@ -1,0 +1,7 @@
+{
+  "name": "languages-ng",
+  "image": "ghcr.io/ourplcc/devcontainers/plcc-ng:1",
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  }
+}
