@@ -24,7 +24,7 @@ of the kept languages use.
 
 ## Notes
 
-See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../specs/2026-07-22-plcc-ng-migration-design.md)
+See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../../specs/2026-07-22-plcc-ng-migration-design.md)
 for the full migration design and phase order. Removed languages remain
 recoverable from the original `ourPLCC/languages` repository's history if
 ever needed.

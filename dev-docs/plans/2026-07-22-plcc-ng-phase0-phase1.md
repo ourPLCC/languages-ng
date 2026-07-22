@@ -189,7 +189,7 @@ EOF
 ### Task 2: File the Phase 0 cleanup issue
 
 **Files:**
-- Create: `dev-docs/issues/001-remove-unused-languages.md` (generated)
+- Create: `dev-docs/issues/done/001-remove-unused-languages.md` (generated)
 - Modify: `dev-docs/roadmap.md`
 
 **Interfaces:**
@@ -198,16 +198,16 @@ EOF
 - [ ] **Step 1: Generate the issue file**
 
 Run: `bin/issues/new.bash remove-unused-languages chore`
-Expected output: `dev-docs/issues/001-remove-unused-languages.md`
+Expected output: `dev-docs/issues/done/001-remove-unused-languages.md`
 
 - [ ] **Step 2: Confirm the `Target` field defaulted correctly**
 
-Run: `grep '^\*\*Target:\*\*' dev-docs/issues/001-remove-unused-languages.md`
+Run: `grep '^\*\*Target:\*\*' dev-docs/issues/done/001-remove-unused-languages.md`
 Expected: `**Target:** this repo` — this is the real end-to-end check that Task 1's `sed` edit works.
 
 - [ ] **Step 3: Fill in the issue's Description and Notes**
 
-Edit `dev-docs/issues/001-remove-unused-languages.md`. Replace the `## Description` section body and `## Notes` section body:
+Edit `dev-docs/issues/done/001-remove-unused-languages.md`. Replace the `## Description` section body and `## Notes` section body:
 
 ```markdown
 ## Description
@@ -249,14 +249,14 @@ New content:
 
 ### Chore
 
-- **[#1](issues/001-remove-unused-languages.md) — Remove unused languages**
+- **[#1](issues/done/001-remove-unused-languages.md) — Remove unused languages**
   Removes languages not used in course materials so only the plcc-ng migration's 14 target languages remain in src/.
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add dev-docs/issues/001-remove-unused-languages.md dev-docs/roadmap.md
+git add dev-docs/issues/done/001-remove-unused-languages.md dev-docs/roadmap.md
 git commit -m "docs(issues): file 001 - remove unused languages"
 ```
 
