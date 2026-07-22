@@ -1,0 +1,30 @@
+# Language V1
+# The Rep loop prints the arithmetic value of the expression
+#   using an initial set of bindings to certain Roman numerals
+skip WHITESPACE '\s+'
+skip COMMENT '%.*'
+token LIT '\d+'
+token LPAREN '\('
+token RPAREN '\)'
+token COMMA ','
+token ADDOP '\+'
+token SUBOP '\-'
+token MULOP '\*'
+token DIVOP '/'
+token ADD1OP 'add1'
+token SUB1OP 'sub1'
+token ZEROP 'zero\?'
+token VAR '[A-Za-z]\w*'
+%
+<Program>        ::= <Exp>
+<Exp:LitExp>     ::= <LIT>
+<Exp:VarExp>     ::= <VAR:name>
+<Exp:PrimappExp> ::= <Prim> LPAREN <Rands> RPAREN
+<Rands>          **= <Exp> +COMMA
+<Prim:AddPrim>   ::= ADDOP
+<Prim:SubPrim>   ::= SUBOP
+<Prim:MulPrim>   ::= MULOP
+<Prim:DivPrim>   ::= DIVOP
+<Prim:Add1Prim>  ::= ADD1OP
+<Prim:Sub1Prim>  ::= SUB1OP
+<Prim:ZeropPrim> ::= ZEROP
