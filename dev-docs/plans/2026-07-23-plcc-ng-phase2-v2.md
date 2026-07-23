@@ -1267,7 +1267,7 @@ ok N V2 env-if (javascript)
 (exact `N` values depend on bats' run order — all six must say `ok`.)
 
 Run: `bin/test.bash 2>&1 | grep -c 'plccmk: command not found'`
-Expected: `10` (V3–V6, SET, REF, NAME, NEED, TYPE0, TYPE1, OBJ — unchanged, still awaiting their own phases).
+Expected: `11` (V3–V6, SET, REF, NAME, NEED, TYPE0, TYPE1, OBJ — unchanged, still awaiting their own phases).
 
 - [ ] **Step 5: Commit**
 
