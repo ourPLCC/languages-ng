@@ -26,17 +26,17 @@
 ## Task 1: File the V2 issue
 
 **Files:**
-- Create: `dev-docs/issues/007-migrate-v2-to-plcc-ng.md` (generated, filename includes the assigned id)
+- Create: `dev-docs/issues/done/007-migrate-v2-to-plcc-ng.md` (generated, filename includes the assigned id)
 - Modify: `dev-docs/roadmap.md`
 
 - [ ] **Step 1: Generate the issue file**
 
 Run: `bin/issues/new.bash migrate-v2-to-plcc-ng feat`
-Expected output: `dev-docs/issues/007-migrate-v2-to-plcc-ng.md`
+Expected output: `dev-docs/issues/done/007-migrate-v2-to-plcc-ng.md`
 
 - [ ] **Step 2: Fill in the issue's Description and Notes**
 
-Edit `dev-docs/issues/007-migrate-v2-to-plcc-ng.md`:
+Edit `dev-docs/issues/done/007-migrate-v2-to-plcc-ng.md`:
 
 ```markdown
 ## Description
@@ -64,14 +64,14 @@ Edit `dev-docs/roadmap.md`. Add under the existing `### Feat` group (create it i
 ```markdown
 ### Feat
 
-- **[#7](issues/007-migrate-v2-to-plcc-ng.md) — Migrate V2 to plcc-ng**
+- **[#7](issues/done/007-migrate-v2-to-plcc-ng.md) — Migrate V2 to plcc-ng**
   Ports V2's grammar and Java semantics to plcc-ng syntax, adds Python and JavaScript semantics, reusing envRN and V1's Prim/Val unchanged.
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add dev-docs/issues/007-migrate-v2-to-plcc-ng.md dev-docs/roadmap.md
+git add dev-docs/issues/done/007-migrate-v2-to-plcc-ng.md dev-docs/roadmap.md
 git commit -m "$(cat <<'EOF'
 docs(issues): file 007 - migrate V2 to plcc-ng
 
