@@ -1,0 +1,246 @@
+%include ../grammar.plcc
+%
+Java
+
+%include ../../Env/envRN/java/env.plcc
+
+Val
+%%%
+import runtime.LanguageError;
+
+public abstract class Val {
+
+    public boolean isTrue() {
+        return true;
+    }
+
+    public IntVal intVal() {
+        throw new LanguageError(this + ": not an Int");
+    }
+}
+%%%
+
+IntVal
+%%%
+public class IntVal extends Val {
+
+    public int val;
+
+    public IntVal(String s) {
+        val = Integer.parseInt(s);
+    }
+
+    public IntVal(int v) {
+        val = v;
+    }
+
+    public IntVal intVal() {
+        return this;
+    }
+
+    public String toString() {
+        return "" + val;
+    }
+
+    public boolean isTrue() {
+        return val != 0;
+    }
+}
+%%%
+
+Program
+%%%
+public static Env env = Env.initEnv();
+
+public void _run() {
+    System.out.println(exp.eval(env));
+}
+%%%
+
+Exp
+%%%
+public abstract Val eval(Env env);
+%%%
+
+LitExp
+%%%
+public Val eval(Env env) {
+    return new IntVal(lit.lexeme);
+}
+
+public String toString() {
+    return lit.lexeme;
+}
+%%%
+
+VarExp
+%%%
+public Val eval(Env env) {
+    return env.applyEnv(name.lexeme);
+}
+
+public String toString() {
+    return name.lexeme;
+}
+%%%
+
+IfExp
+%%%
+public Val eval(Env env) {
+    Val testVal = testexp.eval(env);
+    if (testVal.isTrue())
+        return trueexp.eval(env);
+    else
+        return falseexp.eval(env);
+}
+
+public String toString() {
+    return "if " + testexp + " then " + trueexp + " else " + falseexp;
+}
+%%%
+
+PrimappExp
+%%%
+public Val eval(Env env) {
+    List<Val> args = rands.evalRands(env);
+    return prim.apply(args);
+}
+
+public String toString() {
+    return prim + "(" + rands + ")";
+}
+%%%
+
+Rands:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Rands
+%%%
+public List<Val> evalRands(Env env) {
+    List<Val> args = new ArrayList<Val>(expList.size());
+    for (Exp e : expList)
+        args.add(e.eval(env));
+    return args;
+}
+
+public String toString() {
+    String s = "";
+    String sep = "";
+    for (Exp e : expList) {
+        s += sep + e;
+        sep = ",";
+    }
+    return s;
+}
+%%%
+
+Prim
+%%%
+public abstract Val apply(List<Val> args);
+%%%
+
+AddPrim
+%%%
+public String toString() {
+    return "+";
+}
+
+public Val apply(List<Val> args) {
+    if (args.size() != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = args.get(0).intVal().val;
+    int i1 = args.get(1).intVal().val;
+    return new IntVal(i0 + i1);
+}
+%%%
+
+SubPrim
+%%%
+public String toString() {
+    return "-";
+}
+
+public Val apply(List<Val> args) {
+    if (args.size() != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = args.get(0).intVal().val;
+    int i1 = args.get(1).intVal().val;
+    return new IntVal(i0 - i1);
+}
+%%%
+
+MulPrim
+%%%
+public String toString() {
+    return "*";
+}
+
+public Val apply(List<Val> args) {
+    if (args.size() != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = args.get(0).intVal().val;
+    int i1 = args.get(1).intVal().val;
+    return new IntVal(i0 * i1);
+}
+%%%
+
+DivPrim
+%%%
+public String toString() {
+    return "/";
+}
+
+public Val apply(List<Val> args) {
+    if (args.size() != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = args.get(0).intVal().val;
+    int i1 = args.get(1).intVal().val;
+    if (i1 == 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(i0 / i1);
+}
+%%%
+
+Add1Prim
+%%%
+public String toString() {
+    return "add1";
+}
+
+public Val apply(List<Val> args) {
+    if (args.size() != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = args.get(0).intVal().val;
+    return new IntVal(i0 + 1);
+}
+%%%
+
+Sub1Prim
+%%%
+public String toString() {
+    return "sub1";
+}
+
+public Val apply(List<Val> args) {
+    if (args.size() != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = args.get(0).intVal().val;
+    return new IntVal(i0 - 1);
+}
+%%%
+
+ZeropPrim
+%%%
+public String toString() {
+    return "zero?";
+}
+
+public Val apply(List<Val> args) {
+    if (args.size() != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = args.get(0).intVal().val;
+    return new IntVal(i0 == 0 ? 1 : 0);
+}
+%%%
