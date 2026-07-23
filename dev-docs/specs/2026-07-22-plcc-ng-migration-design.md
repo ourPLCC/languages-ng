@@ -34,9 +34,13 @@ Work proceeds **language-first**: for a given language, its grammar port and all
 
 3. **Phase 2 — V1 through V6, in order**
    - V1/V2 introduce the `envRN` Env variant; V3–V6 introduce `envVal`. Each is ported once, the first time it's needed, and reused afterward.
+   - `src/Env/envVal` (like `src/Env/envRN` before it) pre-exists as a flat old-PLCC file at the exact path the new `src/Env/envVal/<target>/` directory needs — V3's plan should budget deleting it up front (confirmed safe: it's a pure duplicate of the per-language `envVal` copies, same as `envRN` was), not rediscover the collision live.
+   - `envVal`'s port must **keep** `checkDuplicates` and the two-list `Bindings(idList, valList)` constructor that `envRN`'s port correctly dropped as dead weight — V1/V2 never call either, but V3's `let` and V4's `proc` formals both do. Don't carry V1's trimmed shape forward by reflex.
+   - V6's `<program>` grammar has two alternatives (`Define`/`Eval`), and `plcc-rep` reads and evaluates one at a time from stdin in a loop, with `define` mutating a `Program`-level environment that later reads in the same run must see. Whether `plcc-ng`'s equivalent REP loop preserves that persistent state across multiple parses in one process is unvalidated — worth a live smoke test early in V6's own phase, the same way V0 and V1 spiked their own novel mechanics before committing to a full port.
 
 4. **Phase 3 — SET, REF, NAME, NEED**
    - Introduces the `envRef` Env variant, ported once and reused by all four.
+   - Same `src/Env/envRef` flat-file-vs-directory collision as `envRN`/`envVal` — delete the flat file as part of whichever of these four languages goes first.
 
 5. **Phase 4 — TYPE0, TYPE1**
 
@@ -75,6 +79,7 @@ This is deliberate: the goal is a single textbook that discusses "how `LetExp.ev
 - Each existing test case keeps one shared `<LANG>.input` / `<LANG>.expected` pair (not one per target), since all three targets must produce identical output for the same input. Each case's `.bats` file holds three `@test` blocks, one per target directory, each asserting against the same expected file.
 - Expected outputs need updating independent of the multi-target work, because `plcc-ng`'s scan/parse output format differs from old PLCC (`source:line:col TOKEN 'lexeme'` instead of `TOKEN(lexeme)`; full parse tree always shown; no `-t` trace flag on `plcc-parse`).
 - Where a language's current test coverage is thin, add cases during that language's phase — not as a separate catch-all pass.
+- `bin/relocate.bash` copies the **whole `src/` tree** into each `@test`'s isolated tmpdir, not just the language under test — required starting with V1, whose `spec.plcc` `%include`s a sibling top-level directory (`../../Env/envRN/<target>/env.plcc`); a narrower copy leaves that include with nothing to resolve against once relocated. Don't narrow this back to a per-language copy — every later phase's cross-directory `%include`s depend on it.
 
 ## Defect Tracking for plcc-ng / Migration Guide Issues
 
@@ -98,6 +103,7 @@ The summary above undersold several concrete details, confirmed by round-trippin
   - `:import` — placed as import/`require` lines near the top of that specific class's generated file. **Needed per file that references a free-standing class** — e.g. if both `Program` and `LitExp` call into `Env`, both `Program:import` and `LitExp:import` need their own `%include`/import block; there's no way to import once and have it apply file-wide. (Confirmed the failure mode too: omitting it on one class produces a runtime `NameError: name 'X' is not defined` in Python, or the JS/Java equivalent, only in that one file.)
   - `:init` — spliced into the generated constructor, after field assignment. This is the direct `plcc-ng` equivalent of old PLCC's `ClassName:init` action hook (e.g. `LetDecls:init`'s duplicate-check call) — confirmed supported, not just carried over from the migration guide's silence on the subject.
   - Java needs neither `:import` (same-directory, package-less classes reference each other with no import statement at all) nor a Python-style `:top`.
+  - **JavaScript auto-injects `const { Node, Token, LanguageError } = require('./runtime/base');` into every grammar-derived class file already** — an explicit `:import` for any of those three names on a *grammar-derived* class (not a free-standing one) redeclares the same identifier and fails with `Identifier 'X' has already been declared`. Only free-standing classes (which get no auto-injected requires at all) need to require them explicitly. Found live while porting V1's seven `Prim` subclasses, each of which throws `LanguageError` — the fix was deleting the redundant require, not adding one.
   - **A class attribute/static field doesn't need its own modifier** — a plain assignment statement (Python `env = Env.initEnv()`, Java `public static Env env = Env.initEnv();`, JS `static env = Env.initEnv();`) placed in the default (no-modifier) block is legal directly in the class body alongside method definitions, landing textually after the generated constructor but still valid at class-definition time.
 
 ## Out of Scope
