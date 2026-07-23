@@ -1,0 +1,33 @@
+# Language V2
+#   Language V1 + if...then...else
+skip WHITESPACE '\s+'
+skip COMMENT '%.*'
+token LIT '\d+'
+token LPAREN '\('
+token RPAREN '\)'
+token COMMA ','
+token ADDOP '\+'
+token SUBOP '\-'
+token MULOP '\*'
+token DIVOP '/'
+token ADD1OP 'add1'
+token SUB1OP 'sub1'
+token ZEROP 'zero\?'
+token IF 'if'
+token THEN 'then'
+token ELSE 'else'
+token VAR '[A-Za-z]\w*'
+%
+<Program>        ::= <Exp>
+<Exp:LitExp>     ::= <LIT>
+<Exp:VarExp>     ::= <VAR:name>
+<Exp:IfExp>      ::= IF <Exp:testexp> THEN <Exp:trueexp> ELSE <Exp:falseexp>
+<Exp:PrimappExp> ::= <Prim> LPAREN <Rands> RPAREN
+<Rands>          **= <Exp> +COMMA
+<Prim:AddPrim>   ::= ADDOP
+<Prim:SubPrim>   ::= SUBOP
+<Prim:MulPrim>   ::= MULOP
+<Prim:DivPrim>   ::= DIVOP
+<Prim:Add1Prim>  ::= ADD1OP
+<Prim:Sub1Prim>  ::= SUB1OP
+<Prim:ZeropPrim> ::= ZEROP

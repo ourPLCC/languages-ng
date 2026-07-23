@@ -34,3 +34,16 @@ headings are added in the order each language is migrated.
   (Env-based evaluation) to carry it, so course material walking through
   V1's grammar or its Env-lookup semantics should use the PascalCased
   nonterminal names.
+
+## V2
+
+- Same `VAR`-field rename as V0/V1: the captured field is `name`, not
+  `var`.
+- `IfExp`'s three `Exp` children are captured as `testexp`, `trueexp`,
+  `falseexp` — **all lowercase**, not the camelCase `testExp`/`trueExp`/
+  `falseExp` the old PLCC grammar used. This isn't a style choice: a
+  camelCase alt-name on a repeated nonterminal capture hits a live
+  `plcc-ng` bug (parser vs. codegen disagree on casing — see issue #6),
+  so the lowercase spelling is required, not optional. Course material
+  walking through `IfExp.eval()` should refer to `self.testexp` /
+  `testexp` / `this.testexp`, etc., not the old camelCase names.
