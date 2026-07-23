@@ -8,3 +8,5 @@
   plcc-ng's Python target wraps a string returned from _run() in quotes, contradicting its own docs; upstream defect, tracked here pending approval to file.
 - **[#4](issues/004-js-var-field-reserved-word.md) — JS target breaks on a VAR field name**
   A token auto-captured as `var` generates invalid JavaScript; upstream defect, tracked here pending approval to file.
+- **[#6](issues/006-multi-capture-alt-name-case-mismatch.md) — Multi-capture alt-name case mismatch**
+  A camelCase alt-name on a repeated nonterminal capture (e.g. IfExp's testExp/trueExp/falseExp) generates fields the parser can't find at runtime because it always lowercases alt-names; upstream defect, tracked here pending approval to file.
