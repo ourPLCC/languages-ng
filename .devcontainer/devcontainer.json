@@ -1,6 +1,6 @@
 {
   "name": "languages-ng",
-  "image": "ghcr.io/ourplcc/devcontainers/plcc-ng:1",
+  "image": "ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.0@sha256:8e0123b52bd6bda9b60bb15d03d3b1922b9a56ce79565bd52bca195f6d3f0979",
   "features": {
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/devcontainers-extra/features/shellcheck:1": {}
