@@ -83,6 +83,10 @@ reserved-word collision (see issue #4) — one fix in the grammar,
 inherited by every later phase automatically.
 
 Found while spiking V2's `IfExp` mechanics for
-[dev-docs/plans/2026-07-22-plcc-ng-phase2-v1.md](../plans/2026-07-22-plcc-ng-phase2-v1.md)'s
+[dev-docs/plans/2026-07-22-plcc-ng-phase2-v1.md](../../plans/2026-07-22-plcc-ng-phase2-v1.md)'s
 successor plan. Not filed upstream yet — needs the repo owner's
 go-ahead first.
+
+**Resolved in plcc-ng 2.0.0:** alt-name casing is preserved, so `IfExp`'s
+`testExp`/`trueExp`/`falseExp` work as written. The all-lowercase workaround
+was reverted. Upstream shipped the fix, so filing upstream is moot.

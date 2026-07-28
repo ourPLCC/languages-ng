@@ -1100,15 +1100,15 @@ EOF
 Two genuine discrepancies between `plcc-ng`'s documented and actual behavior were found and confirmed in isolation while validating this plan (see the design spec's "Addendum: Validated Syntax Facts" for the full writeup). Both get filed here, `Target: ourPLCC/plcc-ng`, informational only — no upstream filing without your go-ahead.
 
 **Files:**
-- Create: `dev-docs/issues/003-python-run-return-value-quoted.md` (generated)
-- Create: `dev-docs/issues/004-js-var-field-reserved-word.md` (generated)
+- Create: `dev-docs/issues/done/003-python-run-return-value-quoted.md` (generated)
+- Create: `dev-docs/issues/done/004-js-var-field-reserved-word.md` (generated)
 - Modify: `dev-docs/roadmap.md`
 
 - [ ] **Step 1: File the Python `_run()` return-value quoting issue**
 
 Run: `bin/issues/new.bash python-run-return-value-quoted docs`
 
-Edit the generated file (`dev-docs/issues/003-python-run-return-value-quoted.md`):
+Edit the generated file (`dev-docs/issues/done/003-python-run-return-value-quoted.md`):
 
 ```markdown
 **Target:** ourPLCC/plcc-ng
@@ -1156,7 +1156,7 @@ Not filed upstream yet — needs the repo owner's go-ahead first.
 
 Run: `bin/issues/new.bash js-var-field-reserved-word docs`
 
-Edit the generated file (`dev-docs/issues/004-js-var-field-reserved-word.md`):
+Edit the generated file (`dev-docs/issues/done/004-js-var-field-reserved-word.md`):
 
 ```markdown
 **Target:** ourPLCC/plcc-ng
@@ -1199,17 +1199,17 @@ Edit `dev-docs/roadmap.md`, adding a `### Docs` group:
 ```markdown
 ### Docs
 
-- **[#3](issues/003-python-run-return-value-quoted.md) — Python _run() return value printed with quotes**
+- **[#3](issues/done/003-python-run-return-value-quoted.md) — Python _run() return value printed with quotes**
   plcc-ng's Python target wraps a string returned from _run() in quotes, contradicting its own docs; upstream defect, tracked here pending approval to file.
-- **[#4](issues/004-js-var-field-reserved-word.md) — JS target breaks on a VAR field name**
+- **[#4](issues/done/004-js-var-field-reserved-word.md) — JS target breaks on a VAR field name**
   A token auto-captured as `var` generates invalid JavaScript; upstream defect, tracked here pending approval to file.
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add dev-docs/issues/003-python-run-return-value-quoted.md \
-        dev-docs/issues/004-js-var-field-reserved-word.md \
+git add dev-docs/issues/done/003-python-run-return-value-quoted.md \
+        dev-docs/issues/done/004-js-var-field-reserved-word.md \
         dev-docs/roadmap.md
 git commit -m "docs(issues): file 003, 004 - plcc-ng defects found during V0 migration"
 ```
