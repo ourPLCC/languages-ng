@@ -14,12 +14,15 @@ headings are added in the order each language is migrated.
 
 ## V0
 
-- The `VAR` token's captured field is renamed from the auto-generated
-  `var` to `name` in the shared grammar (all 3 targets), because `var` is
-  a reserved word in JavaScript and would otherwise break the generated
-  JavaScript code. Semantics code and any course material walking through
-  V0's implementation should refer to the `name` field (`self.name` /
-  `name` / `this.name`), not `var`.
+- The identifier token is renamed from `VAR` to **`SYMBOL`**, and captured
+  as bare `<SYMBOL>`, so `VarExp`'s field is **`symbol`** (`self.symbol` /
+  `symbol` / `this.symbol`), not the original `var`. This corrects a
+  misnomer — in V0–V6 a `SYMBOL` names an immutable binding, not a mutable
+  variable — and sidesteps the `var`/JavaScript reserved-word collision
+  (plcc-ng 2.0.0 rejects a `var` field outright). The AST node class stays
+  `VarExp`. This `SYMBOL`/`symbol` spelling is the standing convention for
+  every language. Course material walking through V0 should refer to the
+  `SYMBOL` token and the `symbol` field.
 
 ## V1
 

@@ -29,7 +29,7 @@ def __str__(self):
 VarExp
 %%%
 def __str__(self):
-    return self.name.lexeme
+    return self.symbol.lexeme
 %%%
 
 AddPrim

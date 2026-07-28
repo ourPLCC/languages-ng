@@ -33,7 +33,7 @@ toString() {
 VarExp
 %%%
 toString() {
-    return this.name.lexeme;
+    return this.symbol.lexeme;
 }
 %%%
 

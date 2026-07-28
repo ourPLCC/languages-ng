@@ -39,7 +39,7 @@ public String toString() {
 VarExp
 %%%
 public String toString() {
-    return name.lexeme;
+    return symbol.lexeme;
 }
 %%%
 
