@@ -1,5 +1,13 @@
 # plcc-ng Migration — Phase 2 (V3) Implementation Plan
 
+> **⛔ PAUSED (2026-07-28) — blocked on [issue #10](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md).**
+> Task 1 (file issue #9) is done. Task 2 halted: V3's `let` grammar
+> `<LetDecls> **= <SYMBOL> EQUALS <Exp>` does not parse under plcc-ng 2.0.0
+> — a `**=` rule drops a non-capturing terminal (`EQUALS`) between two
+> captures. The decision was to keep the grammar in its faithful original
+> shape and resume once plcc-ng fixes #10, rather than restructure around
+> it. When resuming, restart the subagent-driven loop at Task 2.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Port V3's grammar and Python/Java/JavaScript semantics to `plcc-ng`, introducing the `envVal` Env variant. V3 is `V2 + let`: same seven `Prim`s and `Val`/`IntVal`, plus the `LetExp`/`LetDecls` grammar productions and their semantics in all three targets. Also close issue #8 (the completed 2.0.0 update) as bookkeeping.
@@ -121,6 +129,7 @@ token SYMBOL '[A-Za-z]\w*'
 <Exp:PrimappExp> ::= <Prim> LPAREN <Rands> RPAREN
 <Exp:LetExp>     ::= LET <LetDecls> IN <Exp>
 <LetDecls>       **= <SYMBOL> EQUALS <Exp>
+<Rands>          **= <Exp> +COMMA
 <Prim:AddPrim>   ::= ADDOP
 <Prim:SubPrim>   ::= SUBOP
 <Prim:MulPrim>   ::= MULOP
