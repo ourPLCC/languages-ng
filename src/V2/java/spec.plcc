@@ -52,8 +52,8 @@ Program
 %%%
 public static Env env = Env.initEnv();
 
-public void _run() {
-    System.out.println(exp.eval(env));
+public String _run() {
+    return exp.eval(env).toString();
 }
 %%%
 

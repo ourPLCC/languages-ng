@@ -5,7 +5,7 @@ Python
 Program
 %%%
 def _run(self):
-    print(self.exp)
+    return str(self.exp)
 %%%
 
 PrimappExp

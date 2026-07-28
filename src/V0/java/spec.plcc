@@ -4,8 +4,8 @@ Java
 
 Program
 %%%
-public void _run() {
-    System.out.println(exp.toString());
+public String _run() {
+    return exp.toString();
 }
 %%%
 

@@ -48,7 +48,7 @@ Program
 env = Env.initEnv()
 
 def _run(self):
-    print(self.exp.eval(Program.env))
+    return str(self.exp.eval(Program.env))
 %%%
 
 LitExp:import
