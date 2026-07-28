@@ -76,26 +76,26 @@ public String toString() {
 VarExp
 %%%
 public Val eval(Env env) {
-    return env.applyEnv(name.lexeme);
+    return env.applyEnv(symbol.lexeme);
 }
 
 public String toString() {
-    return name.lexeme;
+    return symbol.lexeme;
 }
 %%%
 
 IfExp
 %%%
 public Val eval(Env env) {
-    Val testVal = testexp.eval(env);
+    Val testVal = testExp.eval(env);
     if (testVal.isTrue())
-        return trueexp.eval(env);
+        return trueExp.eval(env);
     else
-        return falseexp.eval(env);
+        return falseExp.eval(env);
 }
 
 public String toString() {
-    return "if " + testexp + " then " + trueexp + " else " + falseexp;
+    return "if " + testExp + " then " + trueExp + " else " + falseExp;
 }
 %%%
 

@@ -40,13 +40,10 @@ headings are added in the order each language is migrated.
 
 ## V2
 
-- Same `VAR`-field rename as V0/V1: the captured field is `name`, not
-  `var`.
-- `IfExp`'s three `Exp` children are captured as `testexp`, `trueexp`,
-  `falseexp` — **all lowercase**, not the camelCase `testExp`/`trueExp`/
-  `falseExp` the old PLCC grammar used. This isn't a style choice: a
-  camelCase alt-name on a repeated nonterminal capture hits a live
-  `plcc-ng` bug (parser vs. codegen disagree on casing — see issue #6),
-  so the lowercase spelling is required, not optional. Course material
-  walking through `IfExp.eval()` should refer to `self.testexp` /
-  `testexp` / `this.testexp`, etc., not the old camelCase names.
+- Same `VAR` → `SYMBOL` token rename as V0/V1: the field is `symbol`,
+  not the original `var`.
+- `IfExp`'s three `Exp` children are captured with the original camelCase
+  alt-names `testExp` / `trueExp` / `falseExp` (plcc-ng 2.0.0 preserves
+  alt-name casing; the earlier all-lowercase workaround for issue #6 is no
+  longer needed). Course material walking through `IfExp.eval()` should
+  refer to `self.testExp` / `testExp` / `this.testExp`, etc.

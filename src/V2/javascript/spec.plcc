@@ -82,25 +82,25 @@ toString() {
 VarExp
 %%%
 eval(env) {
-    return env.applyEnv(this.name.lexeme);
+    return env.applyEnv(this.symbol.lexeme);
 }
 
 toString() {
-    return this.name.lexeme;
+    return this.symbol.lexeme;
 }
 %%%
 
 IfExp
 %%%
 eval(env) {
-    if (this.testexp.eval(env).isTrue())
-        return this.trueexp.eval(env);
+    if (this.testExp.eval(env).isTrue())
+        return this.trueExp.eval(env);
     else
-        return this.falseexp.eval(env);
+        return this.falseExp.eval(env);
 }
 
 toString() {
-    return `if ${this.testexp} then ${this.trueexp} else ${this.falseexp}`;
+    return `if ${this.testExp} then ${this.trueExp} else ${this.falseExp}`;
 }
 %%%
 

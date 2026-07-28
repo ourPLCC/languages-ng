@@ -68,22 +68,22 @@ def __str__(self):
 VarExp
 %%%
 def eval(self, env):
-    return env.applyEnv(self.name.lexeme)
+    return env.applyEnv(self.symbol.lexeme)
 
 def __str__(self):
-    return self.name.lexeme
+    return self.symbol.lexeme
 %%%
 
 IfExp
 %%%
 def eval(self, env):
-    if self.testexp.eval(env).isTrue():
-        return self.trueexp.eval(env)
+    if self.testExp.eval(env).isTrue():
+        return self.trueExp.eval(env)
     else:
-        return self.falseexp.eval(env)
+        return self.falseExp.eval(env)
 
 def __str__(self):
-    return f"if {self.testexp} then {self.trueexp} else {self.falseexp}"
+    return f"if {self.testExp} then {self.trueExp} else {self.falseExp}"
 %%%
 
 PrimappExp
