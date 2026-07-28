@@ -14,11 +14,11 @@ token DIVOP '/'
 token ADD1OP 'add1'
 token SUB1OP 'sub1'
 token ZEROP 'zero\?'
-token VAR '[A-Za-z]\w*'
+token SYMBOL '[A-Za-z]\w*'
 %
 <Program>        ::= <Exp>
 <Exp:LitExp>     ::= <LIT>
-<Exp:VarExp>     ::= <VAR:name>
+<Exp:VarExp>     ::= <SYMBOL>
 <Exp:PrimappExp> ::= <Prim> LPAREN <Rands> RPAREN
 <Rands>          **= <Exp> +COMMA
 <Prim:AddPrim>   ::= ADDOP

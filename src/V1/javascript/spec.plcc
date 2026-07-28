@@ -82,11 +82,11 @@ toString() {
 VarExp
 %%%
 eval(env) {
-    return env.applyEnv(this.name.lexeme);
+    return env.applyEnv(this.symbol.lexeme);
 }
 
 toString() {
-    return this.name.lexeme;
+    return this.symbol.lexeme;
 }
 %%%
 

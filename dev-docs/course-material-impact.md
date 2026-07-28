@@ -26,11 +26,11 @@ headings are added in the order each language is migrated.
 
 ## V1
 
-- Same `VAR`-field rename as V0, applied to V1's grammar: the captured
-  field is `name`, not `var`. V1's semantics now read it as
-  `env.applyEnv(self.name.lexeme)` / `env.applyEnv(name.lexeme)` /
-  `env.applyEnv(this.name.lexeme)`, so course material walking through
-  V1's `VarExp` evaluation should refer to `name`, not `var`.
+- Same `VAR` → `SYMBOL` token rename as V0: the field is `symbol`, not the
+  original `var`. V1's semantics now read `env.applyEnv(self.symbol.lexeme)`
+  / `env.applyEnv(symbol.lexeme)` / `env.applyEnv(this.symbol.lexeme)`, so
+  course material walking through V1's `VarExp` evaluation should refer to
+  the `symbol` field.
 - Nonterminals are PascalCased (`<program>` → `<Program>`, `<exp>` →
   `<Exp>`, `<prim>` → `<Prim>`, `<rands>` → `<Rands>`), following the same
   convention V0 established. V1 is the first language with real semantics

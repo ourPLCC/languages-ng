@@ -76,11 +76,11 @@ public String toString() {
 VarExp
 %%%
 public Val eval(Env env) {
-    return env.applyEnv(name.lexeme);
+    return env.applyEnv(symbol.lexeme);
 }
 
 public String toString() {
-    return name.lexeme;
+    return symbol.lexeme;
 }
 %%%
 

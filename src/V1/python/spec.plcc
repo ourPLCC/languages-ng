@@ -68,10 +68,10 @@ def __str__(self):
 VarExp
 %%%
 def eval(self, env):
-    return env.applyEnv(self.name.lexeme)
+    return env.applyEnv(self.symbol.lexeme)
 
 def __str__(self):
-    return self.name.lexeme
+    return self.symbol.lexeme
 %%%
 
 PrimappExp
