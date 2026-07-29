@@ -45,7 +45,7 @@
 
 Run: `bin/issues/new.bash migrate-v3-to-plcc-ng feat`
 
-This reads `.next-id.txt` (currently `9`), creates the file, and increments the id. Note the exact path it prints (expected `dev-docs/issues/009-migrate-v3-to-plcc-ng.md`) and use that path in the steps below.
+This reads `.next-id.txt` (currently `9`), creates the file, and increments the id. Note the exact path it prints (expected `dev-docs/issues/done/009-migrate-v3-to-plcc-ng.md`) and use that path in the steps below.
 
 - [ ] **Step 2: Fill in the issue's Description and Notes**
 
@@ -72,14 +72,14 @@ and [dev-docs/plans/2026-07-28-plcc-ng-phase2-v3.md](../plans/2026-07-28-plcc-ng
 Edit `dev-docs/roadmap.md`. Add under the `### Feat` group (create the group if it isn't present):
 
 ```markdown
-- **[#9](issues/009-migrate-v3-to-plcc-ng.md) — Migrate V3 to plcc-ng**
+- **[#9](issues/done/009-migrate-v3-to-plcc-ng.md) — Migrate V3 to plcc-ng**
   Ports V3's grammar and Java semantics to plcc-ng, adds Python and JavaScript semantics, and introduces the envVal Env variant (empty initEnv, checkDuplicates, two-list Bindings constructor) reused by V4-V6.
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add dev-docs/issues/009-migrate-v3-to-plcc-ng.md dev-docs/roadmap.md
+git add dev-docs/issues/done/009-migrate-v3-to-plcc-ng.md dev-docs/roadmap.md
 git commit -m "$(cat <<'EOF'
 docs(issues): file 009 - migrate V3 to plcc-ng
 

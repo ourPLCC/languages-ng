@@ -25,5 +25,5 @@ and their semantics. V4-V6 are explicitly out of scope for this issue.
 
 ## Notes
 
-See [dev-docs/specs/2026-07-28-plcc-ng-v3-design.md](../specs/2026-07-28-plcc-ng-v3-design.md)
-and [dev-docs/plans/2026-07-28-plcc-ng-phase2-v3.md](../plans/2026-07-28-plcc-ng-phase2-v3.md).
+See [dev-docs/specs/2026-07-28-plcc-ng-v3-design.md](../../specs/2026-07-28-plcc-ng-v3-design.md)
+and [dev-docs/plans/2026-07-28-plcc-ng-phase2-v3.md](../../plans/2026-07-28-plcc-ng-phase2-v3.md).
