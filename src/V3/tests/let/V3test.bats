@@ -2,12 +2,26 @@
 
 load '../../../../bin/relocate.bash'
 
-@test "V3 let" {
+@test "V3 let (python)" {
   relocate
-  plccmk -c grammar > /dev/null
-  RESULT="$(rep -n < ./tests/let/V3.input)"
-
-  expected_output=$(< "./tests/let/V3.expected")
+  cd python
+  RESULT="$(plcc-rep < ../tests/let/V3.input)"
+  expected_output=$(< "../tests/let/V3.expected")
   [[ "$RESULT" == "$expected_output" ]]
+}
 
+@test "V3 let (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/let/V3.input)"
+  expected_output=$(< "../tests/let/V3.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
+
+@test "V3 let (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/let/V3.input)"
+  expected_output=$(< "../tests/let/V3.expected")
+  [[ "$RESULT" == "$expected_output" ]]
 }
