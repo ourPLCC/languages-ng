@@ -95,7 +95,7 @@ a non-arbno `::=` rule consumes its full RHS.
 **Impact on this repo:** V3's `let` migration was **paused** on this. The
 decision (see roadmap / issue #9) was to keep V3's grammar in its faithful
 original shape rather than restructure around the bug, and resume once
-plcc-ng fixed this upstream. Per [dev-docs/issue-conventions.md](../issue-conventions.md),
+plcc-ng fixed this upstream. Per [dev-docs/issue-conventions.md](../../issue-conventions.md),
 this issue stays open until the upstream fix lands and any local change is
 reconciled. Confirm before filing this publicly in `ourPLCC/plcc-ng`.
 
