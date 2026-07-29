@@ -61,8 +61,18 @@ headings are added in the order each language is migrated.
   `let`-bind the variables it uses; there is no ambient `x`/`v`/`m`.
 - Duplicate-detection and the two-list binding construction now read a
   token's value via `.lexeme` (not `.toString()`, which under plcc-ng
-  2.0.0 yields the `source:line:col TOKEN 'lexeme'` scan format), and
-  raise `LanguageError` rather than the old `PLCCException`.
+  2.0.0 (and unchanged in 2.0.1) yields the `source:line:col TOKEN
+  'lexeme'` scan format), and raise `LanguageError` rather than the old
+  `PLCCException`.
+- `LetDecls.addBindings` evaluates each `Exp` in `expList` inline (e.g.
+  Python: `[e.eval(env) for e in self.expList]`) rather than
+  constructing a `Rands` object and calling `evalRands` on it, unlike
+  `PrimappExp.eval`, which does delegate through `Rands`/`evalRands`.
+  This is a deviation from how the original pre-migration course
+  material's `LetDecls` was shaped. Course material comparing
+  `LetDecls.addBindings` against `PrimappExp.eval` should note that the
+  two look different on purpose: `LetDecls` doesn't have a pre-existing
+  `Rands` node to reuse the way `PrimappExp` does.
 - `LetExp.toString()` / `LetDecls.toString()` are the original course
   material's placeholder stubs (`"... LetExp ..."` / `"... LetDecls ..."`)
   and are preserved verbatim, not "finished".
