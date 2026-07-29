@@ -92,9 +92,29 @@ rhs symbols (shifting non-capturing terminals, appending only capturing ones
 to their field lists), rather than only the capturing subset — mirroring how
 a non-arbno `::=` rule consumes its full RHS.
 
-**Impact on this repo:** V3's `let` migration is **paused** on this. The
+**Impact on this repo:** V3's `let` migration was **paused** on this. The
 decision (see roadmap / issue #9) was to keep V3's grammar in its faithful
 original shape rather than restructure around the bug, and resume once
-plcc-ng fixes this upstream. Per [dev-docs/issue-conventions.md](../issue-conventions.md),
+plcc-ng fixed this upstream. Per [dev-docs/issue-conventions.md](../issue-conventions.md),
 this issue stays open until the upstream fix lands and any local change is
 reconciled. Confirm before filing this publicly in `ourPLCC/plcc-ng`.
+
+**Fixed upstream in plcc-ng 2.0.1** (verified 2026-07-29 against the exact
+V3 grammar). `_handle_arbno` now emits an entry for *every* rhs symbol,
+tagging non-capturing ones `"field": null` instead of dropping them:
+
+```python
+arbno_rhs = [
+    {"field": _arbno_field(s) if s.get("isCapturing", False) else None,
+     "symbol": s["name"], "is_terminal": bool(s.get("isTerminal", False))}
+    for s in rhs
+]
+```
+
+and `_parse_arbno` shifts those `field: null` terminals per iteration
+without appending them to a list field — the fix suggested above.
+`let three = 2 four = 5 in +(three, four)` now parses cleanly, with
+`LetDecls` yielding `symbolList` and `expList`. Since no local workaround
+was ever committed, nothing needs reverting; this issue closes once the
+devcontainer is rebuilt on 2.0.1 and V3's real grammar parses (V3 plan,
+Task 1b → Task 2).

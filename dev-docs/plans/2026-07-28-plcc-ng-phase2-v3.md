@@ -1,12 +1,15 @@
 # plcc-ng Migration — Phase 2 (V3) Implementation Plan
 
-> **⛔ PAUSED (2026-07-28) — blocked on [issue #10](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md).**
-> Task 1 (file issue #9) is done. Task 2 halted: V3's `let` grammar
-> `<LetDecls> **= <SYMBOL> EQUALS <Exp>` does not parse under plcc-ng 2.0.0
-> — a `**=` rule drops a non-capturing terminal (`EQUALS`) between two
-> captures. The decision was to keep the grammar in its faithful original
-> shape and resume once plcc-ng fixes #10, rather than restructure around
-> it. When resuming, restart the subagent-driven loop at Task 2.
+> **▶ RESUMED (2026-07-29) — [issue #10](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md) is fixed upstream in plcc-ng 2.0.1.**
+> The pause (2026-07-28) was because V3's `let` grammar
+> `<LetDecls> **= <SYMBOL> EQUALS <Exp>` did not parse under plcc-ng 2.0.0 —
+> a `**=` rule dropped the non-capturing `EQUALS` between two captures. The
+> decision was to keep the grammar in its faithful original shape rather than
+> restructure around the bug, and that grammar now parses correctly under
+> 2.0.1 (verified against the exact grammar in Task 2 Step 1).
+>
+> Task 1 (file issue #9) is done. Do **Task 1b** (adopt 2.0.1 — requires a
+> devcontainer rebuild) first, then restart the subagent-driven loop at Task 2.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -87,6 +90,56 @@ EOF
 
 ---
 
+## Task 1b: Adopt plcc-ng 2.0.1 and unblock issue #10
+
+**Files:**
+- Modify: `.devcontainer/devcontainer.json`
+
+plcc-ng 2.0.1 fixes issue #10: `plcc/ll1/spec_json_decoder.py::_handle_arbno` no longer filters the repeated body to capturing symbols (non-capturing entries are kept with `"field": null`), and `predictive_parser.py::_parse_arbno` shifts them — exactly the fix #10 suggested. Only four non-test source files changed between 2.0.0 and 2.0.1 (`spec_json_decoder.py`, `predictive_parser.py`, `build/staleness.py`, `cmd/make.py`), so V0–V2 regression risk is low but is still checked in Task 8.
+
+- [ ] **Step 1: Bump the pinned devcontainer image**
+
+`.devcontainer/devcontainer.json` `"image"` becomes:
+
+```
+ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.1@sha256:a50898fdf863e9792d8a62d79d0f5f664a1e89634397f1498a7ccc0c29fc2d24
+```
+
+(Digest read from ghcr.io on 2026-07-29; the same method reproduces 2.0.0's existing `sha256:8e0123b5…` pin exactly.)
+
+- [ ] **Step 2: Rebuild the devcontainer — REQUIRES A HUMAN**
+
+The bump only takes effect after *Dev Containers: Rebuild Container*. This cannot be done from inside the container; stop and ask the reporter to rebuild.
+
+- [ ] **Step 3: Confirm the running CLI is 2.0.1**
+
+```bash
+/usr/local/pipx/venvs/plcc-ng/bin/python -c "import importlib.metadata as m; print(m.version('plcc-ng'))"
+```
+
+Expected: `2.0.1`. If it still prints `2.0.0`, the rebuild did not take — do not proceed.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add .devcontainer/devcontainer.json
+git commit -m "$(cat <<'EOF'
+build(devcontainer): pin plcc-ng 2.0.1 image by digest
+
+2.0.1 fixes the arbno mid-body-terminal drop (issue #10) that blocked
+V3's <LetDecls> **= <SYMBOL> EQUALS <Exp> rule.
+
+Refs #10
+EOF
+)"
+```
+
+Issue #10 is **not** closed here — per the "close on verification" rule in
+[issue-conventions.md](../issue-conventions.md), it closes in Task 2 once the
+real V3 grammar parses under the rebuilt container.
+
+---
+
 ## Task 2: Create the shared V3 grammar and verify scan/parse
 
 **Files:**
@@ -148,13 +201,44 @@ cd src/V3
 echo "let three = 2 four = 5 in +(three, four)" | plcc-parse -s grammar.plcc
 ```
 
-Expected: a clean parse tree rooted at `Program` → `LetExp`, whose `LetDecls` holds two `SYMBOL`/`Exp` pairs and whose body is a `PrimappExp`. It MUST NOT print an LL(1) conflict or a `command not found`. If plcc-parse reports an LL(1) conflict on `<LetDecls>`, stop and file an issue (`bin/issues/new.bash`, `Target: ourPLCC/plcc-ng`) before proceeding — do not silently restructure the grammar.
+Expected (verified against plcc-ng 2.0.1 on 2026-07-29): a clean parse tree rooted at `Program` → `LetExp`, whose `LetDecls` groups both captures as lists — `symbolList` (`three`, `four`) then `expList` (the two `LitExp`s) — and whose body is a `PrimappExp`:
+
+```
+Program
+  LetExp
+    LetDecls
+      SYMBOL 'three' [-:1:5]
+      SYMBOL 'four' [-:1:15]
+      LitExp
+        LIT '2' [-:1:13]
+      LitExp
+        LIT '5' [-:1:22]
+    PrimappExp
+      ...
+```
+
+It MUST NOT print `unexpected 'EQUALS'` (the #10 symptom), an LL(1) conflict, or a `command not found`. If it still prints `unexpected 'EQUALS'`, the container is not actually running 2.0.1 — go back to Task 1b Step 3. If plcc-parse reports a genuine LL(1) conflict on `<LetDecls>`, stop and file an issue (`bin/issues/new.bash`, `Target: ourPLCC/plcc-ng`) before proceeding — do not silently restructure the grammar.
 
 Clean up and return:
 
 ```bash
 rm -rf plcc-ng
 cd /workspaces/languages-ng/.claude/worktrees/v3-migration
+```
+
+- [ ] **Step 2b: Close issue #10 (now verified fixed)**
+
+The clean parse above is the verification #10 was held open for. No local workaround was ever committed for it — the grammar was deliberately kept in its faithful shape — so there is nothing to revert.
+
+```bash
+bin/issues/close.bash 10
+```
+
+Expected: prints `closed: dev-docs/issues/done/010-plcc-ng-arbno-drops-mid-body-terminal.md` and updates the roadmap. Commit separately from Step 4:
+
+```bash
+git add -A
+git commit -m "docs(issues): close issue 10 (arbno mid-body terminal, fixed in plcc-ng 2.0.1), update roadmap"
 ```
 
 - [ ] **Step 3: Log the course-material impact**
