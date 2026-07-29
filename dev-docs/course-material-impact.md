@@ -47,3 +47,22 @@ headings are added in the order each language is migrated.
   alt-name casing; the earlier all-lowercase workaround for issue #6 is no
   longer needed). Course material walking through `IfExp.eval()` should
   refer to `self.testExp` / `testExp` / `this.testExp`, etc.
+
+## V3
+
+- Same `SYMBOL`/`symbol` convention as V0-V2 (the identifier token is
+  `SYMBOL`, captured as `symbol`; in `let` LHS positions it is captured
+  as the list `symbolList`).
+- New `let` productions: `<Exp:LetExp> ::= LET <LetDecls> IN <Exp>` and
+  `<LetDecls> **= <SYMBOL> EQUALS <Exp>`. Course material walking through
+  `LetDecls` should refer to its `symbolList` / `expList` fields.
+- `envVal.initEnv()` is **empty** (no preset bindings) — unlike V1/V2's
+  `envRN`, which preset the Roman-numeral values. Every V3 example must
+  `let`-bind the variables it uses; there is no ambient `x`/`v`/`m`.
+- Duplicate-detection and the two-list binding construction now read a
+  token's value via `.lexeme` (not `.toString()`, which under plcc-ng
+  2.0.0 yields the `source:line:col TOKEN 'lexeme'` scan format), and
+  raise `LanguageError` rather than the old `PLCCException`.
+- `LetExp.toString()` / `LetDecls.toString()` are the original course
+  material's placeholder stubs (`"... LetExp ..."` / `"... LetDecls ..."`)
+  and are preserved verbatim, not "finished".
