@@ -1,0 +1,303 @@
+%include ../grammar.plcc
+%
+javascript
+
+%include ../../Env/envVal/javascript/env.plcc
+
+Val
+%%%
+const { LanguageError } = require('./runtime/base');
+
+class Val {
+
+    isTrue() {
+        return true;
+    }
+
+    intVal() {
+        throw new LanguageError(`${this}: not an Int`);
+    }
+}
+
+module.exports = { Val };
+%%%
+
+IntVal
+%%%
+const { Val } = require('./Val');
+
+class IntVal extends Val {
+
+    constructor(val) {
+        super();
+        this.val = typeof val === "string" ? parseInt(val, 10) : val;
+    }
+
+    intVal() {
+        return this;
+    }
+
+    toString() {
+        return String(this.val);
+    }
+
+    isTrue() {
+        return this.val !== 0;
+    }
+}
+
+module.exports = { IntVal };
+%%%
+
+Program:import
+%%%
+const { Env } = require('./Env');
+%%%
+
+Program
+%%%
+static env = Env.initEnv();
+
+_run() {
+    return String(this.exp.eval(Program.env));
+}
+%%%
+
+LitExp:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+LitExp
+%%%
+eval(env) {
+    return new IntVal(this.lit.lexeme);
+}
+
+toString() {
+    return this.lit.lexeme;
+}
+%%%
+
+VarExp
+%%%
+eval(env) {
+    return env.applyEnv(this.symbol.lexeme);
+}
+
+toString() {
+    return this.symbol.lexeme;
+}
+%%%
+
+IfExp
+%%%
+eval(env) {
+    if (this.testExp.eval(env).isTrue())
+        return this.trueExp.eval(env);
+    else
+        return this.falseExp.eval(env);
+}
+
+toString() {
+    return `if ${this.testExp} then ${this.trueExp} else ${this.falseExp}`;
+}
+%%%
+
+PrimappExp
+%%%
+eval(env) {
+    const args = this.rands.evalRands(env);
+    return this.prim.apply(args);
+}
+
+toString() {
+    return `${this.prim}(${this.rands})`;
+}
+%%%
+
+LetExp
+%%%
+eval(env) {
+    const nenv = this.letDecls.addBindings(env);
+    return this.exp.eval(nenv);
+}
+
+toString() {
+    return "... LetExp ...";
+}
+%%%
+
+LetDecls:import
+%%%
+const { Env } = require('./Env');
+const { Bindings } = require('./Bindings');
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(this.symbolList, " in let LHS identifiers");
+%%%
+
+LetDecls
+%%%
+addBindings(env) {
+    const valList = this.expList.map(e => e.eval(env));
+    const bindings = new Bindings(this.symbolList, valList);
+    return env.extendEnv(bindings);
+}
+
+toString() {
+    return "... LetDecls ...";
+}
+%%%
+
+Rands
+%%%
+evalRands(env) {
+    return this.expList.map(e => e.eval(env));
+}
+
+toString() {
+    return this.expList.map(e => String(e)).join(",");
+}
+%%%
+
+AddPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+AddPrim
+%%%
+toString() {
+    return "+";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 + i1);
+}
+%%%
+
+SubPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+SubPrim
+%%%
+toString() {
+    return "-";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 - i1);
+}
+%%%
+
+MulPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+MulPrim
+%%%
+toString() {
+    return "*";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 * i1);
+}
+%%%
+
+DivPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+DivPrim
+%%%
+toString() {
+    return "/";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    if (i1 === 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(Math.trunc(i0 / i1));
+}
+%%%
+
+Add1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+Add1Prim
+%%%
+toString() {
+    return "add1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 + 1);
+}
+%%%
+
+Sub1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+Sub1Prim
+%%%
+toString() {
+    return "sub1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 - 1);
+}
+%%%
+
+ZeropPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+ZeropPrim
+%%%
+toString() {
+    return "zero?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 === 0 ? 1 : 0);
+}
+%%%
