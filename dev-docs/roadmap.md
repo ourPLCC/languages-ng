@@ -13,3 +13,5 @@
 
 - **[#13](issues/013-dev-docs-link-checker-not-fence-aware.md) — dev-docs link checker is not fence-aware**
   The plan-embedded link checker reports 19 broken links, but 15 are Markdown links inside fenced code blocks that were never meant to resolve; its "all links resolve" gate is unsatisfiable until it skips fences, and the 4 real breaks come from a `close.bash` link-rewriting gap.
+- **[#16](issues/016-cross-target-integer-divergence.md) — cross-target integer divergence**
+  Java's 32-bit `IntVal.val` silently overflows where Python's arbitrary-precision and JavaScript's double integers don't (measured: `.fact(20)` gives `2432902008176640000` in Python/JS, `-2102132736` in Java). Inherited from V0 and repo-wide, not a V4 defect, but V4's `Prog/fact-acc` and its new `recursion/` test make the boundary trivially reachable in a live demo.
