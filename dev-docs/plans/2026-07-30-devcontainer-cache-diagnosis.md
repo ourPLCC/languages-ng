@@ -17,7 +17,7 @@
 - Commit message types: `chore` for the devcontainer change, `docs(issues)` for both issue-file commits. `fix`/`feat` are reserved for `src/` changes because they bump the release version (see `.releaserc.yaml`) — do not use them here.
 - End every commit message with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
 - No [course-material-impact.md](../course-material-impact.md) entry: nothing in `src/` changes.
-- Expected `bin/test.bash` result throughout: **34 tests, 31 pass, 3 fail** — V4 `proc`, V5 `letrec`, V6 `define`, all failing with `plccmk: command not found`. These are pre-existing, tracked by issue #12, and unrelated to this work. Do not attempt to fix them.
+- Expected `bin/test.bash` result throughout: **34 tests, 24 pass, 10 fail** — V4, V5, V6, NAME, NEED, OBJ, REF, SET, TYPE0 and TYPE1, all failing with `plccmk: command not found`. Those are exactly the ten suites that still drive old PLCC (`grep -rl plccmk src/` returns precisely that set), and the plcc-ng image does not ship `plccmk`. They are pre-existing and unrelated to this work — and the inverse of the gap tracked by issue #12, which is about CI lacking plcc-ng rather than this container lacking old PLCC. Do not attempt to fix them.
 
 ---
 
@@ -110,7 +110,7 @@ Expected: `OK: parses, digest unchanged, workaround gone`
 
 Run: `bin/test.bash`
 
-Expected: 34 tests, 31 pass, 3 fail (V4/V5/V6, `plccmk: command not found`).
+Expected: 34 tests, 24 pass, 10 fail (V4, V5, V6, NAME, NEED, OBJ, REF, SET, TYPE0, TYPE1 — `plccmk: command not found`).
 
 Note what this does and does not prove: the suite runs in the **already-running** container and does not read `devcontainer.json`, so it cannot validate the revert. It confirms the image's plcc-ng 2.0.1 drives V0–V3 correctly — which is the substance of why the workaround is unnecessary. The revert itself is verified by Steps 3–4 and by the spec's evidence table.
 
@@ -404,7 +404,7 @@ Expected: `OK: devcontainer.json comment resolves`
 
 Run: `bin/issues/check.bash` — expected: exit 0, **1** open issue (#12), roadmap consistent.
 
-Run: `bin/test.bash` — expected: 34 tests, 31 pass, 3 fail (V4/V5/V6, `plccmk: command not found`), unchanged from the baseline.
+Run: `bin/test.bash` — expected: 34 tests, 24 pass, 10 fail (V4, V5, V6, NAME, NEED, OBJ, REF, SET, TYPE0, TYPE1 — `plccmk: command not found`), unchanged from the baseline.
 
 - [ ] **Step 7: Commit**
 
@@ -427,7 +427,7 @@ EOF
 
 ## Out of scope
 
-- The three failing V4/V5/V6 tests (`plccmk: command not found`) — tracked by [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md).
+- The ten failing `plccmk: command not found` tests (V4, V5, V6, NAME, NEED, OBJ, REF, SET, TYPE0, TYPE1) — the local inverse of the gap tracked by [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md), which records CI's image lacking plcc-ng rather than this container lacking old PLCC.
 - Any upstream report to `ourPLCC/devcontainers` — there is no defect to report.
 - Rewriting `1831a79`'s commit message.
 - Bumping the image digest or plcc-ng version.
