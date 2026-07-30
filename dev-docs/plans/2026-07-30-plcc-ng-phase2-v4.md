@@ -33,14 +33,14 @@
 ## Task 1: File the V4 issue
 
 **Files:**
-- Create: `dev-docs/issues/014-migrate-v4-to-plcc-ng.md` (id assigned by the script)
+- Create: `dev-docs/issues/done/014-migrate-v4-to-plcc-ng.md` (id assigned by the script)
 - Modify: `dev-docs/roadmap.md`
 
 - [ ] **Step 1: Generate the issue file**
 
 Run: `bin/issues/new.bash migrate-v4-to-plcc-ng feat`
 
-This reads `dev-docs/issues/.next-id.txt` (currently `14`), creates the file from the template with today's date, and increments the id. The script prints the path it created — expected `dev-docs/issues/014-migrate-v4-to-plcc-ng.md`. Use the printed path in the steps below; never assign an id by hand.
+This reads `dev-docs/issues/.next-id.txt` (currently `14`), creates the file from the template with today's date, and increments the id. The script prints the path it created — expected `dev-docs/issues/done/014-migrate-v4-to-plcc-ng.md`. Use the printed path in the steps below; never assign an id by hand.
 
 - [ ] **Step 2: Fill in the issue's Description and Notes**
 
@@ -71,7 +71,7 @@ Edit `dev-docs/roadmap.md`. Per [issue-conventions.md](../issue-conventions.md),
 ```markdown
 ### Feat
 
-- **[#14](issues/014-migrate-v4-to-plcc-ng.md) — Migrate V4 to plcc-ng**
+- **[#14](issues/done/014-migrate-v4-to-plcc-ng.md) — Migrate V4 to plcc-ng**
   Ports V4's grammar and Java semantics to plcc-ng and adds Python and JavaScript semantics. V4 is V3 + procedures (proc/application, closures) and the sequence operator, reusing envVal unchanged. Also verifies V4's Prog/ example programs against all three targets.
 ```
 
@@ -84,7 +84,7 @@ and `bin/issues/check.bash` fails on a clean checkout (`next_id 14 not > max_id
 14`) even though it passes against the dirty working tree.
 
 ```bash
-git add dev-docs/issues/014-migrate-v4-to-plcc-ng.md dev-docs/roadmap.md dev-docs/issues/.next-id.txt
+git add dev-docs/issues/done/014-migrate-v4-to-plcc-ng.md dev-docs/roadmap.md dev-docs/issues/.next-id.txt
 git commit -m "$(cat <<'EOF'
 docs(issues): file 014 - migrate V4 to plcc-ng
 
