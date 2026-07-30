@@ -51,20 +51,44 @@ ships, every container create drifts off the pinned 2.0.1, reintroducing
 exactly the non-reproducibility the pin exists to prevent. It also adds a
 network dependency and latency to every create.
 
-[dev-docs/issue-conventions.md](../issue-conventions.md) makes removal a
-precondition of closing, not an optional tidy-up: an issue whose
-workaround lives in the tree "stays open for as long as that workaround
-lives in the code… removing the workaround is [the fix]."
+That is the entire case for removal, and it stands on its own.
+[dev-docs/issue-conventions.md](../issue-conventions.md) does have a rule
+making workaround-removal a precondition of closing, but it does not
+apply here: it is scoped to "when an **upstream defect** forces a local
+workaround in shipped **`src/`**," and this branch's own conclusion is
+that there is no upstream defect, while the workaround lived in
+`.devcontainer/` rather than `src/`. Removing it is in that rule's spirit,
+not under its letter.
 
 ## Mechanism worth documenting
 
 The image has been pinned by digest since `bcd8b6e`, so a stale *base
-tag* does not explain the reuse — a digest pin resolves unambiguously.
-What got reused is the **derived** image the Dev Containers extension
-builds by layering the configured features (`claude-code`, `shellcheck`)
-and `postCreateCommand` onto the base. Its cache key did not pick up the
-base digest change, so a plain rebuild after `b5e6308` → `bcd8b6e`
-(2.0.0 → 2.0.1) kept the old toolchain.
+tag* does not explain the reading — a digest pin resolves unambiguously.
+The likeliest remaining candidate is reuse of the **derived** image the
+Dev Containers extension builds by layering the configured features
+(`claude-code`, `shellcheck`) and `postCreateCommand` onto the base: a
+plain rebuild after `b5e6308` → `bcd8b6e` (2.0.0 → 2.0.1) would then have
+kept the old toolchain.
+
+That is inference, not measurement, and it should not be recorded as
+though it were the latter. The evidence above proves a *negative* — the
+image is correct, the workaround was inert — and is silent on which local
+mechanism was at work. No Docker-side evidence was gathered or could be:
+there is no `docker` CLI and no `/var/run/docker.sock` in this container.
+The specific mechanism is questionable even on its face: the Dev
+Containers CLI generates a Dockerfile whose base is a build arg
+(`ARG _DEV_CONTAINERS_BASE_IMAGE` / `FROM $_DEV_CONTAINERS_BASE_IMAGE`),
+and BuildKit resolves that before `FROM`, so a changed digest normally
+*does* invalidate the chain. Simpler explanations fit the same evidence:
+a Reopen-in-Container or restart that never rebuilt, an existing container
+reattached, or a rebuild that predated the digest bump landing in the
+working tree.
+
+A branch whose purpose is correcting a confidently-stated wrong cause
+should not deposit a second confidently-stated cause of comparable
+standing. What is permanently defensible is narrower and sufficient: the
+staleness was local, because the pinned digest is content-addressed and
+the published image demonstrably ships 2.0.1.
 
 The actionable rule: **after bumping the image digest, rebuild without
 cache.** That is the one thing a future maintainer needs, and it belongs
@@ -81,9 +105,10 @@ only), and add a jsonc comment above the `image` line:
 {
   "name": "languages-ng",
   // Pinned by digest for reproducibility. When you bump this, rebuild
-  // WITHOUT cache ("Dev Containers: Rebuild Container Without Cache") —
-  // the derived feature image is cached independently of the base
-  // digest, so a plain rebuild silently reuses the old toolchain.
+  // WITHOUT cache ("Dev Containers: Rebuild Container Without Cache") --
+  // the derived feature image can be reused across a base-digest change
+  // (exact cache-key behavior unconfirmed), so a plain rebuild may
+  // silently keep the old toolchain.
   // Do not "fix" a stale container with `pipx upgrade plcc-ng`; that
   // defeats this pin. See
   // dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md
@@ -127,10 +152,16 @@ commit message is immutable; the revert's message carries the correction.
 - `.devcontainer/devcontainer.json` parses as JSON once `//` comments are
   stripped, and `postCreateCommand` matches its pre-workaround value byte
   for byte (`git show '1831a79^:.devcontainer/devcontainer.json'`).
-- `bin/test.bash` matches the branch baseline: 34 tests, 31 pass, 3 fail
-  (V4 `proc`, V5 `letrec`, V6 `define` — all `plccmk: command not found`,
-  pre-existing and tracked by [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md)).
-  This suite already exercises the image's plcc-ng 2.0.1 across V0–V3.
+- `bin/test.bash` matches the branch baseline: 34 tests, 24 pass, 10 fail
+  — V4, V5, V6, NAME, NEED, OBJ, REF, SET, TYPE0 and TYPE1, every one of
+  them `plccmk: command not found`. Those are exactly the ten suites that
+  still drive old PLCC (`grep -rl plccmk src/` returns precisely that
+  set), and the plcc-ng image does not ship `plccmk`. They are
+  pre-existing and unrelated to this work. They are also the *inverse* of
+  the gap tracked by [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md),
+  which is about CI lacking plcc-ng so migrated languages fail *there*;
+  here it is the local container lacking old PLCC. This suite already
+  exercises the image's plcc-ng 2.0.1 across V0–V3.
 
 ### Accepted limitation
 
