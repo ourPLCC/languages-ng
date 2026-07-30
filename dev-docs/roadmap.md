@@ -6,6 +6,8 @@
 
 - **[#12](issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — CI cannot run plcc-ng-migrated languages**
   CI's test image only installs old-PLCC with no Node.js, so plcc-ng-migrated languages (V0-V3) fail in CI with `command not found` while passing locally — the opposite of local dev. Deferred until every language has migrated: the job is `on: pull_request` and no PRs are opened yet, and the fix collapses to basing CI on the devcontainer image once old-PLCC is needed nowhere.
+- **[#15](issues/015-gitignore-java-pattern-shadows-source-dirs.md) — `.gitignore`'s `Java/` pattern shadows source dirs**
+  On a case-insensitive filesystem, `.gitignore`'s `Java/` line (meant for old PLCC's build output) also matches every `src/*/java/` source directory, forcing `git add -f` (already hit by V3 and V4) and invisible in case-sensitive CI. No gitignore pattern fixes it in place; recommended fix is to drop the line, since `plcc-rep` only ever writes the already-ignored `plcc-ng/`.
 
 ### Docs
 
