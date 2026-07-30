@@ -77,8 +77,14 @@ Edit `dev-docs/roadmap.md`. Per [issue-conventions.md](../issue-conventions.md),
 
 - [ ] **Step 4: Commit**
 
+`bin/issues/new.bash` also bumps `dev-docs/issues/.next-id.txt` to `15`. That
+bump ships in **this same commit** — leaving it uncommitted means the next
+`new.bash` on any branch re-reads `14` and collides with the issue just filed,
+and `bin/issues/check.bash` fails on a clean checkout (`next_id 14 not > max_id
+14`) even though it passes against the dirty working tree.
+
 ```bash
-git add dev-docs/issues/014-migrate-v4-to-plcc-ng.md dev-docs/roadmap.md
+git add dev-docs/issues/014-migrate-v4-to-plcc-ng.md dev-docs/roadmap.md dev-docs/issues/.next-id.txt
 git commit -m "$(cat <<'EOF'
 docs(issues): file 014 - migrate V4 to plcc-ng
 
