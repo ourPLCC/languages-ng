@@ -2,12 +2,26 @@
 
 load '../../../../bin/relocate.bash'
 
-@test "V4 proc" {
+@test "V4 proc (python)" {
   relocate
-  plccmk -c grammar > /dev/null
-  RESULT="$(rep -n < ./tests/proc/V4.input)"
-
-  expected_output=$(< "./tests/proc/V4.expected")
+  cd python
+  RESULT="$(plcc-rep < ../tests/proc/V4.input)"
+  expected_output=$(< "../tests/proc/V4.expected")
   [[ "$RESULT" == "$expected_output" ]]
+}
 
+@test "V4 proc (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/proc/V4.input)"
+  expected_output=$(< "../tests/proc/V4.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
+
+@test "V4 proc (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/proc/V4.input)"
+  expected_output=$(< "../tests/proc/V4.expected")
+  [[ "$RESULT" == "$expected_output" ]]
 }
