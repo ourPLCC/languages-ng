@@ -98,3 +98,12 @@ headings are added in the order each language is migrated.
 - `SeqExp` reads its trailing expressions from `seqExps.expList`; the
   first expression is the separate field `exp`. `{a; b; c}` evaluates
   `a` first and yields the value of `c`.
+- `Prog/oe` and `Prog/fib` are **shrunk** so every shipped example runs
+  in all three targets. `oe`'s final call is now `.even?(10, even?, odd?)`
+  instead of `.even?(11000, even?, odd?)` (output unchanged: `1`), and
+  `fib` now computes `.fib(10)` instead of `.fib(30)`, so its output
+  changes from `832040` to `55`. The original arguments exceeded the
+  interpreter recursion depth available in Python (a ~1,000-frame default
+  limit, several frames per language-level call) and made `fib` take
+  minutes. Course material quoting either argument or `fib`'s result
+  needs updating.
