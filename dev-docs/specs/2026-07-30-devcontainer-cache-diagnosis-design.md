@@ -1,7 +1,7 @@
 # Devcontainer stale-toolchain diagnosis (issue #11)
 
 **Date:** 2026-07-30
-**Issue:** [#11](../issues/011-devcontainer-image-stale-plcc-ng-version.md)
+**Issue:** [#11](../issues/done/011-devcontainer-image-stale-plcc-ng-version.md)
 **Type:** chore
 
 ## Problem

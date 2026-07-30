@@ -151,7 +151,7 @@ EOF
 Rewrites the issue file so the record reflects what actually happened. The file keeps its `# NNN - slug` / `**Type:**` / `**Target:**` / `**Date:**` header and its `## Description` / `## Steps to Reproduce` / `## Notes` headings, matching `dev-docs/issues/TEMPLATE.md` and the other issues. Per convention (see `dev-docs/issues/done/010-*.md`), the resolution is a bold-led paragraph in `## Notes`, not a new `## Resolution` heading.
 
 **Files:**
-- Modify: `dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md` (replace entire body below the header comment)
+- Modify: `dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md` (replace entire body below the header comment)
 
 **Interfaces:**
 - Consumes: Task 1's committed `.devcontainer/devcontainer.json` (the Notes text asserts the workaround is gone, which is only true after Task 1).
@@ -162,7 +162,7 @@ Rewrites the issue file so the record reflects what actually happened. The file 
 Run:
 
 ```bash
-grep -n '^\*\*Target:\*\*' dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md
+grep -n '^\*\*Target:\*\*' dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md
 ```
 
 Expected: `4:**Target:** ourPLCC/devcontainers`
@@ -272,7 +272,7 @@ Design spec:
 Run:
 
 ```bash
-grep -n '^#\|^\*\*Type\|^\*\*Target\|^\*\*Date' dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md
+grep -n '^#\|^\*\*Type\|^\*\*Target\|^\*\*Date' dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md
 ```
 
 Expected — headings in this order, and `**Target:** this repo`:
@@ -292,7 +292,7 @@ Then confirm every relative link in the file points at a real file:
 ```bash
 python3 - <<'PY'
 import re, pathlib
-p = pathlib.Path('dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md')
+p = pathlib.Path('dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md')
 bad = [t for t in re.findall(r'\]\(([^)#]+\.md)\)', p.read_text())
        if not (p.parent / t).resolve().exists()]
 print('BROKEN:', bad) if bad else print('OK: all links resolve')
@@ -310,7 +310,7 @@ Expected: exit 0, reporting 2 open issues and a consistent roadmap. The issue is
 - [ ] **Step 6: Commit**
 
 ```bash
-git add dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md
+git add dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md
 git commit -F - <<'EOF'
 docs(issues): correct issue 11 diagnosis - local cache, not upstream image
 

@@ -25,7 +25,7 @@ reported `plcc-ng 2.0.0` from `plcc-version`, and its
 `plcc/ll1/spec_json_decoder.py` and `plcc/parser/predictive_parser.py`
 held the pre-2.0.1 arbno code — so anyone rebuilding still hit the arbno
 mid-body-terminal bug of issue
-[#10](done/010-plcc-ng-arbno-drops-mid-body-terminal.md). This was blamed
+[#10](010-plcc-ng-arbno-drops-mid-body-terminal.md). This was blamed
 on the upstream image build/publish pipeline being out of sync with its
 own version tag.
 
@@ -76,7 +76,7 @@ Commit `1831a79` had appended `pipx upgrade plcc-ng` to
 inert and harmful: `pipx upgrade` installs whatever is newest on PyPI, so
 once plcc-ng 2.1.0 ships it would pull every container create off the
 pinned digest, defeating the reproducibility the pin exists to provide.
-Per [dev-docs/issue-conventions.md](../issue-conventions.md), removing the
+Per [dev-docs/issue-conventions.md](../../issue-conventions.md), removing the
 workaround — not merely diagnosing it — is what allows this issue to
 close. The durable lesson lives as a comment at the pin in
 `.devcontainer/devcontainer.json`: after bumping the digest, rebuild
@@ -90,4 +90,4 @@ as-is; git history is immutable, and the revert's message carries the
 correction.
 
 Design spec:
-[dev-docs/specs/2026-07-30-devcontainer-cache-diagnosis-design.md](../specs/2026-07-30-devcontainer-cache-diagnosis-design.md).
+[dev-docs/specs/2026-07-30-devcontainer-cache-diagnosis-design.md](../../specs/2026-07-30-devcontainer-cache-diagnosis-design.md).
