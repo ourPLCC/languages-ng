@@ -1,9 +1,16 @@
 {
   "name": "languages-ng",
+  // Pinned by digest for reproducibility. When you bump this, rebuild
+  // WITHOUT cache ("Dev Containers: Rebuild Container Without Cache") --
+  // the derived feature image is cached independently of the base digest,
+  // so a plain rebuild silently reuses the old toolchain.
+  // Do not "fix" a stale container with `pipx upgrade plcc-ng`; that
+  // defeats this pin. See
+  // dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md
   "image": "ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.1@sha256:a50898fdf863e9792d8a62d79d0f5f664a1e89634397f1498a7ccc0c29fc2d24",
   "features": {
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/devcontainers-extra/features/shellcheck:1": {}
   },
-  "postCreateCommand": "BATS_VERSION=v1.11.0 && git clone https://github.com/bats-core/bats-core.git /tmp/bats-core && cd /tmp/bats-core && git checkout $BATS_VERSION && sudo ./install.sh /usr/local && cd - && rm -rf /tmp/bats-core && sudo env PIPX_HOME=/usr/local/pipx PIPX_BIN_DIR=/usr/local/bin /usr/local/py-utils/bin/pipx upgrade plcc-ng # workaround for issue #11: image tagged 2.0.1 still ships 2.0.0; force-upgrade from PyPI on every container create"
+  "postCreateCommand": "BATS_VERSION=v1.11.0 && git clone https://github.com/bats-core/bats-core.git /tmp/bats-core && cd /tmp/bats-core && git checkout $BATS_VERSION && sudo ./install.sh /usr/local && cd - && rm -rf /tmp/bats-core"
 }
