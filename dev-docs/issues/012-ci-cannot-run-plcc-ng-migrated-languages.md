@@ -62,3 +62,39 @@ Found while doing the whole-branch review fix wave for the V3 migration
 branch (issue #9, already closed). Not caused by that branch, but that
 branch's 9 new tests are the first ones to make the failure count
 concretely worse, which is what surfaced it.
+
+**Deferred until every language has migrated to plcc-ng (decided
+2026-07-30).** Do not act on the fix direction above before then — it is
+written for a state the repo is leaving, and following it now would build
+something half-disposable. Two reasons:
+
+- *The failing job does not run.* `test-languages.yaml` triggers `on:
+  pull_request`, and the working flow until migration completes is
+  worktree → implement → merge to main → push. No PR is opened, so the
+  job never fires and `bin/test.bash` run locally is the real quality
+  gate. Fixing CI now buys nothing until the PR workflow exists.
+- *The fix collapses once migration finishes.* Today a fix would have to
+  install plcc-ng and Node.js **alongside** old-PLCC, since V0-V3 need
+  the first and V4-V6 still need the second. After V4-V6 migrate,
+  old-PLCC is needed nowhere and half that image is dead weight. The
+  image already pinned in `.devcontainer/devcontainer.json` ships Java
+  21, Python 3.12, Node 24, and plcc-ng, so the eventual fix is to base
+  the CI image on that pin and add bats — not to keep extending the
+  separately hand-assembled stack in `test-langauges.dockerfile`. Basing
+  both on one image is also what stops the two toolchains drifting apart
+  again, which is the underlying cause here.
+
+Pick this up when the last language migrates, and rewrite the fix
+direction then, together with the PR workflow that would make it
+observable.
+
+The mirror-image local gap needs no issue of its own. V4/V5/V6 fail
+locally with `plccmk: command not found` only because their `.bats` files
+still call old-PLCC, and migrating a language rewrites its `.bats` — the
+failures delete themselves as the migration proceeds. Migrating does not
+require old-PLCC to be installed: V3's migration never regenerated a
+`.expected` from old-PLCC output (`let/V3.expected` predates it
+unchanged; `nested-let` and `single-let` were authored new alongside the
+plcc-ng tests). So do not add old-PLCC to the devcontainer to green those
+three tests — it would install a toolchain the project is in the middle
+of deleting the need for.
