@@ -76,3 +76,60 @@ headings are added in the order each language is migrated.
 - `LetExp.toString()` / `LetDecls.toString()` are the original course
   material's placeholder stubs (`"... LetExp ..."` / `"... LetDecls ..."`)
   and are preserved verbatim, not "finished".
+
+## V4
+
+- Same `SYMBOL`/`symbol` convention as V0-V3, but V4 **widens** the
+  identifier pattern to `[A-Za-z][\w?]*` so a name may end in `?`. This
+  is a real V4 language feature carried over from the original grammar,
+  not migration drift — `Prog/oe` names its procedures `even?` and
+  `odd?`. (V5's old grammar carries a comment claiming the `?` arrives
+  at V5; that comment is stale — the widening is already V4's.)
+- New productions: `<Exp:ProcExp> ::= <Proc>`,
+  `<Exp:AppExp> ::= DOT <Exp> LPAREN <Rands> RPAREN`,
+  `<Exp:SeqExp> ::= LBRACE <Exp> <SeqExps> RBRACE`,
+  `<SeqExps> **= SEMI <Exp>`,
+  `<Proc> ::= PROC LPAREN <Formals> RPAREN <Exp>`, and
+  `<Formals> **= <SYMBOL> +COMMA`.
+- `Formals`' list field is **`symbolList`** (`self.formals.symbolList` /
+  `formals.symbolList` / `this.formals.symbolList`), not the original
+  Java code's `varList`. Course material walking through `ProcVal.apply`
+  or the `proc` formals duplicate-check should use `symbolList`.
+- `SeqExp` reads its trailing expressions from `seqExps.expList`; the
+  first expression is the separate field `exp`. `{a; b; c}` evaluates
+  `a` first and yields the value of `c`.
+- `Prog/oe` and `Prog/fib` are **shrunk** so every shipped example runs
+  in all three targets. `oe`'s final call is now `.even?(10, even?, odd?)`
+  instead of `.even?(11000, even?, odd?)` (output unchanged: `1`), and
+  `fib` now computes `.fib(10)` instead of `.fib(30)`, so its output
+  changes from `832040` to `55`. `oe`'s original argument exceeded the
+  interpreter recursion depth available in Python (a ~1,000-frame
+  default limit, several frames per language-level call; measured at
+  roughly 330 language-level calls); `fib`'s original argument was
+  measured at 66 seconds of Python runtime, not minutes. Course material
+  quoting either argument or `fib`'s result needs updating.
+- `ProcVal` holds `formals`, `body`, and the environment captured at
+  `proc`-evaluation time (`self.env` / `env` / `this.env`); `apply`
+  extends *that* captured environment, not the caller's — this is what
+  makes V4's procedures lexically scoped, and it's the first question a
+  student asks walking `ProcVal.apply`. `Val.apply` keeps a second `env`
+  parameter (Python `Val.apply(self, args, env)`, Java `apply(List<Val>
+  args, Env e)`, JavaScript `apply(args, env)`) that nothing in V4 (or
+  V5/V6) reads; it is preserved because it is the signature the course
+  material shows. Course material walking `ProcVal.apply` should point
+  out that the environment it extends is the one closed over at
+  `proc`-time, not the `env`/`e` argument passed to `apply`.
+- `AppExp.toString()` and `SeqExp.toString()` are the original course
+  material's placeholder stubs — `" ... AppExp ..."` and
+  `" ... SeqExp ... "`, irregular spacing included — preserved verbatim
+  rather than "finished", the same treatment V3 gave `LetExp`/`LetDecls`.
+  `ProcExp` has **no** `toString()` at all, because the original has
+  none. Course material quoting any of the three should not expect a real
+  rendering of a procedure application, a sequence, or a `proc`
+  expression.
+- V4's runtime errors — `Cannot apply …` (`Val.apply`'s default), the
+  `formals`/`args` number mismatch, and the duplicate-formals check
+  (`Env.checkDuplicates` on `Formals.symbolList`) — raise plcc-ng's
+  `LanguageError`, the same substitution V3 made for old PLCC's
+  `PLCCException`. Course material quoting V4's error handling should
+  refer to `LanguageError`.

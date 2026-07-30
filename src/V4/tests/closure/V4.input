@@ -1,0 +1,16 @@
+let
+  p = proc(x)
+        let
+          y = 1
+        in
+          +(x,y)
+in
+  .p(.p(.p(3)))
+
+let
+  p = let
+        y = 1
+      in
+        proc(x) +(x,y)
+in
+  .p(.p(.p(3)))
