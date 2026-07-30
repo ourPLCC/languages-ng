@@ -2,8 +2,9 @@
   "name": "languages-ng",
   // Pinned by digest for reproducibility. When you bump this, rebuild
   // WITHOUT cache ("Dev Containers: Rebuild Container Without Cache") --
-  // the derived feature image is cached independently of the base digest,
-  // so a plain rebuild silently reuses the old toolchain.
+  // the derived feature image can be reused across a base-digest change
+  // (exact cache-key behavior unconfirmed), so a plain rebuild may
+  // silently keep the old toolchain.
   // Do not "fix" a stale container with `pipx upgrade plcc-ng`; that
   // defeats this pin. See
   // dev-docs/issues/done/011-devcontainer-image-stale-plcc-ng-version.md
