@@ -76,3 +76,25 @@ headings are added in the order each language is migrated.
 - `LetExp.toString()` / `LetDecls.toString()` are the original course
   material's placeholder stubs (`"... LetExp ..."` / `"... LetDecls ..."`)
   and are preserved verbatim, not "finished".
+
+## V4
+
+- Same `SYMBOL`/`symbol` convention as V0-V3, but V4 **widens** the
+  identifier pattern to `[A-Za-z][\w?]*` so a name may end in `?`. This
+  is a real V4 language feature carried over from the original grammar,
+  not migration drift — `Prog/oe` names its procedures `even?` and
+  `odd?`. (V5's old grammar carries a comment claiming the `?` arrives
+  at V5; that comment is stale — the widening is already V4's.)
+- New productions: `<Exp:ProcExp> ::= <Proc>`,
+  `<Exp:AppExp> ::= DOT <Exp> LPAREN <Rands> RPAREN`,
+  `<Exp:SeqExp> ::= LBRACE <Exp> <SeqExps> RBRACE`,
+  `<SeqExps> **= SEMI <Exp>`,
+  `<Proc> ::= PROC LPAREN <Formals> RPAREN <Exp>`, and
+  `<Formals> **= <SYMBOL> +COMMA`.
+- `Formals`' list field is **`symbolList`** (`self.formals.symbolList` /
+  `formals.symbolList` / `this.formals.symbolList`), not the original
+  Java code's `varList`. Course material walking through `ProcVal.apply`
+  or the `proc` formals duplicate-check should use `symbolList`.
+- `SeqExp` reads its trailing expressions from `seqExps.expList`; the
+  first expression is the separate field `exp`. `{a; b; c}` evaluates
+  `a` first and yields the value of `c`.
