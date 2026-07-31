@@ -247,6 +247,7 @@ EOF
 
 **Files:**
 - Create: `src/V5/python/spec.plcc`
+- Modify: `dev-docs/course-material-impact.md`
 
 **Interfaces:**
 - Consumes: `src/V5/grammar.plcc` (Task 2) and the unmodified `src/Env/envVal/python/env.plcc` — specifically `Env.checkDuplicates(symbolList, msg="")`, `Env.initEnv()`, `env.extendEnv(bindings)`, `env.applyEnv(symString)`, `env.add(binding)` (mutates the node in place), `Binding(idString, val)`, and `Bindings()` / `Bindings(idList, valList)`.
@@ -374,10 +375,41 @@ rm -rf plcc-ng __pycache__
 cd ../../..
 ```
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Log the letrec semantics in the course-material impact log**
+
+This lands here, in the commit that first implements the semantics, because [CLAUDE.md](../../CLAUDE.md) requires impact entries in the same commit as the change they describe — not batched into a later docs commit. Tasks 4 and 5 implement the *same* semantics in two more targets and add no further entry.
+
+Append these bullets to the end of the `## V5` section created in Task 2:
+
+```markdown
+- `letrec` is implemented by **mutation, not by a fixpoint**.
+  `LetDecls.addLetrecBindings(env)` extends the environment with an
+  *empty* `Bindings`, then evaluates each right-hand side **in that
+  already-extended environment** and adds the resulting binding to that
+  same node with `env.add(...)`. A `proc` right-hand side captures the
+  env object while it still holds zero bindings; later additions to that
+  same node are what make its siblings (and itself) visible by the time
+  anything is called. This is worth showing explicitly on a slide — it
+  is not the placeholder-and-patch `letrec` most textbooks present.
+- A consequence worth stating in class: the binding pass is **eager and
+  sequential**, so a right-hand side that *looks something up* can only
+  see bindings to its left. `letrec f = proc(...) .g(...) g = proc(...)
+  .f(...) in ...` works (neither side looks anything up while binding),
+  but `letrec a = b b = 1 in a` fails with `no binding for b`. Faithful
+  to the original V5, not a porting artifact.
+- `LetDecls`' list fields are **`symbolList`** and **`expList`** (the
+  original Java code's `varList`/`expList`). Course material walking
+  through `addBindings` or `addLetrecBindings` should use `symbolList`.
+- The duplicate-identifier message is now
+  `duplicate ID <id> in let/letrec LHS identifiers` — V4 and earlier say
+  `... in let LHS identifiers`. `LetDecls` is shared by both `let` and
+  `letrec`, so the check covers both.
+```
+
+- [ ] **Step 8: Commit**
 
 ```bash
-git add src/V5/python/spec.plcc
+git add src/V5/python/spec.plcc dev-docs/course-material-impact.md
 git commit -m "$(cat <<'EOF'
 feat(V5): add Python semantics
 
@@ -662,66 +694,12 @@ EOF
 
 ---
 
-## Task 6: Log the letrec semantics in the course-material impact log
-
-**Files:**
-- Modify: `dev-docs/course-material-impact.md`
-
-This is its own task rather than folded into Tasks 3–5 because the entry describes one semantics implemented three times; writing it once, after all three targets agree, is what keeps it accurate. It still lands before any test work, so the log never lags the code by more than one task.
-
-- [ ] **Step 1: Append to the `## V5` section**
-
-Add these bullets to the end of the `## V5` section created in Task 2:
-
-```markdown
-- `letrec` is implemented by **mutation, not by a fixpoint**.
-  `LetDecls.addLetrecBindings(env)` extends the environment with an
-  *empty* `Bindings`, then evaluates each right-hand side **in that
-  already-extended environment** and adds the resulting binding to that
-  same node with `env.add(...)`. A `proc` right-hand side captures the
-  env object while it still holds zero bindings; later additions to that
-  same node are what make its siblings (and itself) visible by the time
-  anything is called. This is worth showing explicitly on a slide — it
-  is not the placeholder-and-patch `letrec` most textbooks present.
-- A consequence worth stating in class: the binding pass is **eager and
-  sequential**, so a right-hand side that *looks something up* can only
-  see bindings to its left. `letrec f = proc(...) .g(...) g = proc(...)
-  .f(...) in ...` works (neither side looks anything up while binding),
-  but `letrec a = b b = 1 in a` fails with `no binding for b`. Faithful
-  to the original V5, not a porting artifact.
-- `LetDecls`' list fields are **`symbolList`** and **`expList`** (the
-  original Java code's `varList`/`expList`). Course material walking
-  through `addBindings` or `addLetrecBindings` should use `symbolList`.
-- The duplicate-identifier message is now
-  `duplicate ID <id> in let/letrec LHS identifiers` — V4 and earlier say
-  `... in let LHS identifiers`. `LetDecls` is shared by both `let` and
-  `letrec`, so the check covers both.
-```
-
-- [ ] **Step 2: Commit**
-
-```bash
-git add dev-docs/course-material-impact.md
-git commit -m "$(cat <<'EOF'
-docs(course-material-impact): record V5's letrec semantics
-
-The mutation-based addLetrecBindings, its eager/sequential
-forward-reference limitation, the symbolList field name, and the changed
-duplicate-identifier message.
-
-Refs #17
-EOF
-)"
-```
-
----
-
-## Task 7: Remove the old V5 old-PLCC files
+## Task 6: Remove the old V5 old-PLCC files
 
 **Files:**
 - Delete: `src/V5/grammar`, `src/V5/code`, `src/V5/prim`, `src/V5/envVal`, `src/V5/val`
 
-None of these collides with a path the new layout needs (`src/V5/grammar` vs `src/V5/grammar.plcc`), which is why the deletion comes here rather than up front. `src/V5/tests/` stays — it is handled in Task 8. V5 has no `Prog/` directory.
+None of these collides with a path the new layout needs (`src/V5/grammar` vs `src/V5/grammar.plcc`), which is why the deletion comes here rather than up front. `src/V5/tests/` stays — it is handled in Task 7. V5 has no `Prog/` directory.
 
 - [ ] **Step 1: Confirm nothing still references them**
 
@@ -762,7 +740,7 @@ EOF
 
 ---
 
-## Task 8: Rewrite the V5 bats test and add two cases
+## Task 7: Rewrite the V5 bats test and add two cases
 
 **Files:**
 - Modify: `src/V5/tests/letrec/V5test.bats`
@@ -953,7 +931,7 @@ EOF
 
 ---
 
-## Task 9: Close the V5 issue
+## Task 8: Close the V5 issue
 
 - [ ] **Step 1: Re-verify before closing**
 
@@ -961,7 +939,7 @@ EOF
 bats --recursive src/V5/tests
 ```
 
-Expected: 9/9 passing. Do not close on a stale result from Task 8 — run it again.
+Expected: 9/9 passing. Do not close on a stale result from Task 7 — run it again.
 
 - [ ] **Step 2: Close the issue**
 
