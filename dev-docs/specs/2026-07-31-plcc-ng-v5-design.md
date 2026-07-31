@@ -212,11 +212,24 @@ comfortably inside the safe range for both.
 Recomputed fresh against the installed CLI on this branch, not decremented from
 V4's plan — V2's plan got this wrong precisely by copying and adjusting.
 
-The suite today is **48 tests: 46 passing** (V0–V4 across all three targets)
-and **2 failing** with `plccmk: command not found` (V5's single old test and
-V6's). After this phase: **56 tests** — 48, minus V5's 1 old test, plus 9 new
-(3 cases × 3 targets) — with **1** remaining `plccmk: command not found`
-failure, V6's.
+These figures were themselves corrected mid-execution. The first version of this
+section claimed 46 of 48 passing, derived from a `bin/test.bash` run piped
+through `tail -40`: the seven non-V languages sort alphabetically *before* `V0`,
+so their seven failures fell outside the window and were never seen. Count from
+the whole run, or from `grep -c`, not from a tail.
+
+The suite today is **48 tests: 39 passing and 9 failing**, every failure a
+`plccmk: command not found` from a language still on old PLCC — NAME, NEED,
+OBJ, REF, SET, TYPE0, TYPE1, V5, and V6. (Only the V-series has been migrated
+so far; the seven non-V languages are Phases 3–5 and are untouched here.)
+
+After this phase: **56 tests** — 48, minus V5's 1 old test, plus 9 new (3 cases
+× 3 targets) — **48 passing and 8 failing**, the same `command not found` set
+minus V5.
+
+The load-bearing invariant is the delta, not the totals: the
+`command not found` count must drop by **exactly 1**, and no test that passed
+before may fail after.
 
 ## Out of Scope
 

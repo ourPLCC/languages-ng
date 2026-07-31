@@ -762,7 +762,7 @@ The old `src/V5/tests/letrec/V5test.bats` still calls `plccmk`/`rep`, so it curr
 BASELINE_CNF=$(bin/test.bash 2>&1 | grep -c 'command not found'); echo "baseline=$BASELINE_CNF"
 ```
 
-Expected: `2` (V5's single old test and V6's). After this task it must drop to exactly `1` — V6's alone.
+Expected: `9` — the seven non-V languages (NAME, NEED, OBJ, REF, SET, TYPE0, TYPE1), which are Phases 3–5 and untouched by this branch, plus V5's single old test and V6's. After this task it must drop to exactly `8`. Trust the number you actually observe over the number written here, and report any discrepancy; what must hold is the delta of exactly 1.
 
 - [ ] **Step 2: Rewrite `src/V5/tests/letrec/V5test.bats` for the three targets**
 
@@ -914,7 +914,9 @@ bin/test.bash 2>&1 | tail -20
 NEW_CNF=$(bin/test.bash 2>&1 | grep -c 'command not found'); echo "now=$NEW_CNF baseline=$BASELINE_CNF"
 ```
 
-Expected: **56 tests, 55 passing.** Every V0, V1, V2, V3, V4, and V5 test passes. `NEW_CNF` must be exactly `1` (`BASELINE_CNF - 1`) — V6's test, the only language left in this repo that still calls `plccmk`. No other failure mode is acceptable. If a V0–V4 test that passed before now fails, stop and report: V5 must not have touched anything shared.
+Expected: **56 tests, 48 passing, 8 failing.** Every V0, V1, V2, V3, V4, and V5 test passes. `NEW_CNF` must be exactly `BASELINE_CNF - 1` — that is 8, down from 9.
+
+The 8 remaining failures are all `plccmk: command not found` from languages still on old PLCC: NAME, NEED, OBJ, REF, SET, TYPE0, TYPE1 (Phases 3–5, untouched by this branch) and V6. No other failure mode is acceptable. If a V0–V4 test that passed before now fails, stop and report: V5 must not have touched anything shared.
 
 - [ ] **Step 7: Commit**
 
