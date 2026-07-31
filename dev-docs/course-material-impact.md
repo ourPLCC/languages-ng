@@ -168,3 +168,12 @@ headings are added in the order each language is migrated.
   `duplicate ID <id> in let/letrec LHS identifiers` — V4 and earlier say
   `... in let LHS identifiers`. `LetDecls` is shared by both `let` and
   `letrec`, so the check covers both.
+- `letrec` makes direct self-recursion (`.f(sub1(x))`) the natural thing
+  to write, and Python's practical ceiling for it is far lower than
+  Java's or JavaScript's: measured with `letrec f = proc(x) if zero?(x)
+  then 0 else .f(sub1(x)) in .f(N)`, Python dies around `N=330` while
+  Java and JavaScript both survive past `N=2700`. If a live demo or
+  assignment pushes recursion depth into the hundreds on the Python
+  target, expect a `RecursionError` there well before the other two
+  targets show any trouble — see
+  [issue #19](issues/019-python-recursion-ceiling.md).
