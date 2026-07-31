@@ -35,14 +35,14 @@
 ## Task 1: File the V5 issue
 
 **Files:**
-- Create: `dev-docs/issues/done/017-migrate-v5-to-plcc-ng.md` (id assigned by the script)
+- Create: `dev-docs/issues/017-migrate-v5-to-plcc-ng.md` (id assigned by the script)
 - Modify: `dev-docs/roadmap.md`, `dev-docs/issues/.next-id.txt`
 
 - [ ] **Step 1: Generate the issue file**
 
 Run: `bin/issues/new.bash migrate-v5-to-plcc-ng feat`
 
-This reads `dev-docs/issues/.next-id.txt` (currently `17`), creates the file from the template with today's date, and increments the id. The script prints the path it created — expected `dev-docs/issues/done/017-migrate-v5-to-plcc-ng.md`. Use the printed path in the steps below; never assign an id by hand.
+This reads `dev-docs/issues/.next-id.txt` (currently `17`), creates the file from the template with today's date, and increments the id. The script prints the path it created — expected `dev-docs/issues/017-migrate-v5-to-plcc-ng.md`, in the **open** issues directory. It does not and cannot create the file under `done/`: Task 8's `bin/issues/close.bash 17` is what moves it there, and that script hard-fails if the file is already closed. Use the printed path in the steps below; never assign an id by hand.
 
 - [ ] **Step 2: Fill in the issue's Description and Notes**
 
@@ -64,6 +64,9 @@ out of scope.
 
 See [dev-docs/specs/2026-07-31-plcc-ng-v5-design.md](../specs/2026-07-31-plcc-ng-v5-design.md)
 and [dev-docs/plans/2026-07-31-plcc-ng-phase2-v5.md](../plans/2026-07-31-plcc-ng-phase2-v5.md).
+
+(These `../` paths are correct for the open directory. `close.bash` rewrites
+them to `../../` when it moves the file into `done/`.)
 ```
 
 - [ ] **Step 3: Add the roadmap entry**
@@ -73,7 +76,7 @@ Edit `dev-docs/roadmap.md`. Per [issue-conventions.md](../issue-conventions.md),
 ```markdown
 ### Feat
 
-- **[#17](issues/done/017-migrate-v5-to-plcc-ng.md) — Migrate V5 to plcc-ng**
+- **[#17](issues/017-migrate-v5-to-plcc-ng.md) — Migrate V5 to plcc-ng**
   Ports V5's grammar and Java semantics to plcc-ng and adds Python and JavaScript semantics. V5 is V4 + letrec, reusing envVal and every other V4 class unchanged; the only new semantics are LetrecExp.eval and LetDecls.addLetrecBindings.
 ```
 
@@ -86,7 +89,7 @@ and `bin/issues/check.bash` fails on a clean checkout (`next_id 17 not > max_id
 17`) even though it passes against the dirty working tree.
 
 ```bash
-git add dev-docs/issues/done/017-migrate-v5-to-plcc-ng.md dev-docs/roadmap.md dev-docs/issues/.next-id.txt
+git add dev-docs/issues/017-migrate-v5-to-plcc-ng.md dev-docs/roadmap.md dev-docs/issues/.next-id.txt
 git commit -m "$(cat <<'EOF'
 docs(issues): file 017 - migrate V5 to plcc-ng
 
