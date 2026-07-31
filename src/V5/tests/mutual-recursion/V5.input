@@ -1,0 +1,5 @@
+letrec
+  even? = proc(x) if zero?(x) then 1 else .odd?(sub1(x))
+  odd? = proc(x) if zero?(x) then 0 else .even?(sub1(x))
+in
+  .even?(10)

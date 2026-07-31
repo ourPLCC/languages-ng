@@ -1,0 +1,4 @@
+letrec
+  f = proc(x) if zero?(x) then 100 else .f(sub1(x))
+in
+  +(.f(3), letrec f = proc(x) if zero?(x) then 7 else .f(sub1(x)) in .f(3))

@@ -133,3 +133,47 @@ headings are added in the order each language is migrated.
   `LanguageError`, the same substitution V3 made for old PLCC's
   `PLCCException`. Course material quoting V4's error handling should
   refer to `LanguageError`.
+
+## V5
+
+- New token `LETREC 'letrec'` and one new production,
+  `<Exp:LetrecExp> ::= LETREC <LetDecls> IN <Exp>`. `LetDecls` is shared
+  with `LetExp` — `letrec` introduces no new nonterminal.
+- Same `SYMBOL`/`symbol` convention as V0-V4. V5's old grammar carried a
+  header comment claiming variable names "now can have a `?` in them" at
+  V5; that comment was **stale** and is not carried forward — the
+  widening to `[A-Za-z][\w?]*` already happened at V4. Course material
+  that attributes the `?` to V5 should attribute it to V4.
+- `LetrecExp` has **no** `toString()`. The original has none, and the
+  port does not invent one (same treatment as V4's `ProcExp`).
+- `letrec` is implemented by **mutation, not by a fixpoint**.
+  `LetDecls.addLetrecBindings(env)` extends the environment with an
+  *empty* `Bindings`, then evaluates each right-hand side **in that
+  already-extended environment** and adds the resulting binding to that
+  same node with `env.add(...)`. A `proc` right-hand side captures the
+  env object while it still holds zero bindings; later additions to that
+  same node are what make its siblings (and itself) visible by the time
+  anything is called. This is worth showing explicitly on a slide — it
+  is not the placeholder-and-patch `letrec` most textbooks present.
+- A consequence worth stating in class: the binding pass is **eager and
+  sequential**, so a right-hand side that *looks something up* can only
+  see bindings to its left. `letrec f = proc(...) .g(...) g = proc(...)
+  .f(...) in ...` works (neither side looks anything up while binding),
+  but `letrec a = b b = 1 in a` fails with `no binding for b`. Faithful
+  to the original V5, not a porting artifact.
+- `LetDecls`' list fields are **`symbolList`** and **`expList`** (the
+  original Java code's `varList`/`expList`). Course material walking
+  through `addBindings` or `addLetrecBindings` should use `symbolList`.
+- The duplicate-identifier message is now
+  `duplicate ID <id> in let/letrec LHS identifiers` — V4 and earlier say
+  `... in let LHS identifiers`. `LetDecls` is shared by both `let` and
+  `letrec`, so the check covers both.
+- `letrec` makes direct self-recursion (`.f(sub1(x))`) the natural thing
+  to write, and Python's practical ceiling for it is far lower than
+  Java's or JavaScript's: measured with `letrec f = proc(x) if zero?(x)
+  then 0 else .f(sub1(x)) in .f(N)`, Python dies around `N=330` while
+  Java and JavaScript both survive past `N=2700`. If a live demo or
+  assignment pushes recursion depth into the hundreds on the Python
+  target, expect a `RecursionError` there well before the other two
+  targets show any trouble — see
+  [issue #19](issues/019-python-recursion-ceiling.md).
