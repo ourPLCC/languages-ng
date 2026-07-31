@@ -2,11 +2,6 @@
 
 ## Open Issues
 
-### Feat
-
-- **[#17](issues/017-migrate-v5-to-plcc-ng.md) — Migrate V5 to plcc-ng**
-  Ports V5's grammar and Java semantics to plcc-ng and adds Python and JavaScript semantics. V5 is V4 + letrec, reusing envVal and every other V4 class unchanged; the only new semantics are LetrecExp.eval and LetDecls.addLetrecBindings.
-
 ### Chore
 
 - **[#12](issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — CI cannot run plcc-ng-migrated languages**
