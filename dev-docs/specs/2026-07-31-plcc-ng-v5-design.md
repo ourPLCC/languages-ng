@@ -161,7 +161,7 @@ structural-fidelity rule — the same reasoning that keeps V4's placeholder
 targets must produce identical output) plus one `V5test.bats` with three `@test`
 blocks, one per target directory, driven by `plcc-rep` — the same shape V3 and
 V4 use. V5 ships one test today and has no `Prog/` directory to mine further
-cases from, so the other two are written by hand. Three cases:
+cases from, so the rest are written by hand. Four cases:
 
 - **`letrec/`** — the existing case, ported off the old `plccmk`/`rep`
   invocation: `letrec fact = proc(x) if zero?(x) then 1 else *(x,.fact(sub1(x)))
@@ -175,17 +175,33 @@ cases from, so the other two are written by hand. Three cases:
 - **`nested-letrec/`** — an inner `letrec` shadowing an outer binding of the
   same name, confirming that scope layering still works when both layers are
   recursive.
+- **`sequential-binding/`** — `letrec a = 1 b = +(a,1) in b` → `2`. Added after
+  the whole-branch review observed that the other three cases bind only `proc`
+  right-hand sides, so nothing asserted the left-to-right ordering that
+  `addLetrecBindings` depends on. This is the positive half of the
+  eager/sequential behavior described above; the negative half
+  (`letrec a = b b = 1 in a`, which fails) stays out under the value-cases-only
+  rule.
 
 Value cases only — no error-path test for the duplicate-identifier check or the
 forward-reference failure — keeping the one-shared-expected model clean, the
 same call V3 and V4 made.
 
-Recursion depths and magnitudes stay small in all three cases. Two live
-constraints make this a rule rather than a preference: Python's default
-1,000-frame recursion limit (which forced V4 to shrink `Prog/oe`), and the
-32-bit Java `IntVal` overflow of open issue
-[#16](../issues/016-cross-target-integer-divergence.md). `.fact(5)` → `120` is
-comfortably inside the safe range for both.
+Recursion depths and magnitudes stay small in every case. Two live constraints
+make this a rule rather than a preference: Python's recursion ceiling (which
+forced V4 to shrink `Prog/oe`), and the 32-bit Java `IntVal` overflow of open
+issue [#16](../issues/016-cross-target-integer-divergence.md). `.fact(5)` →
+`120` is comfortably inside the safe range for both.
+
+On the first of those: this design originally cited "Python's default
+1,000-frame recursion limit", which is the right mechanism but the wrong
+number. Measured during the whole-branch review, a V5 `letrec` self-recursion
+dies in Python at roughly **N=330**, not 1,000 — each language-level call costs
+several Python interpreter frames — while Java and JavaScript survive past
+N=2,700. That threefold divergence is now tracked as open issue
+[#19](../issues/019-python-recursion-ceiling.md), a sibling of #16: inherited
+from V0/V4 rather than introduced here, but `letrec` is what makes deep
+recursion the natural thing for a student to write.
 
 ## Bookkeeping (in the same commits as the work)
 
@@ -223,9 +239,10 @@ The suite today is **48 tests: 39 passing and 9 failing**, every failure a
 OBJ, REF, SET, TYPE0, TYPE1, V5, and V6. (Only the V-series has been migrated
 so far; the seven non-V languages are Phases 3–5 and are untouched here.)
 
-After this phase: **56 tests** — 48, minus V5's 1 old test, plus 9 new (3 cases
-× 3 targets) — **48 passing and 8 failing**, the same `command not found` set
-minus V5.
+After this phase: **59 tests** — 48, minus V5's 1 old test, plus 12 new (4 cases
+× 3 targets) — **51 passing and 8 failing**, the same `command not found` set
+minus V5. (The fourth case, `sequential-binding/`, was added after the
+whole-branch review; the suite stood at 56 tests / 48 passing before it.)
 
 The load-bearing invariant is the delta, not the totals: the
 `command not found` count must drop by **exactly 1**, and no test that passed
