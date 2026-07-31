@@ -146,3 +146,25 @@ headings are added in the order each language is migrated.
   that attributes the `?` to V5 should attribute it to V4.
 - `LetrecExp` has **no** `toString()`. The original has none, and the
   port does not invent one (same treatment as V4's `ProcExp`).
+- `letrec` is implemented by **mutation, not by a fixpoint**.
+  `LetDecls.addLetrecBindings(env)` extends the environment with an
+  *empty* `Bindings`, then evaluates each right-hand side **in that
+  already-extended environment** and adds the resulting binding to that
+  same node with `env.add(...)`. A `proc` right-hand side captures the
+  env object while it still holds zero bindings; later additions to that
+  same node are what make its siblings (and itself) visible by the time
+  anything is called. This is worth showing explicitly on a slide — it
+  is not the placeholder-and-patch `letrec` most textbooks present.
+- A consequence worth stating in class: the binding pass is **eager and
+  sequential**, so a right-hand side that *looks something up* can only
+  see bindings to its left. `letrec f = proc(...) .g(...) g = proc(...)
+  .f(...) in ...` works (neither side looks anything up while binding),
+  but `letrec a = b b = 1 in a` fails with `no binding for b`. Faithful
+  to the original V5, not a porting artifact.
+- `LetDecls`' list fields are **`symbolList`** and **`expList`** (the
+  original Java code's `varList`/`expList`). Course material walking
+  through `addBindings` or `addLetrecBindings` should use `symbolList`.
+- The duplicate-identifier message is now
+  `duplicate ID <id> in let/letrec LHS identifiers` — V4 and earlier say
+  `... in let LHS identifiers`. `LetDecls` is shared by both `let` and
+  `letrec`, so the check covers both.
