@@ -1,0 +1,51 @@
+# Language V5
+#   Language V4 + letrec
+skip WHITESPACE '\s+'
+skip COMMENT '%.*'
+token LIT '\d+'
+token LPAREN '\('
+token RPAREN '\)'
+token COMMA ','
+token ADDOP '\+'
+token SUBOP '\-'
+token MULOP '\*'
+token DIVOP '/'
+token ADD1OP 'add1'
+token SUB1OP 'sub1'
+token ZEROP 'zero\?'
+token IF 'if'
+token THEN 'then'
+token ELSE 'else'
+token LET 'let'
+token LETREC 'letrec'
+token IN 'in'
+token EQUALS '='
+token PROC 'proc'
+token DOT '\.'
+token LBRACE '\{'
+token RBRACE '\}'
+token SEMI ';'
+token SYMBOL '[A-Za-z][\w?]*'
+%
+<Program>        ::= <Exp>
+<Exp:LitExp>     ::= <LIT>
+<Exp:VarExp>     ::= <SYMBOL>
+<Exp:IfExp>      ::= IF <Exp:testExp> THEN <Exp:trueExp> ELSE <Exp:falseExp>
+<Exp:PrimappExp> ::= <Prim> LPAREN <Rands> RPAREN
+<Exp:LetExp>     ::= LET <LetDecls> IN <Exp>
+<Exp:LetrecExp>  ::= LETREC <LetDecls> IN <Exp>
+<Exp:ProcExp>    ::= <Proc>
+<Exp:AppExp>     ::= DOT <Exp> LPAREN <Rands> RPAREN
+<Exp:SeqExp>     ::= LBRACE <Exp> <SeqExps> RBRACE
+<SeqExps>        **= SEMI <Exp>
+<Proc>           ::= PROC LPAREN <Formals> RPAREN <Exp>
+<Formals>        **= <SYMBOL> +COMMA
+<LetDecls>       **= <SYMBOL> EQUALS <Exp>
+<Rands>          **= <Exp> +COMMA
+<Prim:AddPrim>   ::= ADDOP
+<Prim:SubPrim>   ::= SUBOP
+<Prim:MulPrim>   ::= MULOP
+<Prim:DivPrim>   ::= DIVOP
+<Prim:Add1Prim>  ::= ADD1OP
+<Prim:Sub1Prim>  ::= SUB1OP
+<Prim:ZeropPrim> ::= ZEROP

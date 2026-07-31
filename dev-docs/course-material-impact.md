@@ -133,3 +133,16 @@ headings are added in the order each language is migrated.
   `LanguageError`, the same substitution V3 made for old PLCC's
   `PLCCException`. Course material quoting V4's error handling should
   refer to `LanguageError`.
+
+## V5
+
+- New token `LETREC 'letrec'` and one new production,
+  `<Exp:LetrecExp> ::= LETREC <LetDecls> IN <Exp>`. `LetDecls` is shared
+  with `LetExp` — `letrec` introduces no new nonterminal.
+- Same `SYMBOL`/`symbol` convention as V0-V4. V5's old grammar carried a
+  header comment claiming variable names "now can have a `?` in them" at
+  V5; that comment was **stale** and is not carried forward — the
+  widening to `[A-Za-z][\w?]*` already happened at V4. Course material
+  that attributes the `?` to V5 should attribute it to V4.
+- `LetrecExp` has **no** `toString()`. The original has none, and the
+  port does not invent one (same treatment as V4's `ProcExp`).
