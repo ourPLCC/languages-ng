@@ -6,6 +6,8 @@
 
 - **[#12](issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — CI cannot run plcc-ng-migrated languages**
   CI's test image only installs old-PLCC with no Node.js, so plcc-ng-migrated languages (V0-V3) fail in CI with `command not found` while passing locally — the opposite of local dev. Deferred until every language has migrated: the job is `on: pull_request` and no PRs are opened yet, and the fix collapses to basing CI on the devcontainer image once old-PLCC is needed nowhere.
+- **[#20](issues/020-close-bash-roadmap-awk-edge-cases.md) — close.bash's roadmap awk has two dormant edge cases**
+  The `END` block collapses blank-line runs across the whole roadmap rather than just the removed entry's span, and the bullet-removal skip state ends on a blank line, so a multi-paragraph Open Issues entry would leave an orphaned fragment. Both predate #18 and were inherited verbatim by its rewrite; neither fires against the roadmap's current shape, where every entry is a bullet plus one indented continuation line.
 
 ### Docs
 
