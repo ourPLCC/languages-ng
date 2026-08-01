@@ -94,6 +94,6 @@ branch merges, so arguably `close.bash` should not rewrite
 `dev-docs/plans/` at all, only `dev-docs/issues/` and `dev-docs/roadmap.md`.
 
 Found during the V5 migration branch (issue
-[#17](done/017-migrate-v5-to-plcc-ng.md)), which caused none of the breaks
+[#17](017-migrate-v5-to-plcc-ng.md)), which caused none of the breaks
 but tripped over V4's inherited one and then watched the mechanism produce
 a fresh instance.

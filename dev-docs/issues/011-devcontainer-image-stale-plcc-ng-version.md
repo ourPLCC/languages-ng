@@ -109,7 +109,7 @@ inert and harmful: `pipx upgrade` installs whatever is newest on PyPI, so
 once plcc-ng 2.1.0 ships it would pull every container create off the
 pinned digest, defeating the reproducibility the pin exists to provide.
 That merit is the whole justification. The workaround-removal rule in
-[dev-docs/issue-conventions.md](../../issue-conventions.md) is not on
+[dev-docs/issue-conventions.md](../issue-conventions.md) is not on
 point — it is scoped to an *upstream defect* forcing a workaround in
 shipped `src/`, and neither condition holds here: there is no upstream
 defect, and the workaround lived in `.devcontainer/`. Removing it in that
@@ -126,4 +126,4 @@ as-is; git history is immutable, and the revert's message carries the
 correction.
 
 Design spec:
-[dev-docs/specs/2026-07-30-devcontainer-cache-diagnosis-design.md](../../specs/2026-07-30-devcontainer-cache-diagnosis-design.md).
+[dev-docs/specs/2026-07-30-devcontainer-cache-diagnosis-design.md](../specs/2026-07-30-devcontainer-cache-diagnosis-design.md).

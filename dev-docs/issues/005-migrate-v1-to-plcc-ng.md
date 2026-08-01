@@ -25,5 +25,5 @@ this issue.
 
 ## Notes
 
-See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../../specs/2026-07-22-plcc-ng-migration-design.md)
-and [dev-docs/plans/2026-07-22-plcc-ng-phase2-v1.md](../../plans/2026-07-22-plcc-ng-phase2-v1.md).
+See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../specs/2026-07-22-plcc-ng-migration-design.md)
+and [dev-docs/plans/2026-07-22-plcc-ng-phase2-v1.md](../plans/2026-07-22-plcc-ng-phase2-v1.md).

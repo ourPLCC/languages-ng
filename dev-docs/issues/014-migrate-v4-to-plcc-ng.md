@@ -27,5 +27,5 @@ against all three targets. V5-V6 are explicitly out of scope.
 
 ## Notes
 
-See [dev-docs/specs/2026-07-30-plcc-ng-v4-design.md](../../specs/2026-07-30-plcc-ng-v4-design.md)
-and [dev-docs/plans/2026-07-30-plcc-ng-phase2-v4.md](../../plans/2026-07-30-plcc-ng-phase2-v4.md).
+See [dev-docs/specs/2026-07-30-plcc-ng-v4-design.md](../specs/2026-07-30-plcc-ng-v4-design.md)
+and [dev-docs/plans/2026-07-30-plcc-ng-phase2-v4.md](../plans/2026-07-30-plcc-ng-phase2-v4.md).

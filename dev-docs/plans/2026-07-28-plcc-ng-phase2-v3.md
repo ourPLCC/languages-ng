@@ -1,6 +1,6 @@
 # plcc-ng Migration — Phase 2 (V3) Implementation Plan
 
-> **▶ RESUMED (2026-07-29) — [issue #10](../issues/done/010-plcc-ng-arbno-drops-mid-body-terminal.md) is fixed upstream in plcc-ng 2.0.1.**
+> **▶ RESUMED (2026-07-29) — [issue #10](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md) is fixed upstream in plcc-ng 2.0.1.**
 > The pause (2026-07-28) was because V3's `let` grammar
 > `<LetDecls> **= <SYMBOL> EQUALS <Exp>` did not parse under plcc-ng 2.0.0 —
 > a `**=` rule dropped the non-capturing `EQUALS` between two captures. The

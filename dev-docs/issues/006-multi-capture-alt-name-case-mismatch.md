@@ -83,7 +83,7 @@ reserved-word collision (see issue #4) — one fix in the grammar,
 inherited by every later phase automatically.
 
 Found while spiking V2's `IfExp` mechanics for
-[dev-docs/plans/2026-07-22-plcc-ng-phase2-v1.md](../../plans/2026-07-22-plcc-ng-phase2-v1.md)'s
+[dev-docs/plans/2026-07-22-plcc-ng-phase2-v1.md](../plans/2026-07-22-plcc-ng-phase2-v1.md)'s
 successor plan. Not filed upstream yet — needs the repo owner's
 go-ahead first.
 

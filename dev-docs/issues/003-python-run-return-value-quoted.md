@@ -39,7 +39,7 @@ Python target.
 
 ## Notes
 
-Found while validating [dev-docs/plans/2026-07-22-plcc-ng-phase0-phase1.md](../../plans/2026-07-22-plcc-ng-phase0-phase1.md).
+Found while validating [dev-docs/plans/2026-07-22-plcc-ng-phase0-phase1.md](../plans/2026-07-22-plcc-ng-phase0-phase1.md).
 Not filed upstream yet — needs the repo owner's go-ahead first.
 
 **Resolved in plcc-ng 2.0.0:** `_run()` now returns its output and the

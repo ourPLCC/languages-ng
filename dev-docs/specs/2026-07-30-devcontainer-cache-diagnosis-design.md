@@ -1,7 +1,7 @@
 # Devcontainer stale-toolchain diagnosis (issue #11)
 
 **Date:** 2026-07-30
-**Issue:** [#11](../issues/done/011-devcontainer-image-stale-plcc-ng-version.md)
+**Issue:** [#11](../issues/011-devcontainer-image-stale-plcc-ng-version.md)
 **Type:** chore
 
 ## Problem
@@ -133,7 +133,7 @@ to `issues/done/`, removes the Open Issues entry, and rewrites links.
 
 ### Not changed
 
-[dev-docs/issues/done/010-*.md](../issues/done/010-plcc-ng-arbno-drops-mid-body-terminal.md)
+[dev-docs/issues/done/010-*.md](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md)
 is accurate as written: the fix did land in plcc-ng 2.0.1, no local
 workaround was committed for it, and it closed once the devcontainer ran
 2.0.1. No `src/` change, so no

@@ -187,7 +187,7 @@ Program
         LIT '3' [-:1:8]
 ```
 
-It MUST NOT print `unexpected 'SEMI'` or `no production for 'Exp'` — that is the [issue #10](../issues/done/010-plcc-ng-arbno-drops-mid-body-terminal.md) symptom in leading position, which would mean 2.0.1's fix did not cover it. If it does, **stop**: file an issue with `bin/issues/new.bash arbno-drops-leading-body-terminal chore` (set `**Target:** ourPLCC/plcc-ng`), record the exact output, and report back. Do not restructure the grammar around it — V3 set the precedent of keeping the faithful shape and waiting for the upstream fix.
+It MUST NOT print `unexpected 'SEMI'` or `no production for 'Exp'` — that is the [issue #10](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md) symptom in leading position, which would mean 2.0.1's fix did not cover it. If it does, **stop**: file an issue with `bin/issues/new.bash arbno-drops-leading-body-terminal chore` (set `**Target:** ourPLCC/plcc-ng`), record the exact output, and report back. Do not restructure the grammar around it — V3 set the precedent of keeping the faithful shape and waiting for the upstream fix.
 
 If `plcc-parse` reports a genuine LL(1) conflict on any rule, stop and file an issue the same way.
 

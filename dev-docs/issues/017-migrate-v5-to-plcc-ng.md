@@ -27,5 +27,5 @@ out of scope.
 
 ## Notes
 
-See [dev-docs/specs/2026-07-31-plcc-ng-v5-design.md](../../specs/2026-07-31-plcc-ng-v5-design.md)
-and [dev-docs/plans/2026-07-31-plcc-ng-phase2-v5.md](../../plans/2026-07-31-plcc-ng-phase2-v5.md).
+See [dev-docs/specs/2026-07-31-plcc-ng-v5-design.md](../specs/2026-07-31-plcc-ng-v5-design.md)
+and [dev-docs/plans/2026-07-31-plcc-ng-phase2-v5.md](../plans/2026-07-31-plcc-ng-phase2-v5.md).

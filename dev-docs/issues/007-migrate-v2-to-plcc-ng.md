@@ -24,7 +24,7 @@ explicitly out of scope for this issue.
 
 ## Notes
 
-See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../../specs/2026-07-22-plcc-ng-migration-design.md),
-[dev-docs/plans/2026-07-23-plcc-ng-phase2-v2.md](../../plans/2026-07-23-plcc-ng-phase2-v2.md),
-and [issue #6](../006-multi-capture-alt-name-case-mismatch.md) (IfExp's
+See [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../specs/2026-07-22-plcc-ng-migration-design.md),
+[dev-docs/plans/2026-07-23-plcc-ng-phase2-v2.md](../plans/2026-07-23-plcc-ng-phase2-v2.md),
+and [issue #6](006-multi-capture-alt-name-case-mismatch.md) (IfExp's
 repeated-capture alt-names must be all-lowercase).

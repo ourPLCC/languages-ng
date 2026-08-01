@@ -28,16 +28,16 @@ Per the 2.0.0 [What's new](https://ourplcc.github.io/plcc-ng/latest/whats-new/):
   its output as a string and the runtime prints it; direct stdout
   printing is no longer permitted. Java's `_run()` goes `void` → `String`;
   Python/JS must `return` a string, not `print`. This **inverts** our
-  issue [#3](../003-python-run-return-value-quoted.md) workaround — the repo
+  issue [#3](003-python-run-return-value-quoted.md) workaround — the repo
   currently `print()`s everywhere and must switch back to returning.
 - **Alt-name casing fixed.** camelCase alt-names are no longer flattened,
   and multi-word nonterminal captures decapitalize only the first letter.
-  This fixes issue [#6](../006-multi-capture-alt-name-case-mismatch.md), so
+  This fixes issue [#6](006-multi-capture-alt-name-case-mismatch.md), so
   `IfExp`'s `testExp`/`trueExp`/`falseExp` can go back to camelCase.
 - **Reserved-word detection added.** The tool now reports a field name
   colliding with a target-language reserved word as a *specification
   error* at emit/run time (rather than silently generating broken code).
-  This means issue [#4](../004-js-var-field-reserved-word.md)'s `<VAR>` →
+  This means issue [#4](004-js-var-field-reserved-word.md)'s `<VAR>` →
   `var` collision is now a hard error, so an explicit field name is still
   required — TBD in brainstorming what the original course materials call
   it.

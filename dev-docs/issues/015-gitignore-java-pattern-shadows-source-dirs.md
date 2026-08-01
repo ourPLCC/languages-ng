@@ -39,7 +39,7 @@ under `src/V4/java/` and one under `src/V4/Java/` in the same repo.
 **What `Java/` actually protects is now close to nothing.** `plcc-rep`
 writes only `plcc-ng/` (already ignored on line 3) as its build output in
 every target, including Java (see
-[dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../../specs/2026-07-22-plcc-ng-migration-design.md),
+[dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../specs/2026-07-22-plcc-ng-migration-design.md),
 "`plcc-rep` writes build artifacts to a `plcc-ng/` subdirectory"). `Java/`
 exists solely for old PLCC's `plccmk`, which is not installed in this
 devcontainer.

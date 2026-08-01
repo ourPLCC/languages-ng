@@ -29,7 +29,7 @@ targets, rather than special-casing JavaScript.
 
 ## Notes
 
-Found while validating [dev-docs/plans/2026-07-22-plcc-ng-phase0-phase1.md](../../plans/2026-07-22-plcc-ng-phase0-phase1.md).
+Found while validating [dev-docs/plans/2026-07-22-plcc-ng-phase0-phase1.md](../plans/2026-07-22-plcc-ng-phase0-phase1.md).
 `plcc-ng` might reasonably want to either reject/rename reserved-word
 field names at generation time, or document the restriction. Not filed
 upstream yet — needs the repo owner's go-ahead first.
