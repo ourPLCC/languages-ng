@@ -6,16 +6,18 @@ PROJECT_ROOT="$( cd "${SCRIPT_DIR}/../.." &> /dev/null && pwd )"
 cd "${PROJECT_ROOT}"
 
 ISSUES_DIR="dev-docs/issues"
-DONE_DIR="${ISSUES_DIR}/done"
 ROADMAP="dev-docs/roadmap.md"
 
 usage() {
     echo "Usage: $(basename "$0") <id>"
     echo "  id  issue number, e.g. 135"
     echo
-    echo "Moves the issue file to ${DONE_DIR}/, removes its entry from the"
+    echo "Fills in the issue's 'closed' date, removes its entry from the"
     echo "Open Issues section of ${ROADMAP}, and checks its box in any"
     echo "milestone task list. Stages the changes; you review and commit."
+    echo
+    echo "Issue files never move: status is the 'closed' frontmatter field,"
+    echo "so no link to an issue ever needs rewriting."
     exit 1
 }
 
@@ -29,11 +31,7 @@ if [[ ! -e "${matches[0]}" ]]; then
     matches=( "${ISSUES_DIR}/$(( 10#$1 ))"-*.md )
 fi
 if [[ ! -e "${matches[0]}" ]]; then
-    done_matches=( "${DONE_DIR}/${padded}"-*.md "${DONE_DIR}/$(( 10#$1 ))"-*.md )
-    for m in "${done_matches[@]}"; do
-        [[ -e "${m}" ]] && { echo "error: issue $1 is already closed: ${m}" >&2; exit 1; }
-    done
-    echo "error: no open issue matching '${ISSUES_DIR}/${padded}-*.md'" >&2
+    echo "error: no issue matching '${ISSUES_DIR}/${padded}-*.md'" >&2
     exit 1
 fi
 if [[ ${#matches[@]} -gt 1 ]]; then
@@ -44,14 +42,36 @@ fi
 issue_file="${matches[0]}"
 basename="${issue_file##*/}"
 
-git mv "${issue_file}" "${DONE_DIR}/${basename}"
+# Already closed? The frontmatter says so.
+existing=$(awk '
+    NR == 1 { next }
+    /^---$/ { exit }
+    index($0, "closed:") == 1 { line = $0; sub(/^[^:]*:[[:space:]]*/, "", line); print line; exit }
+' "${issue_file}")
+if [[ -n "${existing}" ]]; then
+    echo "error: issue $1 is already closed (${existing}): ${issue_file}" >&2
+    exit 1
+fi
 
-# Roadmap, pass 1: in milestone task lists, check the box and repoint the
-# link at done/. Runs before pass 2 so the entry-removal match below only
-# sees the Open Issues bullet.
-sed -i \
-    -e "s|\[ \] \(\[#[0-9]*\](issues/\)${basename})|[x] \1done/${basename})|" \
-    "${ROADMAP}"
+today="$(date +%Y-%m-%d)"
+
+# Fill in the closed date, inside the frontmatter block only: a "closed:"
+# line in the body must never be touched.
+awk -v today="${today}" '
+    /^---$/ { n++ }
+    n == 1 && !filled && index($0, "closed:") == 1 { print "closed: " today; filled = 1; next }
+    { print }
+' "${issue_file}" > "${issue_file}.tmp"
+mv "${issue_file}.tmp" "${issue_file}"
+
+if ! grep -qx "closed: ${today}" "${issue_file}"; then
+    echo "error: ${issue_file} has no 'closed:' key in its frontmatter" >&2
+    exit 1
+fi
+
+# Roadmap, pass 1: in milestone task lists, check the box. The link is not
+# touched — it has always been issues/${basename} and stays that way.
+sed -i -e "s|\[ \] \(\[#[0-9]*\](issues/${basename})\)|[x] \1|" "${ROADMAP}"
 
 # Roadmap, pass 2: drop the issue's Open Issues entry — the bullet line plus
 # its indented continuation lines, so back-to-back neighbors are untouched —
@@ -78,34 +98,11 @@ awk -v link="(issues/${basename})" '
     }
 ' "${ROADMAP}" > "${ROADMAP}.tmp"
 mv "${ROADMAP}.tmp" "${ROADMAP}"
-git add "${ROADMAP}"
 
-# Pass 3: external inbound links. Other dev-docs/ files may still link to
-# this issue's old open path; repoint them at issues/done/. Depth-agnostic:
-# done/ is a subdirectory of issues/, so no existing "../" needs adjusting.
-while IFS= read -r f; do
-    sed -i "s|issues/${basename}|issues/done/${basename}|g" "${f}"
-    git add "${f}"
-done < <(grep -rl --include='*.md' "issues/${basename}" dev-docs | grep -vF "${DONE_DIR}/${basename}" || true)
-
-# Pass 4: internal outbound links, now that this file itself sits one level
-# deeper (issues/done/ instead of issues/). Three link shapes, keyed off
-# what immediately follows "](". Each pass's output can look like another
-# pass's input, so order matters: climb-adjust first (its "../../" output
-# doesn't look like a bare NNN-*.md link), then the bare-NNN prepend (its
-# "../NNN-*.md" output doesn't look like a done/-prefixed link), then the
-# done/ strip last (its bare NNN-*.md output is never revisited).
-#   ../...     -> one more ../ (anything climbing out of issues/ needs an extra level)
-#   NNN-*.md   -> prepend ../ (bare links to still-open siblings now live one level up)
-#   done/...   -> strip the done/ prefix (already-closed issues are now true siblings)
-moved_file="${DONE_DIR}/${basename}"
-sed -i -e 's|](\.\./|](../../|g' "${moved_file}"
-sed -i -E 's|\]\(([0-9]{3}-[^)]+\.md)\)|](../\1)|g' "${moved_file}"
-sed -i -e 's|](done/|](|g' "${moved_file}"
-git add "${moved_file}"
+git add "${issue_file}" "${ROADMAP}"
 
 bin/issues/check.bash
 
-echo "closed: ${DONE_DIR}/${basename}"
+echo "closed ${issue_file} (closed: ${today})"
 echo "Review ${ROADMAP} (milestone rationale text is not auto-edited), then commit:"
 echo "  docs(issues): close issue $(( 10#$1 )) (<short title>), update roadmap"
