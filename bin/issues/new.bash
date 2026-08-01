@@ -26,12 +26,17 @@ id=$(cat "${NEXT_ID_FILE}")
 padded=$(printf '%03d' "${id}")
 filename="${ISSUES_DIR}/${padded}-${SLUG}.md"
 
+if [[ -n "${TYPE}" ]]; then
+    type_line="type: ${TYPE}"
+else
+    type_line="type:"
+fi
+
 sed \
+    -e "s/^type: TYPE$/${type_line}/" \
+    -e "s/^opened: YYYY-MM-DD$/opened: ${DATE}/" \
     -e "s/NNN/${padded}/" \
     -e "s/Short descriptive title/${SLUG}/" \
-    -e "s/(conventional commit type: fix, feat, refactor, perf, docs, test, …)/${TYPE}/" \
-    -e "s|(this repo by default; set to the upstream repo, e.g. ourPLCC/plcc-ng, if this issue is actually about a defect found there)|this repo|" \
-    -e "s/YYYY-MM-DD/${DATE}/" \
     "${TEMPLATE}" > "${filename}"
 
 echo $(( id + 1 )) > "${NEXT_ID_FILE}"
