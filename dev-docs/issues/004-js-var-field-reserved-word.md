@@ -1,8 +1,11 @@
-# 004 - js-var-field-reserved-word
+---
+type: docs
+target: ourPLCC/plcc-ng
+opened: 2026-07-22
+closed: 2026-07-28
+---
 
-**Type:** docs
-**Target:** ourPLCC/plcc-ng
-**Date:** 2026-07-22
+# 004 - js-var-field-reserved-word
 
 ## Description
 

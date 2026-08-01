@@ -1,8 +1,11 @@
-# 001 - remove-unused-languages
+---
+type: chore
+target: this repo
+opened: 2026-07-22
+closed: 2026-07-22
+---
 
-**Type:** chore
-**Target:** this repo
-**Date:** 2026-07-22
+# 001 - remove-unused-languages
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

@@ -1,8 +1,11 @@
-# 009 - migrate-v3-to-plcc-ng
+---
+type: feat
+target: this repo
+opened: 2026-07-28
+closed: 2026-07-29
+---
 
-**Type:** feat
-**Target:** this repo
-**Date:** 2026-07-28
+# 009 - migrate-v3-to-plcc-ng
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

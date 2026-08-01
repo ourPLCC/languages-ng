@@ -1,8 +1,11 @@
-# 008 - update-plcc-ng-2.0.0
+---
+type: chore
+target: this repo
+opened: 2026-07-27
+closed: 2026-07-29
+---
 
-**Type:** chore
-**Target:** this repo
-**Date:** 2026-07-27
+# 008 - update-plcc-ng-2.0.0
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

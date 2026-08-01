@@ -1,8 +1,11 @@
-# 019 - python-recursion-ceiling
+---
+type: docs
+target: this repo
+opened: 2026-07-31
+closed:
+---
 
-**Type:** docs
-**Target:** this repo
-**Date:** 2026-07-31
+# 019 - python-recursion-ceiling
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

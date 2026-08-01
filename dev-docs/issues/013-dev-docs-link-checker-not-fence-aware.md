@@ -1,8 +1,11 @@
-# 013 - dev-docs-link-checker-not-fence-aware
+---
+type: docs
+target: this repo
+opened: 2026-07-30
+closed:
+---
 
-**Type:** docs
-**Target:** this repo
-**Date:** 2026-07-30
+# 013 - dev-docs-link-checker-not-fence-aware
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

@@ -1,8 +1,11 @@
-# 006 - multi-capture-alt-name-case-mismatch
+---
+type: docs
+target: ourPLCC/plcc-ng
+opened: 2026-07-23
+closed: 2026-07-28
+---
 
-**Type:** docs
-**Target:** ourPLCC/plcc-ng
-**Date:** 2026-07-23
+# 006 - multi-capture-alt-name-case-mismatch
 
 ## Description
 

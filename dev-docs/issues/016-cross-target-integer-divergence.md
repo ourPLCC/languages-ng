@@ -1,8 +1,11 @@
-# 016 - cross-target-integer-divergence
+---
+type: docs
+target: this repo
+opened: 2026-07-30
+closed:
+---
 
-**Type:** docs
-**Target:** this repo
-**Date:** 2026-07-30
+# 016 - cross-target-integer-divergence
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

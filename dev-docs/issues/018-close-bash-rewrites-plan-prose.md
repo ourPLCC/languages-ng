@@ -1,8 +1,11 @@
-# 018 - close-bash-rewrites-plan-prose
+---
+type: chore
+target: this repo
+opened: 2026-07-31
+closed:
+---
 
-**Type:** chore
-**Target:** this repo
-**Date:** 2026-07-31
+# 018 - close-bash-rewrites-plan-prose
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

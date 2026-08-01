@@ -1,8 +1,11 @@
-# 015 - gitignore-java-pattern-shadows-source-dirs
+---
+type: chore
+target: this repo
+opened: 2026-07-30
+closed: 2026-07-31
+---
 
-**Type:** chore
-**Target:** this repo
-**Date:** 2026-07-30
+# 015 - gitignore-java-pattern-shadows-source-dirs
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

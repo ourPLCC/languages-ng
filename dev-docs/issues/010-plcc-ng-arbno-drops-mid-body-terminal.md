@@ -1,8 +1,11 @@
-# 010 - plcc-ng-arbno-drops-mid-body-terminal
+---
+type: chore
+target: ourPLCC/plcc-ng
+opened: 2026-07-28
+closed: 2026-07-29
+---
 
-**Type:** chore
-**Target:** ourPLCC/plcc-ng
-**Date:** 2026-07-28
+# 010 - plcc-ng-arbno-drops-mid-body-terminal
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

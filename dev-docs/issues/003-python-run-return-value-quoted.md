@@ -1,8 +1,11 @@
-# 003 - python-run-return-value-quoted
+---
+type: docs
+target: ourPLCC/plcc-ng
+opened: 2026-07-22
+closed: 2026-07-28
+---
 
-**Type:** docs
-**Target:** ourPLCC/plcc-ng
-**Date:** 2026-07-22
+# 003 - python-run-return-value-quoted
 
 ## Description
 

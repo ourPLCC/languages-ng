@@ -1,8 +1,11 @@
-# 011 - devcontainer-image-stale-plcc-ng-version
+---
+type: chore
+target: this repo
+opened: 2026-07-29
+closed: 2026-07-30
+---
 
-**Type:** chore
-**Target:** this repo
-**Date:** 2026-07-29
+# 011 - devcontainer-image-stale-plcc-ng-version
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

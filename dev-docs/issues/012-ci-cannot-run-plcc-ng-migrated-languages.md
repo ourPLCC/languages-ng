@@ -1,8 +1,11 @@
-# 012 - ci-cannot-run-plcc-ng-migrated-languages
+---
+type: chore
+target: this repo
+opened: 2026-07-29
+closed:
+---
 
-**Type:** chore
-**Target:** this repo
-**Date:** 2026-07-29
+# 012 - ci-cannot-run-plcc-ng-migrated-languages
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".

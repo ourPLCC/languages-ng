@@ -1,8 +1,11 @@
-# 014 - migrate-v4-to-plcc-ng
+---
+type: feat
+target: this repo
+opened: 2026-07-30
+closed: 2026-07-30
+---
 
-**Type:** feat
-**Target:** this repo
-**Date:** 2026-07-30
+# 014 - migrate-v4-to-plcc-ng
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".
