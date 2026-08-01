@@ -12,7 +12,7 @@ bin/issues/new.bash <slug> [type]
 
 This reads [dev-docs/issues/.next-id.txt](dev-docs/issues/.next-id.txt) for the next ID, creates the file from the template with the date filled in, and increments the ID. Never assign issue numbers by hand or by scanning the directory. Add a roadmap entry in the same commit.
 
-To close an issue, always use [bin/issues/close.bash](bin/issues/close.bash) — as the final commit of the branch that does the work. It moves the file to `done/` and updates [dev-docs/roadmap.md](dev-docs/roadmap.md). Verify consistency any time with [bin/issues/check.bash](bin/issues/check.bash).
+To close an issue, always use [bin/issues/close.bash](bin/issues/close.bash) — as the final commit of the branch that does the work. It fills in the issue's `closed` date and updates [dev-docs/roadmap.md](dev-docs/roadmap.md). Issue files never move, so links to them never break. Verify consistency any time with [bin/issues/check.bash](bin/issues/check.bash).
 
 ## Design specs and implementation plans
 

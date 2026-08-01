@@ -118,16 +118,17 @@ Suggested fix direction, in order:
    `OK: all dev-docs links resolve` gate can never pass. Track fence state
    while scanning and skip lines inside fences; mind indented fences and
    the varying fence lengths Markdown permits.
-2. **Repair the 4 real breaks** by dropping the `../` prefix.
-3. **Consider the root cause in `bin/issues/close.bash`.** Pass 4 rewrites
-   a closing issue's own bare sibling links (`NNN-*.md`) to `../NNN-*.md`
-   as it moves the file into `done/`, which is correct at that moment. But
-   Pass 3 — which repoints *inbound* links when some later issue closes —
-   only matches the `issues/NNN-*.md` spelling, never the `../NNN-*.md`
-   form that files already inside `done/` use. So each close silently
-   dangles the links pointing at it from previously-closed issues. All four
-   real breaks were produced this way, and more will appear with every
-   close until Pass 3 also handles the `../` form.
+2. ~~**Repair the 4 real breaks**~~ — done under
+   [#18](018-close-bash-rewrites-plan-prose.md): all four were links from
+   one closed issue to another, and they were repaired when issues stopped
+   moving into `done/`.
+3. ~~**Consider the root cause in `bin/issues/close.bash`.**~~ — moot under
+   [#18](018-close-bash-rewrites-plan-prose.md). There is no pass 3 or pass
+   4 any more: an issue's status is a `closed:` frontmatter date, its file
+   never moves, and no link to it is ever rewritten.
+
+Remaining scope for this issue: fix direction 1 only — a fence-aware link
+checker promoted out of a plan step into `bin/`.
 
 Found during the whole-branch review of the #11 branch, which surfaced the
 checker but caused none of the breaks.
