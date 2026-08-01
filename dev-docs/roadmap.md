@@ -4,8 +4,6 @@
 
 ### Chore
 
-- **[#18](issues/018-close-bash-rewrites-plan-prose.md) — close.bash rewrites plan prose, not just links**
-  `close.bash` pass 3 repoints inbound links with a blind global sed, so closing an issue silently rewrites the plan that described how to file it — including prose and code spans that were correct as history. Each language's plan is adapted from the previous one, so the corruption propagates: V4's plan was corrupted this way, V5's inherited the bad path, and V6's would be next.
 - **[#12](issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — CI cannot run plcc-ng-migrated languages**
   CI's test image only installs old-PLCC with no Node.js, so plcc-ng-migrated languages (V0-V3) fail in CI with `command not found` while passing locally — the opposite of local dev. Deferred until every language has migrated: the job is `on: pull_request` and no PRs are opened yet, and the fix collapses to basing CI on the devcontainer image once old-PLCC is needed nowhere.
 

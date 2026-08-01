@@ -2,7 +2,7 @@
 type: chore
 target: this repo
 opened: 2026-07-31
-closed:
+closed: 2026-08-01
 ---
 
 # 018 - close-bash-rewrites-plan-prose
