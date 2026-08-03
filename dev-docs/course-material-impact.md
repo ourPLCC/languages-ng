@@ -144,8 +144,12 @@ headings are added in the order each language is migrated.
   V5; that comment was **stale** and is not carried forward — the
   widening to `[A-Za-z][\w?]*` already happened at V4. Course material
   that attributes the `?` to V5 should attribute it to V4.
-- `LetrecExp` has **no** `toString()`. The original has none, and the
-  port does not invent one (same treatment as V4's `ProcExp`).
+- `LetrecExp` and `ProcExp` **do** have placeholder `toString()`/`__str__`
+  methods, returning `" ...LetrecExp... "` and `" ...ProcExp... "`.
+  *(Corrected: V5 originally shipped without them, on the grounds that
+  the pre-migration source had none. That was true of V5 alone — V6 and
+  all seven languages of Phases 3-5 have both — so V5 was brought into
+  line rather than left as the outlier.)*
 - `letrec` is implemented by **mutation, not by a fixpoint**.
   `LetDecls.addLetrecBindings(env)` extends the environment with an
   *empty* `Bindings`, then evaluates each right-hand side **in that
@@ -177,3 +181,11 @@ headings are added in the order each language is migrated.
   target, expect a `RecursionError` there well before the other two
   targets show any trouble — see
   [issue #19](issues/019-python-recursion-ceiling.md).
+- V5's four placeholder strings were normalized to the
+  `" ...ClassName... "` spelling every other language uses.
+  `"... LetExp ..."`, `"... LetDecls ..."`, `" ... AppExp ..."`, and
+  `" ... SeqExp ... "` — three different spacings — became
+  `" ...LetExp... "`, `" ...LetDecls... "`, `" ...AppExp... "`, and
+  `" ...SeqExp... "`. No observable output changed: nothing in the test
+  suite prints an `Exp`. Slides quoting the old spellings should be
+  updated, but no result differs.

@@ -159,7 +159,7 @@ eval(env) {
 }
 
 toString() {
-    return "... LetExp ...";
+    return " ...LetExp... ";
 }
 %%%
 
@@ -168,6 +168,10 @@ LetrecExp
 eval(env) {
     env = this.letDecls.addLetrecBindings(env);
     return this.exp.eval(env);
+}
+
+toString() {
+    return " ...LetrecExp... ";
 }
 %%%
 
@@ -201,7 +205,7 @@ addLetrecBindings(env) {
 }
 
 toString() {
-    return "... LetDecls ...";
+    return " ...LetDecls... ";
 }
 %%%
 
@@ -209,6 +213,10 @@ ProcExp
 %%%
 eval(env) {
     return this.proc.makeClosure(env);
+}
+
+toString() {
+    return " ...ProcExp... ";
 }
 %%%
 
@@ -243,7 +251,7 @@ eval(env) {
 }
 
 toString() {
-    return " ... AppExp ...";
+    return " ...AppExp... ";
 }
 %%%
 
@@ -257,7 +265,7 @@ eval(env) {
 }
 
 toString() {
-    return " ... SeqExp ... ";
+    return " ...SeqExp... ";
 }
 %%%
 

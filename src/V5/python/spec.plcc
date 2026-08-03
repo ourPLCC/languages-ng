@@ -131,7 +131,7 @@ def eval(self, env):
     return self.exp.eval(nenv)
 
 def __str__(self):
-    return "... LetExp ..."
+    return " ...LetExp... "
 %%%
 
 LetrecExp
@@ -139,6 +139,9 @@ LetrecExp
 def eval(self, env):
     env = self.letDecls.addLetrecBindings(env)
     return self.exp.eval(env)
+
+def __str__(self):
+    return " ...LetrecExp... "
 %%%
 
 LetDecls:import
@@ -168,13 +171,16 @@ def addLetrecBindings(self, env):
     return env
 
 def __str__(self):
-    return "... LetDecls ..."
+    return " ...LetDecls... "
 %%%
 
 ProcExp
 %%%
 def eval(self, env):
     return self.proc.makeClosure(env)
+
+def __str__(self):
+    return " ...ProcExp... "
 %%%
 
 Proc:import
@@ -206,7 +212,7 @@ def eval(self, env):
     return v.apply(args, env)
 
 def __str__(self):
-    return " ... AppExp ..."
+    return " ...AppExp... "
 %%%
 
 SeqExp
@@ -218,7 +224,7 @@ def eval(self, env):
     return v
 
 def __str__(self):
-    return " ... SeqExp ... "
+    return " ...SeqExp... "
 %%%
 
 Rands
