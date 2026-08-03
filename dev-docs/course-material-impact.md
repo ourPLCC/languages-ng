@@ -201,3 +201,35 @@ headings are added in the order each language is migrated.
 - Same `SYMBOL`/`symbol` convention as V0-V5: the pre-migration V6
   grammar's `VAR` token is named `SYMBOL` in the port, so `Define`'s
   generated field is `symbol`, not `var`.
+- `Program` no longer has a `_run()`. It keeps only the shared
+  `env = Env.initEnv()`, and `Define` and `Eval` each get their own
+  `_run()`. The environment is created **once per `plcc-rep` process**
+  and shared by every program in the run.
+- `Define._run()` **returns the defined name**, not the value. The
+  pre-migration Java ended in `System.out.println(s)` and returned
+  `void`; under plcc-ng an entry point must return its output as a
+  string. Same observable output, different mechanism - worth a note
+  wherever the Java source is shown.
+- `define` is implemented by **mutating a single environment node**, the
+  same mechanism V5's `letrec` uses, hoisted to the top level. A new
+  name is `add`ed to that node; an existing name has its `Binding.val`
+  **reassigned in place**. `define` never extends or replaces the
+  environment.
+- Two consequences worth showing on a slide, both demonstrated by files
+  already in `src/V6/Prog/`:
+  - A redefinition **reaches closures that already exist**, because the
+    assignment goes through the very `Binding` object the closure holds.
+    `Prog/x`: `.f()` gives `2`, then `define x=3`, then `.f()` gives `3`.
+  - A closure over a **`let`-bound copy is immune**, because `let`
+    extends a new node with its own `Binding`. `Prog/xx`: `.f()` gives
+    `2` both before and after `define x=3`.
+- A `define` right-hand side may name a procedure defined **later**, as
+  the shipped `define` test does with `even?`/`odd?` - the closure
+  captured the node, and the later binding lands in that same node.
+- `Define` looks names up with `env.lookup(s)` (local bindings only),
+  not `env.applyEnv(s)`. Faithful to the original, but note that at top
+  level the two are indistinguishable: the environment's parent is
+  `EnvNull`, so no program can tell them apart.
+- V6's `LetrecExp`/`ProcExp` `toString()`s and its `" ...ClassName... "`
+  placeholder spellings match its pre-migration source exactly - no
+  change on that axis. (V5's needed correcting; V6's did not.)

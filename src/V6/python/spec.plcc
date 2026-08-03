@@ -1,0 +1,391 @@
+%include ../grammar.plcc
+%
+Python
+
+%include ../../Env/envVal/python/env.plcc
+
+Val
+%%%
+from runtime.base import LanguageError
+
+
+class Val:
+
+    def apply(self, args, env):
+        raise LanguageError(f"Cannot apply {self}")
+
+    def isTrue(self):
+        return True
+
+    def intVal(self):
+        raise LanguageError(f"{self}: not an Int")
+%%%
+
+IntVal
+%%%
+from Val import Val
+
+
+class IntVal(Val):
+
+    def __init__(self, val):
+        self.val = int(val)
+
+    def intVal(self):
+        return self
+
+    def __str__(self):
+        return str(self.val)
+
+    def isTrue(self):
+        return self.val != 0
+%%%
+
+ProcVal
+%%%
+from Bindings import Bindings
+from Val import Val
+from runtime.base import LanguageError
+
+
+class ProcVal(Val):
+
+    def __init__(self, formals, body, env):
+        self.formals = formals
+        self.body = body
+        self.env = env
+
+    def apply(self, args, env):
+        if len(self.formals.symbolList) != len(args):
+            raise LanguageError("formals/args number mismatch")
+        bindings = Bindings(self.formals.symbolList, args)
+        nenv = self.env.extendEnv(bindings)
+        return self.body.eval(nenv)
+
+    def __str__(self):
+        return "proc"
+%%%
+
+Program:import
+%%%
+from Env import Env
+%%%
+
+Program
+%%%
+env = Env.initEnv()
+%%%
+
+Define:import
+%%%
+from Binding import Binding
+%%%
+
+Define
+%%%
+def _run(self):
+    env = Program.env
+    s = self.symbol.lexeme
+    val = self.exp.eval(env)
+    b = env.lookup(s)
+    if b is not None:
+        b.val = val
+    else:
+        env.add(Binding(s, val))
+    return s
+%%%
+
+Eval
+%%%
+def _run(self):
+    return str(self.exp.eval(Program.env))
+%%%
+
+LitExp:import
+%%%
+from IntVal import IntVal
+%%%
+
+LitExp
+%%%
+def eval(self, env):
+    return IntVal(self.lit.lexeme)
+
+def __str__(self):
+    return self.lit.lexeme
+%%%
+
+VarExp
+%%%
+def eval(self, env):
+    return env.applyEnv(self.symbol.lexeme)
+
+def __str__(self):
+    return self.symbol.lexeme
+%%%
+
+IfExp
+%%%
+def eval(self, env):
+    if self.testExp.eval(env).isTrue():
+        return self.trueExp.eval(env)
+    else:
+        return self.falseExp.eval(env)
+
+def __str__(self):
+    return f"if {self.testExp} then {self.trueExp} else {self.falseExp}"
+%%%
+
+PrimappExp
+%%%
+def eval(self, env):
+    args = self.rands.evalRands(env)
+    return self.prim.apply(args)
+
+def __str__(self):
+    return f"{self.prim}({self.rands})"
+%%%
+
+LetExp
+%%%
+def eval(self, env):
+    nenv = self.letDecls.addBindings(env)
+    return self.exp.eval(nenv)
+
+def __str__(self):
+    return " ...LetExp... "
+%%%
+
+LetrecExp
+%%%
+def eval(self, env):
+    env = self.letDecls.addLetrecBindings(env)
+    return self.exp.eval(env)
+
+def __str__(self):
+    return " ...LetrecExp... "
+%%%
+
+LetDecls:import
+%%%
+from Env import Env
+from Binding import Binding
+from Bindings import Bindings
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(self.symbolList, " in let/letrec LHS identifiers")
+%%%
+
+LetDecls
+%%%
+def addBindings(self, env):
+    valList = [e.eval(env) for e in self.expList]
+    bindings = Bindings(self.symbolList, valList)
+    return env.extendEnv(bindings)
+
+def addLetrecBindings(self, env):
+    env = env.extendEnv(Bindings())
+    for sym, e in zip(self.symbolList, self.expList):
+        val = e.eval(env)
+        env.add(Binding(sym.lexeme, val))
+    return env
+
+def __str__(self):
+    return " ...LetDecls... "
+%%%
+
+ProcExp
+%%%
+def eval(self, env):
+    return self.proc.makeClosure(env)
+
+def __str__(self):
+    return " ...ProcExp... "
+%%%
+
+Proc:import
+%%%
+from ProcVal import ProcVal
+%%%
+
+Proc
+%%%
+def makeClosure(self, env):
+    return ProcVal(self.formals, self.exp, env)
+%%%
+
+Formals:import
+%%%
+from Env import Env
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(self.symbolList, " in proc formals")
+%%%
+
+AppExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    args = self.rands.evalRands(env)
+    return v.apply(args, env)
+
+def __str__(self):
+    return " ...AppExp... "
+%%%
+
+SeqExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    for e in self.seqExps.expList:
+        v = e.eval(env)
+    return v
+
+def __str__(self):
+    return " ...SeqExp... "
+%%%
+
+Rands
+%%%
+def evalRands(self, env):
+    return [e.eval(env) for e in self.expList]
+
+def __str__(self):
+    return ",".join(str(e) for e in self.expList)
+%%%
+
+AddPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+AddPrim
+%%%
+def __str__(self):
+    return "+"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 + i1)
+%%%
+
+SubPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+SubPrim
+%%%
+def __str__(self):
+    return "-"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 - i1)
+%%%
+
+MulPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+MulPrim
+%%%
+def __str__(self):
+    return "*"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 * i1)
+%%%
+
+DivPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+DivPrim
+%%%
+def __str__(self):
+    return "/"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    if i1 == 0:
+        raise LanguageError("attempt to divide by zero")
+    return IntVal(int(i0 / i1))
+%%%
+
+Add1Prim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+Add1Prim
+%%%
+def __str__(self):
+    return "add1"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(i0 + 1)
+%%%
+
+Sub1Prim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+Sub1Prim
+%%%
+def __str__(self):
+    return "sub1"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(i0 - 1)
+%%%
+
+ZeropPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+ZeropPrim
+%%%
+def __str__(self):
+    return "zero?"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(1 if i0 == 0 else 0)
+%%%
