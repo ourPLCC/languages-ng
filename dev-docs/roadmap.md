@@ -2,6 +2,11 @@
 
 ## Open Issues
 
+### Feat
+
+- **[#21](issues/021-migrate-v6-to-plcc-ng.md) — Migrate V6 to plcc-ng**
+  Ports V6's grammar and Java semantics to plcc-ng and adds Python and JavaScript semantics. V6 is V5 + top-level define, reusing envVal and every other V5 class unchanged; the only new semantics are the Define/Eval split of <Program> and their two _run() methods. Last language in Phase 2.
+
 ### Chore
 
 - **[#12](issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — CI cannot run plcc-ng-migrated languages**
