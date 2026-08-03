@@ -147,9 +147,13 @@ headings are added in the order each language is migrated.
 - `LetrecExp` and `ProcExp` **do** have placeholder `toString()`/`__str__`
   methods, returning `" ...LetrecExp... "` and `" ...ProcExp... "`.
   *(Corrected: V5 originally shipped without them, on the grounds that
-  the pre-migration source had none. That was true of V5 alone — V6 and
-  all seven languages of Phases 3-5 have both — so V5 was brought into
-  line rather than left as the outlier.)*
+  the pre-migration source had none. For `LetrecExp` that was true of V5
+  alone — the production is new at V5, so there is no earlier instance to
+  compare against. For `ProcExp` it wasn't: V4's `ProcExp` has no
+  `toString()` either, and V4 is out of scope for this branch and keeps
+  it that way. V6 and all seven languages of Phases 3-5 give both
+  methods a `toString()`, so V5 was brought into line with those rather
+  than left as an outlier on this point.)*
 - `letrec` is implemented by **mutation, not by a fixpoint**.
   `LetDecls.addLetrecBindings(env)` extends the environment with an
   *empty* `Bindings`, then evaluates each right-hand side **in that
@@ -182,13 +186,17 @@ headings are added in the order each language is migrated.
   targets show any trouble — see
   [issue #19](issues/019-python-recursion-ceiling.md).
 - V5's four placeholder strings were normalized to the
-  `" ...ClassName... "` spelling every other language uses.
+  `" ...ClassName... "` spelling V6 and the seven not-yet-ported
+  languages (Phases 3-5) use.
   `"... LetExp ..."`, `"... LetDecls ..."`, `" ... AppExp ..."`, and
   `" ... SeqExp ... "` — three different spacings — became
   `" ...LetExp... "`, `" ...LetDecls... "`, `" ...AppExp... "`, and
   `" ...SeqExp... "`. No observable output changed: nothing in the test
-  suite prints an `Exp`. Slides quoting the old spellings should be
-  updated, but no result differs.
+  suite prints an `Exp`. V3 and V4 were out of scope for this
+  normalization and still carry the old irregular spellings, so course
+  material walking V3 → V4 → V5 will see the spelling change land at V5.
+  Slides quoting the old spellings should be updated, but no result
+  differs.
 
 ## V6
 

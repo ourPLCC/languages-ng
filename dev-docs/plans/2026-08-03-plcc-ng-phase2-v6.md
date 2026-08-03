@@ -118,7 +118,7 @@ git commit -m "docs(issues): file 021 - migrate V6 to plcc-ng"
 
 ## Task 2: Back-fix V5 to the shared placeholder/toString shape
 
-V6 and all seven languages still to be ported (`SET`, `REF`, `NAME`, `NEED`, `TYPE0`, `TYPE1`, `OBJ`) spell their placeholder `toString()`s identically as `" ...ClassName... "`, and all of them give `LetrecExp` and `ProcExp` one. **V5 is the only outlier** — it has three different spacings and is missing both methods.
+V6 and all seven languages still to be ported (`SET`, `REF`, `NAME`, `NEED`, `TYPE0`, `TYPE1`, `OBJ`) spell their placeholder `toString()`s identically as `" ...ClassName... "`, and all of them give `LetrecExp` and `ProcExp` one. **Within that set, V5 is the outlier** — it has three different spacings and is missing both methods. (V3 and V4 predate this convergence and are out of scope here; they keep the old irregular spellings, and V4's `ProcExp` has no `toString()` either.)
 
 This task lands **first** so that Tasks 5–7 can copy V5 verbatim with no exceptions. Behaviorally inert: no test prints an `Exp`, so the suite must be unchanged at 51 passing after this task.
 

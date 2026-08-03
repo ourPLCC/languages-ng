@@ -55,10 +55,11 @@ Two further facts, neither flagged in advance, were established by the same
 exercise and are load-bearing for the port:
 
 **`_run()` must return a string, in all three targets.** The overarching
-design's addendum still claims an asymmetry — that Python and Java should call
-`print()`/`System.out.println()` and return void, and only JavaScript must
-`return`. That is obsolete as of the
-[2.0.0 update](2026-07-27-plcc-ng-2.0.0-update-design.md); returning `None`
+design's addendum originally claimed an asymmetry — that Python and Java
+should call `print()`/`System.out.println()` and return void, and only
+JavaScript must `return`. That became obsolete with the
+[2.0.0 update](2026-07-27-plcc-ng-2.0.0-update-design.md), and a commit on
+this branch corrected the addendum in place; returning `None`
 from Python's `_run()` is now a hard error:
 
 ```
@@ -153,10 +154,12 @@ def _run(self):
     return str(self.exp.eval(Program.env))
 ```
 
-**Imports.** `Define` needs `Env` and `Binding` in Python and JavaScript;
-`Eval` needs neither, since the generated subclass file already requires its
-own base class. Java needs no import block at all, its free-standing classes
-being same-directory and package-less.
+**Imports.** `Define` needs only `Binding` in Python and JavaScript. `Env` is
+not imported directly — `Program.env` reaches it through the base class
+`Define` inherits, which already imports `Env` for its own
+`env = Env.initEnv()`. `Eval` needs neither, since the generated subclass file
+already requires its own base class. Java needs no import block at all, its
+free-standing classes being same-directory and package-less.
 
 ### What `define` actually means — letrec's trick, hoisted to top level
 
@@ -170,7 +173,9 @@ mutates *that node* — it never extends the environment and never replaces it.
 Rebinding an existing name assigns to `b.val` on the `Binding` **object**, not
 to a fresh binding in a fresh node.
 
-Three consequences follow, each already demonstrated by a file in `src/V6/Prog/`:
+Three consequences follow. Two are already demonstrated by a file in
+`src/V6/Prog/`; the forward-reference consequence is instead demonstrated by
+`src/V6/tests/define/V6.input`:
 
 - **Forward references work.** `define even? = proc(x) ... .odd?(...)` is legal
   before `odd?` exists. The closure captured the node, and `odd?` lands in that
@@ -225,25 +230,35 @@ targets.
 ## Convergence on the Post-V5 Shape
 
 V6's pre-migration files differ from V5's in three ways unrelated to `define`.
-Checking those differences against the seven languages still to be ported
-showed that **V5, not V6, is the outlier**:
+Checking those differences against the seven languages still to be ported —
+and, for completeness, against the two already-ported languages that predate
+this convergence — shows that **among the languages this convergence
+applies to, V5 is the outlier, not V6**:
 
 | | `LetrecExp`/`ProcExp` `toString()` | placeholder spelling | dead `zero` field |
 |---|---|---|---|
+| V3 | n/a (neither production exists) | `"... LetExp ..."`, `"... LetDecls ..."` — two spacings | absent |
+| V4 | `LetrecExp` n/a; `ProcExp` absent | `"... LetExp ..."`, `"... LetDecls ..."`, `" ... AppExp ..."`, `" ... SeqExp ... "` — three spacings | absent |
 | V5 | absent | `"... LetExp ..."`, `" ... AppExp ..."`, `" ... SeqExp ... "` — three spacings | absent |
 | V6 | present | `" ...LetExp... "` uniformly | `IntVal zero` |
 | SET, REF, NAME, NEED, TYPE0, TYPE1 | present | `" ...LetExp... "` uniformly | absent |
 | OBJ | present | `" ...LetExp... "` uniformly | `Val zero` |
 
-So on two of the three items, dropping V6's "drift" would only mean Phase 3's
-first language has to add it straight back. V6 therefore **adopts its own
-shape**, and V5 is retro-fixed to match — in its own commit, sequenced
-**before** V6's three `spec.plcc`s are written, so that V6 is a clean copy of
-V5 plus `define` rather than a copy plus a scattering of corrections:
+V3 and V4 are out of scope for this branch and are left exactly as they are —
+they're in the table only to show that the old irregular spellings didn't
+originate with V5. Restricting the comparison to V6 and the seven Phase 3-5
+languages — the set this convergence actually targets — V5 is the only one of
+that group missing either property; on two of the three items, dropping V6's
+"drift" would only mean Phase 3's first language has to add it straight back.
+V6 therefore **adopts its own shape**, and V5 is retro-fixed to match — in its
+own commit, sequenced **before** V6's three `spec.plcc`s are written, so that
+V6 is a clean copy of V5 plus `define` rather than a copy plus a scattering of
+corrections:
 
 - Add `LetrecExp.toString()` and `ProcExp.toString()` to both V5 and V6. V5's
   design declined to invent these on the grounds that "the original has none" —
-  correct for V5 in isolation, but every other kept language does have them.
+  true of V5's own pre-migration source, but every other language V6 and
+  Phase 3-5 converge on does have them.
 - Normalize the four V5 placeholder strings to the uniform `" ...X... "`
   spelling V6 and all seven remaining languages use.
 
@@ -397,9 +412,10 @@ parse `p2`.
 ## Overarching Design Corrections
 
 The overarching
-[migration design](2026-07-22-plcc-ng-migration-design.md) has no reference to
-the [2.0.0 update](2026-07-27-plcc-ng-2.0.0-update-design.md) and carries four
-claims that are now false. A commit on this branch corrects each in place,
+[migration design](2026-07-22-plcc-ng-migration-design.md) carried four
+claims that are now false, with no reference to the
+[2.0.0 update](2026-07-27-plcc-ng-2.0.0-update-design.md) explaining why. A
+commit on this branch corrects each in place, adding that reference and
 pointing at the design or issue that superseded it:
 
 | Where | Stale claim | Reality |
