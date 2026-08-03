@@ -315,6 +315,17 @@ Value cases only — no error-path test for the duplicate-identifier check or fo
 a parse failure mid-stream — keeping the one-shared-expected model clean, the
 same call V3, V4, and V5 made.
 
+These four cover V6's entire new semantic surface: both `<Program>`
+alternatives, persistence across programs, the forward reference, rebinding
+through an existing closure, and the `let`-captured copy that resists it. One
+behavior is deliberately left untested because **it cannot be tested**:
+`Define`'s use of `env.lookup(s)` rather than `env.applyEnv(s)` — the Java
+original's "only look at local bindings". `Program.env`'s parent is `EnvNull`,
+whose `lookup` returns null regardless, so local-only and full-chain lookup are
+observationally identical at top level. The distinction is faithful to the
+original and inert in practice. Recorded here so a later reader does not mistake
+it for a coverage gap and go hunting for the test that would exercise it.
+
 Magnitudes and recursion depths stay small in every case, clear of the two live
 constraints: the 32-bit Java `IntVal` overflow of open issue
 [#16](../issues/016-cross-target-integer-divergence.md), and the Python
@@ -327,9 +338,34 @@ comes close to either.
 V4 established the precedent: `Prog/` files are course artifacts, so they stay
 where they are, but the phase **actually runs** all of them against all three
 targets rather than assuming they still work. V6 has nine — `dddd`, `inits`,
-`ivx`, `p1`, `p2`, `pair`, `util`, `x`, `xx`. All are small, so unlike V4 no
-shrinking for Python's recursion ceiling is expected; the plan should still run
-them rather than assume it.
+`ivx`, `p1`, `p2`, `pair`, `util`, `x`, `xx`. **All nine were run during
+design** against the throwaway Python spec described under
+[Tests](#tests); none needs the shrinking V4's `oe` and `fib` required for
+Python's recursion ceiling. The plan still runs all nine against all three
+targets — design-time verification was Python-only.
+
+Their outputs also explain why none of them is promoted to a test case:
+
+| file | output | why it adds no coverage |
+|---|---|---|
+| `x`, `xx` | see [Tests](#tests) | **promoted** — these become `redefine/` and `capture-copy/` |
+| `inits` | `x` / `14` | **promoted** — becomes `define-then-use/` |
+| `ivx` | `i` / `v` / `x` | defines only, never evaluates |
+| `pair` | `pair` | defines only, never evaluates |
+| `util` | 8 helper names | defines only, never evaluates |
+| `dddd` | `4` / `4` | two `letrec` programs, no `define` — pure V5 surface |
+| `p1`, `p2` | see below | deliberate fragments |
+
+`ivx`, `pair`, and `util` emit nothing but names, so they assert only that
+`define` parses and binds — already covered by `define-then-use/`. `dddd`
+exercises V5 features that V5's own suite covers.
+
+`dddd` does, however, do one job no test case does: V6's `grammar.plcc` is
+newly written (V5's plus two edits), and none of the four test cases uses
+`letrec` or `{seq}`, so a production accidentally dropped while creating that
+file would slip past the whole suite. Running `dddd` catches it. This is the
+reason the run-all-nine requirement is load-bearing rather than ceremonial —
+it should not be dropped from the plan as redundant.
 
 `p1` and `p2` are a special case. They are deliberate *fragments* — `+(3` and
 `,4)` — that form a valid program only when read together, demonstrating a
