@@ -2,12 +2,26 @@
 
 load '../../../../bin/relocate.bash'
 
-@test "V6 define" {
+@test "V6 define (python)" {
   relocate
-  plccmk -c grammar > /dev/null
-  RESULT="$(rep -n < ./tests/define/V6.input)"
-
-  expected_output=$(< "./tests/define/V6.expected")
+  cd python
+  RESULT="$(plcc-rep < ../tests/define/V6.input)"
+  expected_output=$(< "../tests/define/V6.expected")
   [[ "$RESULT" == "$expected_output" ]]
+}
 
+@test "V6 define (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/define/V6.input)"
+  expected_output=$(< "../tests/define/V6.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
+
+@test "V6 define (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/define/V6.input)"
+  expected_output=$(< "../tests/define/V6.expected")
+  [[ "$RESULT" == "$expected_output" ]]
 }
