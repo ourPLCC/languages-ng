@@ -233,3 +233,9 @@ headings are added in the order each language is migrated.
 - V6's `LetrecExp`/`ProcExp` `toString()`s and its `" ...ClassName... "`
   placeholder spellings match its pre-migration source exactly - no
   change on that axis. (V5's needed correcting; V6's did not.)
+- `Prog/p1` + `Prog/p2` demonstrate a reader spanning file boundaries.
+  The invocation changed: `rep Prog/p1 Prog/p2` no longer works, because
+  plcc-rep parses each SOURCE argument as its own stream. Use
+  `cat Prog/p1 Prog/p2 | plcc-rep` instead, which still yields `7`. Both
+  files are unchanged; only the command demonstrating them differs.
+  Tracked as issue #22.
