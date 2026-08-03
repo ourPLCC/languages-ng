@@ -189,3 +189,15 @@ headings are added in the order each language is migrated.
   `" ...SeqExp... "`. No observable output changed: nothing in the test
   suite prints an `Exp`. Slides quoting the old spellings should be
   updated, but no result differs.
+
+## V6
+
+- New token `DEFINE 'define'`, declared directly after `LETREC`.
+- `<Program>` is no longer a single production. It splits into two
+  alternatives, `<Program:Define> ::= DEFINE <SYMBOL> EQUALS <Exp>` and
+  `<Program:Eval> ::= <Exp>`, so a V6 "program" is now one *or* the
+  other and a source file is a sequence of them. Course material that
+  describes `<program> ::= <exp>` for V6 needs both alternatives.
+- Same `SYMBOL`/`symbol` convention as V0-V5: the pre-migration V6
+  grammar's `VAR` token is named `SYMBOL` in the port, so `Define`'s
+  generated field is `symbol`, not `var`.
