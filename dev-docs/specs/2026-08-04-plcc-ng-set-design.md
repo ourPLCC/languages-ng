@@ -258,8 +258,9 @@ three targets must produce identical output) plus one `SETtest.bats` with three
 `@test` blocks, one per target directory, driven by `plcc-rep` — the same shape
 V3–V6 use.
 
-Four cases. **Every expected output below was measured** in
-[Spike 1](#spike-1--envref-and-sets-semantics-python-end-to-end), not predicted:
+Five cases. **Every expected output below was measured**, not predicted: the
+first four in [Spike 1](#spike-1--envref-and-sets-semantics-python-end-to-end),
+and `letrec-set/` directly against all three targets:
 
 - **`let/`** — the existing case, ported off the old `plccmk`/`rep` invocation:
   `let x=42 in {set x=add1(x); x}`. `set` on a `let`-bound variable. → `43`
@@ -272,9 +273,13 @@ Four cases. **Every expected output below was measured** in
 - **`define-then-set/`** — `define x=1` / `set x=2` / `x`. `set` on a binding in
   the persistent top-level node, and the only case that shows `set` returning
   its assigned value. → `x` / `2` / `2`
+- **`letrec-set/`** — `letrec y=2 in { set y=add1(y) ; y }`. `set` on a
+  `letrec` binding — the only case that exercises `LetDecls.addLetrecBindings`,
+  which the other four cases never reach. → `3`
 
 Together these cover every place `envRef` can be mutated: a `let` binding, a
-closure-captured binding, a formal, and a top-level `define` binding.
+closure-captured binding, a formal, a top-level `define` binding, and a
+`letrec` binding.
 
 `formal-is-a-copy/` is deliberately the same program REF will ship, where the
 expected file reads `4` instead of `3`. Shipping it in both languages makes the
@@ -327,8 +332,8 @@ The suite today is **70 tests: 63 passing and 7 failing** — NAME, NEED, OBJ,
 REF, SET, TYPE0, and TYPE1, every failure a `plccmk: command not found` from a
 language still on old PLCC.
 
-After this phase: **81 tests** — 70, minus SET's 1 old test, plus 12 new
-(4 cases × 3 targets) — **75 passing and 6 failing**, the same
+After this phase: **84 tests** — 70, minus SET's 1 old test, plus 15 new
+(5 cases × 3 targets) — **78 passing and 6 failing**, the same
 `command not found` set minus SET.
 
 The load-bearing invariant is the delta, not the totals: the

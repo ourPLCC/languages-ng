@@ -1,0 +1,4 @@
+letrec
+    y = 2
+in
+    { set y = add1(y) ; y }
