@@ -11,6 +11,11 @@ import runtime.LanguageError;
 
 public abstract class Val {
 
+    public static Val [] toArray(List<Val> valList) {
+        int n = valList.size();
+        return valList.toArray(new Val[n]);
+    }
+
     public Val apply(List<Val> args, Env e) {
         throw new LanguageError("Cannot apply " + this);
     }
@@ -157,7 +162,8 @@ PrimappExp
 %%%
 public Val eval(Env env) {
     List<Val> args = rands.evalRands(env);
-    return prim.apply(args);
+    Val [] va = Val.toArray(args);
+    return prim.apply(va);
 }
 
 public String toString() {
@@ -300,7 +306,7 @@ public String toString() {
 
 Prim
 %%%
-public abstract Val apply(List<Val> args);
+public abstract Val apply(Val [] va);
 %%%
 
 AddPrim
@@ -309,11 +315,11 @@ public String toString() {
     return "+";
 }
 
-public Val apply(List<Val> args) {
-    if (args.size() != 2)
+public Val apply(Val [] va) {
+    if (va.length != 2)
         throw new LanguageError("two arguments expected");
-    int i0 = args.get(0).intVal().val;
-    int i1 = args.get(1).intVal().val;
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
     return new IntVal(i0 + i1);
 }
 %%%
@@ -324,11 +330,11 @@ public String toString() {
     return "-";
 }
 
-public Val apply(List<Val> args) {
-    if (args.size() != 2)
+public Val apply(Val [] va) {
+    if (va.length != 2)
         throw new LanguageError("two arguments expected");
-    int i0 = args.get(0).intVal().val;
-    int i1 = args.get(1).intVal().val;
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
     return new IntVal(i0 - i1);
 }
 %%%
@@ -339,11 +345,11 @@ public String toString() {
     return "*";
 }
 
-public Val apply(List<Val> args) {
-    if (args.size() != 2)
+public Val apply(Val [] va) {
+    if (va.length != 2)
         throw new LanguageError("two arguments expected");
-    int i0 = args.get(0).intVal().val;
-    int i1 = args.get(1).intVal().val;
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
     return new IntVal(i0 * i1);
 }
 %%%
@@ -354,11 +360,11 @@ public String toString() {
     return "/";
 }
 
-public Val apply(List<Val> args) {
-    if (args.size() != 2)
+public Val apply(Val [] va) {
+    if (va.length != 2)
         throw new LanguageError("two arguments expected");
-    int i0 = args.get(0).intVal().val;
-    int i1 = args.get(1).intVal().val;
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
     if (i1 == 0)
         throw new LanguageError("attempt to divide by zero");
     return new IntVal(i0 / i1);
@@ -371,10 +377,10 @@ public String toString() {
     return "add1";
 }
 
-public Val apply(List<Val> args) {
-    if (args.size() != 1)
+public Val apply(Val [] va) {
+    if (va.length != 1)
         throw new LanguageError("one argument expected");
-    int i0 = args.get(0).intVal().val;
+    int i0 = va[0].intVal().val;
     return new IntVal(i0 + 1);
 }
 %%%
@@ -385,10 +391,10 @@ public String toString() {
     return "sub1";
 }
 
-public Val apply(List<Val> args) {
-    if (args.size() != 1)
+public Val apply(Val [] va) {
+    if (va.length != 1)
         throw new LanguageError("one argument expected");
-    int i0 = args.get(0).intVal().val;
+    int i0 = va[0].intVal().val;
     return new IntVal(i0 - 1);
 }
 %%%
@@ -399,10 +405,10 @@ public String toString() {
     return "zero?";
 }
 
-public Val apply(List<Val> args) {
-    if (args.size() != 1)
+public Val apply(Val [] va) {
+    if (va.length != 1)
         throw new LanguageError("one argument expected");
-    int i0 = args.get(0).intVal().val;
+    int i0 = va[0].intVal().val;
     return new IntVal(i0 == 0 ? 1 : 0);
 }
 %%%

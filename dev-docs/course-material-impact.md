@@ -37,6 +37,13 @@ headings are added in the order each language is migrated.
   (Env-based evaluation) to carry it, so course material walking through
   V1's grammar or its Env-lookup semantics should use the PascalCased
   nonterminal names.
+- Java's `Prim.apply` now takes `Val [] va` rather than `List<Val> args`,
+  with `Val.toArray` restoring the array from the list in
+  `PrimappExp.eval`. Operand access is `va[0]` / `va.length`, matching
+  Python's `args[0]` / `len(args)` and JavaScript's `args[0]` /
+  `args.length`. Course material walking through a primitive's `apply` can
+  now use one indexing idiom across all three target appendices instead of
+  Java's `args.get(0)` / `args.size()`.
 
 ## V2
 
@@ -47,6 +54,13 @@ headings are added in the order each language is migrated.
   alt-name casing; the earlier all-lowercase workaround for issue #6 is no
   longer needed). Course material walking through `IfExp.eval()` should
   refer to `self.testExp` / `testExp` / `this.testExp`, etc.
+- Java's `Prim.apply` now takes `Val [] va` rather than `List<Val> args`,
+  with `Val.toArray` restoring the array from the list in
+  `PrimappExp.eval`. Operand access is `va[0]` / `va.length`, matching
+  Python's `args[0]` / `len(args)` and JavaScript's `args[0]` /
+  `args.length`. Course material walking through a primitive's `apply` can
+  now use one indexing idiom across all three target appendices instead of
+  Java's `args.get(0)` / `args.size()`.
 
 ## V3
 
@@ -76,6 +90,13 @@ headings are added in the order each language is migrated.
 - `LetExp.toString()` / `LetDecls.toString()` are the original course
   material's placeholder stubs (`"... LetExp ..."` / `"... LetDecls ..."`)
   and are preserved verbatim, not "finished".
+- Java's `Prim.apply` now takes `Val [] va` rather than `List<Val> args`,
+  with `Val.toArray` restoring the array from the list in
+  `PrimappExp.eval`. Operand access is `va[0]` / `va.length`, matching
+  Python's `args[0]` / `len(args)` and JavaScript's `args[0]` /
+  `args.length`. Course material walking through a primitive's `apply` can
+  now use one indexing idiom across all three target appendices instead of
+  Java's `args.get(0)` / `args.size()`.
 
 ## V4
 
@@ -133,6 +154,13 @@ headings are added in the order each language is migrated.
   `LanguageError`, the same substitution V3 made for old PLCC's
   `PLCCException`. Course material quoting V4's error handling should
   refer to `LanguageError`.
+- Java's `Prim.apply` now takes `Val [] va` rather than `List<Val> args`,
+  with `Val.toArray` restoring the array from the list in
+  `PrimappExp.eval`. Operand access is `va[0]` / `va.length`, matching
+  Python's `args[0]` / `len(args)` and JavaScript's `args[0]` /
+  `args.length`. Course material walking through a primitive's `apply` can
+  now use one indexing idiom across all three target appendices instead of
+  Java's `args.get(0)` / `args.size()`.
 
 ## V5
 
@@ -197,6 +225,13 @@ headings are added in the order each language is migrated.
   material walking V3 → V4 → V5 will see the spelling change land at V5.
   Slides quoting the old spellings should be updated, but no result
   differs.
+- Java's `Prim.apply` now takes `Val [] va` rather than `List<Val> args`,
+  with `Val.toArray` restoring the array from the list in
+  `PrimappExp.eval`. Operand access is `va[0]` / `va.length`, matching
+  Python's `args[0]` / `len(args)` and JavaScript's `args[0]` /
+  `args.length`. Course material walking through a primitive's `apply` can
+  now use one indexing idiom across all three target appendices instead of
+  Java's `args.get(0)` / `args.size()`.
 
 ## V6
 
@@ -247,3 +282,10 @@ headings are added in the order each language is migrated.
   `cat Prog/p1 Prog/p2 | plcc-rep` instead, which still yields `7`. Both
   files are unchanged; only the command demonstrating them differs.
   Tracked as issue #22.
+- Java's `Prim.apply` now takes `Val [] va` rather than `List<Val> args`,
+  with `Val.toArray` restoring the array from the list in
+  `PrimappExp.eval`. Operand access is `va[0]` / `va.length`, matching
+  Python's `args[0]` / `len(args)` and JavaScript's `args[0]` /
+  `args.length`. Course material walking through a primitive's `apply` can
+  now use one indexing idiom across all three target appendices instead of
+  Java's `args.get(0)` / `args.size()`.
