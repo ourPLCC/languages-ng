@@ -17,3 +17,11 @@ load '../../../../bin/relocate.bash'
   expected_output=$(< "../tests/define-then-set/SET.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "SET define-then-set (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/define-then-set/SET.input)"
+  expected_output=$(< "../tests/define-then-set/SET.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}

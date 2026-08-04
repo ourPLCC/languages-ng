@@ -17,3 +17,11 @@ load '../../../../bin/relocate.bash'
   expected_output=$(< "../tests/let/SET.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "SET let (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/let/SET.input)"
+  expected_output=$(< "../tests/let/SET.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
