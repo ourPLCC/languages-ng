@@ -2,6 +2,11 @@
 
 ## Open Issues
 
+### Feat
+
+- **[#23](issues/023-migrate-set-to-plcc-ng.md) — Migrate SET to plcc-ng**
+  Ports SET's grammar and Java/Python/JavaScript semantics to plcc-ng, and ports the shared `envRef` Env variant (`envVal` plus one level of `Ref` indirection) used by SET, REF, NAME, and NEED. SET is V6 + the `SET` token/`SetExp` production; opens Phase 3.
+
 ### Chore
 
 - **[#12](issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — CI cannot run plcc-ng-migrated languages**
