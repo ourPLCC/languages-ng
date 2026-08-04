@@ -2,7 +2,7 @@
 type: docs
 target: this repo
 opened: 2026-07-30
-closed:
+closed: 2026-08-04
 ---
 
 # 013 - dev-docs-link-checker-not-fence-aware
@@ -127,8 +127,44 @@ Suggested fix direction, in order:
    4 any more: an issue's status is a `closed:` frontmatter date, its file
    never moves, and no link to it is ever rewritten.
 
-Remaining scope for this issue: fix direction 1 only — a fence-aware link
-checker promoted out of a plan step into `bin/`.
-
 Found during the whole-branch review of the #11 branch, which surfaced the
 checker but caused none of the breaks.
+
+## Resolution
+
+**Closed without building the checker.** Fix direction 1 was the only
+remaining scope, and it is not worth the code it would take to keep
+correct.
+
+Measured across all 50 Markdown files on 2026-08-04: of 166 relative
+links, 154 point into `dev-docs/`, 7 into `bin/`, and 5 at `CLAUDE.md`.
+**None point into `src/`** — the only part of the repo with real file
+churn, where whole `src/V*/code|grammar|prim|val|envVal` trees are deleted
+each migration (`489323e`, `37fe117`, `5fbadab`). The entire linked
+surface is files that, since
+[#18](018-close-bash-rewrites-plan-prose.md), never move.
+
+That also accounts for the checker's whole historical yield. The 4 real
+breaks above were `done/`-relative links between closed issues, produced
+by a mechanism `b60e8ce` removed when it flattened `issues/`. A fence- and
+inline-code-aware scan of the tree on 2026-08-04 reports **0** broken
+links. What is left is authoring typos and the 7 `bin/` links — cheap to
+notice, and cheaper to fix than a checker is to maintain.
+
+Two findings worth keeping if this is ever revisited:
+
+- **Fence-awareness alone is not enough.** Three reports survive fence
+  skipping because they are links inside *inline code spans* — prose in
+  [2026-07-31-issue-status-frontmatter.md](../plans/2026-07-31-issue-status-frontmatter.md)
+  that quotes a line of Markdown between backticks to say what to replace
+  it with. Any checker must skip both fences and inline spans.
+- **Don't hand-roll it.** Off-the-shelf checkers parse Markdown into an
+  AST, so text inside fences and code spans is never a link — the bug in
+  this issue is an artifact of regex-scanning raw text. `lychee` with
+  `--offline` (via `lycheeverse/lychee-action`) is the best fit: a ~15
+  line workflow, no repo manifest required. The npm options
+  (`remark-validate-links`, `markdown-link-check`) would mean introducing
+  node packaging to a repo that has none.
+
+Reopen if docs start linking into `src/` paths, where a break would be
+silent.
