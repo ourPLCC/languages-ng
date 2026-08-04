@@ -289,3 +289,34 @@ headings are added in the order each language is migrated.
   `args.length`. Course material walking through a primitive's `apply` can
   now use one indexing idiom across all three target appendices instead of
   Java's `args.get(0)` / `args.size()`.
+
+## SET
+
+- New token `SET` (`set`) and new production
+  `<Exp:SetExp> ::= SET <SYMBOL> EQUALS <Exp>`, giving fields
+  `SetExp.symbol` and `SetExp.exp`. `set x = e` is an **expression** and
+  evaluates to the assigned value, so it composes inside `{...}` sequences
+  and as an operand.
+- SET introduces the `envRef` environment: a `Binding` holds a **`Ref`**
+  (field `ref`), not a `Val`. `applyEnvRef` is the primitive lookup and
+  returns the `Ref`; `applyEnv` is derived from it as
+  `applyEnvRef(sym).deRef()`. Extension is `extendEnvRef(bindings)`, and
+  `Bindings` is built from an id list and a **ref** list. Course material
+  drawing environment diagrams for SET onward needs the extra box: name →
+  ref → value, where V0–V6 had name → value.
+- `Env.checkDuplicates` returns nothing. The pre-migration
+  `src/Env/envRef` and `src/REF/envRef` returned the `Set` of names they
+  built; no caller ever used it, and the majority of the languages already
+  declared it `void`.
+- `ProcVal.apply` wraps its arguments in **fresh** `ValRef`s before
+  binding them, which is why assigning to a formal (`proc(t) set t = ...`)
+  cannot reach the caller's variable. This is the exact line REF changes
+  to get call-by-reference, and the `formal-is-a-copy` test is the same
+  program REF ships with a different expected value.
+- `apply` takes an `env` parameter it does not read
+  (`apply(args, env)`). This is deliberate: it is the hook for the
+  dynamic-scoping exercise, in which a proc resolves free variables in the
+  **calling** environment passed here rather than the one it captured.
+  It must not be removed.
+- `Define._run()` returns the defined name rather than printing it, the
+  same `_run()` contract V6 adopted. Observable output is unchanged.

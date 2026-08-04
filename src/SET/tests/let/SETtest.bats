@@ -2,12 +2,10 @@
 
 load '../../../../bin/relocate.bash'
 
-@test "SET let" {
+@test "SET let (python)" {
   relocate
-  plccmk -c grammar > /dev/null
-  RESULT="$(rep -n < ./tests/let/SET.input)"
-
-  expected_output=$(< "./tests/let/SET.expected")
+  cd python
+  RESULT="$(plcc-rep < ../tests/let/SET.input)"
+  expected_output=$(< "../tests/let/SET.expected")
   [[ "$RESULT" == "$expected_output" ]]
-
 }
