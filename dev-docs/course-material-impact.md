@@ -320,3 +320,10 @@ headings are added in the order each language is migrated.
   It must not be removed.
 - `Define._run()` returns the defined name rather than printing it, the
   same `_run()` contract V6 adopted. Observable output is unchanged.
+- Java's `Prim.apply` takes `Val [] va`, with operand access `va[0]` /
+  `va.length`, matching Python's `args[0]` / `len(args)` and JavaScript's
+  `args[0]` / `args.length`. Unlike V1–V6, this is **not** a change from
+  SET's pre-migration original — SET's Java already built the array with
+  `Val.toArray`. SET simply carries forward the shape V1–V6 were
+  retro-fixed to match, so all three target appendices read alike from
+  SET onward too.

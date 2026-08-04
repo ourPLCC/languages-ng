@@ -120,6 +120,9 @@ public class ProcVal extends Val {
         this.env = env;
     }
 
+    // `e` is the calling environment (unused); `env` above is the one
+    // captured at proc-evaluation time. A dynamic-scoping reimplementation
+    // of `proc` would resolve free variables against `e` instead.
     public Val apply(List<Val> args, Env e) {
         if (formals.symbolList.size() != args.size())
             throw new LanguageError("formals/args number mismatch");

@@ -57,6 +57,14 @@ Work proceeds **language-first**: for a given language, its grammar port and all
      | `checkDuplicates` returns `Set<String>` | `src/Env/envRef`, `src/REF/envRef` |
      | `void` shape + reserved-ID check | `src/OBJ/envRef` (see Phase 5) |
 
+     This table is a historical record of the pre-migration flat files as
+     they stood when Phase 3 was planned. **As of the SET phase, none of
+     the pre-migration `envRef` paths above still exist** — both the flat
+     `src/Env/envRef` and the per-language flat `src/SET/envRef` (and its
+     siblings) were deleted once SET's port landed. The canonical `void`
+     shape they describe now lives at `src/Env/envRef/<target>/env.plcc`,
+     ported once by the SET phase and `%include`d by REF, NAME, and NEED.
+
      The two shapes differ *only* in whether `checkDuplicates` returns the `Set<String>` it builds internally. **No caller anywhere in `src/` uses that return value** — all 16 call sites across the seven languages are bare statements that discard it (`Env.checkDuplicates(varList, " in proc formals")` and friends; verified with `grep -rn "Env\.checkDuplicates" src/`, none assigned or chained). So deleting the flat file is still safe, but "it's a duplicate, just delete it" is the wrong reason and picks the wrong shape by default.
 
      **Port the `void` shape as canonical**, dropping the dead `Set<String>` return — the same trimming `envRN`'s port applied to its own dead weight, and the majority shape already. Do not carry REF's return type forward just because REF happens to be the language that ports first; `src/REF/envRef` is a byte-identical copy of the flat file, not independent evidence that the return value is wanted.
@@ -66,6 +74,7 @@ Work proceeds **language-first**: for a given language, its grammar port and all
 6. **Phase 5 — OBJ**
    - OBJ currently forks `envRef` with additional reserved-identifier checks (`self`, `myclass`, `superclass`, `this`, `super`) whose `checkDuplicates` signature also diverges from canonical `envRef`, not just adds to it. This phase ports OBJ's fork as a documented, explicit extension of the canonical `envRef` (in each of the 3 targets) rather than continuing the current silent copy-paste divergence — with a check on whether OBJ's exact divergence is still needed or was accidental drift.
      **Corrected (2026-08-04):** the signature-divergence claim is an artifact of comparing OBJ against `src/Env/envRef` (the `Set<String>` shape) instead of against the majority `void` shape corrected in Phase 3 above. Diffed against `src/SET/envRef`, OBJ's fork is **purely additive** — a `reservedIDS` array plus a loop that throws `PLCCException("Semantic error", "reserved ID: "+reserved)` for any formal that collides. No signature difference at all. Once Phase 3 ports the `void` shape as canonical, OBJ is a clean extension of it, which makes this phase's "documented, explicit extension" framing straightforward rather than a reconciliation of two divergent signatures. The open question is unchanged and still worth asking: whether the reserved-ID check is still wanted.
+     **Note (SET phase):** `src/SET/envRef` no longer exists — it was deleted once SET's port landed. A future implementer diffing OBJ's fork should diff it against the ported canonical shape at `src/Env/envRef/<target>/env.plcc` instead (the pre-migration flat file this note originally pointed at is preserved only in git history).
 
 ## File/Directory Architecture
 
