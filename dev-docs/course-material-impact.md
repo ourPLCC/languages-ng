@@ -327,3 +327,33 @@ headings are added in the order each language is migrated.
   `Val.toArray`. SET simply carries forward the shape V1–V6 were
   retro-fixed to match, so all three target appendices read alike from
   SET onward too.
+
+## REF
+
+- REF adds **no grammar changes at all** — `src/REF/grammar.plcc` is SET's
+  file with a different header comment. Anything a handout says about SET's
+  syntax is true of REF verbatim, including the `SET` token and
+  `<Exp:SetExp>`.
+- `Exp` gains `evalRef(env)`, which by default wraps `eval(env)` in a
+  **fresh** `ValRef`. `VarExp` overrides it to return
+  `env.applyEnvRef(...)` — the binding's own `Ref`. That one override is
+  call-by-reference: a bare variable operand passes its cell, and every
+  other kind of operand passes a copy.
+- `Rands` gains `evalRandsRef`, and `AppExp.eval` calls it. `evalRands`
+  and `PrimappExp` are unchanged — **primitives still take `Val`s**, so
+  `+(x,0)` never passes a reference. This is the distinction
+  `tests/nonvar-arg-is-a-copy/` pins down.
+- `Val.apply` and `ProcVal.apply` take a list of **`Ref`s**
+  (Java: `apply(List<Ref> args, Env e)`). `ProcVal` no longer wraps
+  anything, because its caller already did — deleting SET's
+  `Ref.valsToRefs(args)` line *is* the SET→REF change. `Ref.valsToRefs`
+  itself remains, since `LetDecls.addBindings` still uses it.
+- `apply` keeps the `env` parameter it does not read, for the same
+  dynamic-scoping exercise SET's entry describes. It must not be removed.
+- `src/REF/tests/formal-is-a-ref/` is byte-identical to SET's
+  `tests/formal-is-a-copy/` and expects **`4`** where SET expects `3`.
+  Diffing the two expected files is the shortest possible demonstration of
+  what REF adds.
+- The old `src/REF/tests/let/` is now `tests/nonvar-arg-is-a-copy/`. Same
+  program, renamed for what it tests. Any handout citing the path needs
+  updating.

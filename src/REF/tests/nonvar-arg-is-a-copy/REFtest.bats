@@ -1,0 +1,11 @@
+#!/usr/bin/env bats
+
+load '../../../../bin/relocate.bash'
+
+@test "REF nonvar-arg-is-a-copy (python)" {
+  relocate
+  cd python
+  RESULT="$(plcc-rep < ../tests/nonvar-arg-is-a-copy/REF.input)"
+  expected_output=$(< "../tests/nonvar-arg-is-a-copy/REF.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
