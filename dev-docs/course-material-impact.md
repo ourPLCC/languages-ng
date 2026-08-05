@@ -408,11 +408,12 @@ headings are added in the order each language is migrated.
   call-by-name and is worth a slide of its own.
 - `apply` now takes a `List<Ref>` **and** an `Env` (`apply(args, env)`
   in Python/JavaScript, `apply(List<Ref> args, Env e)` in Java) — the
-  same unread `env` parameter REF introduced as a dynamic-scoping
-  homework seam. Pre-migration NAME's `apply(List<Ref>)` had no `Env`
-  parameter at all. `ProcVal.apply` also now raises
-  `formals/args number mismatch` on an arity error, rather than
-  whatever pre-migration NAME did.
+  same unread `env` parameter, for the same dynamic-scoping exercise
+  SET's entry describes. Pre-migration NAME's `apply(List<Ref>)` had no
+  `Env` parameter at all. `ProcVal.apply` also now raises
+  `formals/args number mismatch` on an arity error; pre-migration NAME
+  had no arity check at all, going straight to
+  `new Bindings(formals.varList, refList)`.
 - `let` and `letrec` are untouched: both `LetDecls` methods still
   evaluate their bindings eagerly, exactly as REF does. Call-by-name in
   this language is a rule about **operands to a proc call**, not about
