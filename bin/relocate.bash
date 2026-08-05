@@ -1,10 +1,38 @@
+# Copy every non-ignored file under $1 into $2, preserving relative
+# paths. Driving the copy from git means .gitignore is the single source
+# of truth for what counts as build output -- a plain `cp -R` also sweeps
+# up the gitignored plcc-ng/, __pycache__/, and *.class directories a
+# by-hand plcc-rep run leaves behind, which silently corrupts the next
+# suite run (issue #25).
+#
+# --others --exclude-standard is what keeps uncommitted work visible:
+# git ls-files yields a path list and tar reads those paths from the
+# working tree, so uncommitted edits and never-added files are copied,
+# while ignored files are not.
+function relocate_copy_tree () {
+  local from="$1" to="$2"
+  (
+    cd "${from}" || return 1
+    git ls-files -z --cached --others --exclude-standard \
+      | tar --null -T - -cf -
+  ) | tar -xf - -C "${to}"
+}
+
+# BATS_TEST_DIRNAME is .../src/<LANG>/tests/<case>. Copy the whole src/
+# tree (not just <LANG>/) for two reasons: migrated specs %include a
+# sibling top-level directory -- e.g. V1's spec.plcc reaching into
+# ../../Env/envRN/<target>/env.plcc -- and the not-yet-migrated languages
+# (NAME, NEED, OBJ, TYPE0, TYPE1) run plccmk, which builds in place and
+# has no way to be pointed at a spec elsewhere.
+#
+# The %include half of that is now avoidable: plcc-rep -s <abs spec path>
+# resolves %include from the spec's real location while writing build
+# output to the cwd, so migrated tests need no copy at all. See the
+# follow-up issue filed alongside issue #25.
+#
+# Then cd into <LANG>, landing in the same place callers already expect
+# (unchanged for languages with no cross-directory %include).
 function relocate () {
-  # BATS_TEST_DIRNAME is .../src/<LANG>/tests/<case>. Copy the whole
-  # src/ tree (not just <LANG>/) so that specs which %include a sibling
-  # top-level directory -- e.g. V1's spec.plcc reaching into
-  # ../../Env/envRN/<target>/env.plcc -- still resolve once relocated.
-  # Then cd into <LANG>, landing in the same place callers already
-  # expect (unchanged for languages with no cross-directory %include).
   local lang_dir
   lang_dir="$(cd "${BATS_TEST_DIRNAME}/../.." && pwd)"
   local lang_name
@@ -12,6 +40,6 @@ function relocate () {
   local src_dir
   src_dir="$(cd "${lang_dir}/.." && pwd)"
   cd "${BATS_TEST_TMPDIR}"
-  cp -R "${src_dir}/"* .
+  relocate_copy_tree "${src_dir}" .
   cd "${lang_name}"
 }
