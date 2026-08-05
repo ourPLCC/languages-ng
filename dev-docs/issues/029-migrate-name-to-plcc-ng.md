@@ -2,7 +2,7 @@
 type: feat
 target: this repo
 opened: 2026-08-05
-closed:
+closed: 2026-08-05
 ---
 
 # 029 - migrate-name-to-plcc-ng
