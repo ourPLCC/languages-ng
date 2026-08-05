@@ -93,6 +93,11 @@ class ProcVal(Val):
         self.body = body
         self.env = env
 
+    # Like the evaluation of an expression, the application of a proc
+    # takes place in the context of an environment, which arrives as the
+    # second parameter. A proc may use or ignore that environment as its
+    # own semantics require. This one ignores it: it resolves free
+    # variables in the environment it captured when it was created.
     def apply(self, args, env):
         if len(self.formals.symbolList) != len(args):
             raise LanguageError("formals/args number mismatch")

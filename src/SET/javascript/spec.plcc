@@ -118,6 +118,11 @@ class ProcVal extends Val {
         this.env = env;
     }
 
+    // Like the evaluation of an expression, the application of a proc
+    // takes place in the context of an environment, which arrives as the
+    // second parameter. A proc may use or ignore that environment as its
+    // own semantics require. This one ignores it: it resolves free
+    // variables in the environment it captured when it was created.
     apply(args, env) {
         if (this.formals.symbolList.length !== args.length)
             throw new LanguageError("formals/args number mismatch");
