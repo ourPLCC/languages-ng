@@ -613,14 +613,25 @@ Expected: FAIL in `setup` — `cp: cannot stat '.../bin/clean.bash'`.
 # only *ignored* files, so .gitignore stays the single source of truth and
 # untracked work in progress is never touched.
 
+# set -e comes BEFORE the cd preamble, unlike bin/test.bash. That script
+# only runs bats, so falling through a failed cd is harmless; this one
+# deletes files, and must abort rather than clean whatever directory it
+# happened to be invoked from.
+set -euo pipefail
+
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$( cd "${SCRIPT_DIR}/.." &> /dev/null && pwd )"
 cd "${PROJECT_ROOT}"
 
-set -euo pipefail
-
 git clean -X -d -f src
 ```
+
+**Amended 2026-08-05, mid-execution.** This snippet originally placed
+`set -euo pipefail` *after* the `cd`, copying `bin/test.bash`'s preamble
+verbatim. Review caught that a failed `cd` then leaves the script running
+`git clean` in the invoking directory instead of aborting — a read-only
+script's idiom carried onto a destructive one. The ordering above is
+load-bearing; do not "restore consistency" with `bin/test.bash`.
 
 Then: `chmod +x bin/clean.bash`
 
