@@ -22,3 +22,5 @@
 
 - **[#27](issues/027-use-spec-flag-instead-of-copying-tree.md) — use `plcc-rep -s` instead of copying `src/` into each test tmpdir**
   `plcc-rep -s <abs spec path>` resolves `%include` from the spec's real location while writing build output to the current directory, so the 30 migrated test files need no copied tree at all — isolation becomes structural rather than a filtered copy. The 5 legacy `plccmk` languages still need `relocate`, so both mechanisms coexist until they migrate.
+- **[#28](issues/028-relocate-filter-hides-permission-errors.md) — relocate's `[[ -e ]]` filter hides permission errors**
+  `relocate_copy_tree`'s existence filter can't tell "deleted with `rm`" from "exists but unreadable" (`chmod 000` on a tracked file's parent directory reproduces it), so an `EACCES` path is silently dropped from the copy instead of failing loudly — the same silent-corruption class as issue #25, reintroduced one layer down. Dormant: nothing in this repo `chmod`s a spec directory today.
