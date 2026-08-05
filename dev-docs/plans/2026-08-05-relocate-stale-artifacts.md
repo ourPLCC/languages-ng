@@ -801,8 +801,18 @@ Expected: no errors.
 
 ```bash
 git add dev-docs/issues dev-docs/roadmap.md
-git commit -m "docs(issues): file follow-up - use plcc-rep -s instead of copying src"
+git commit -m "docs(issues): file 027 - use plcc-rep -s instead of copying src"
 ```
+
+Substitute the ID the script actually assigned. `dev-docs/issue-conventions.md`
+specifies the form `docs(issues): file NNN - <short title>`, and every prior
+issue-filing commit follows it — the number belongs in the message, not a
+word like "follow-up". `bin/issues/check.bash` validates file and roadmap
+consistency but **not** commit-message format, so nothing will catch this
+automatically.
+
+**Amended 2026-08-05, mid-execution** — the original text here said
+"file follow-up -", which review caught as convention drift.
 
 ---
 
