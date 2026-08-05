@@ -420,3 +420,36 @@ headings are added in the order each language is migrated.
 - The old `src/NAME/tests/let-proc/` is now
   `tests/operand-evaluated-at-use/`. Same program (expected value still
   `7`), renamed for what it actually demonstrates.
+- All eight of `Prog/{countdown, counter, divideByZero, jensen, looper,
+  pppp, sumsq, test}` were run against all three targets (Task 5) and are
+  byte-identical across Python, Java, and JavaScript. Four of them were
+  also run against REF's own shipped `spec.plcc`, giving a live
+  NAME-versus-REF contrast — not a predicted one, since both are shipped
+  specs and both numbers come from actually running the same source file:
+
+  | program | NAME | REF |
+  |---|---|---|
+  | `Prog/pppp` | `7` | `6` |
+  | `Prog/test` | `10` | `4` |
+  | `Prog/counter` | `1` | `4` |
+  | `Prog/divideByZero` | `11` | `attempt to divide by zero` |
+
+  This table doubles as a demo: `( cd src/NAME/python && plcc-rep <
+  ../Prog/pppp )` next to `( cd src/REF/python && plcc-rep <
+  ../../NAME/Prog/pppp )` shows the divergence live, in class, from the
+  same source file against two different `spec.plcc`s.
+- `Prog/jensen` and `Prog/looper` **do not terminate** under call-by-value
+  — run against REF, Python raises `RecursionError` after a long climb,
+  and Java and JavaScript may simply hang. This is the sharpest available
+  demonstration that call-by-name is not merely a different answer to the
+  same program: it is a different set of programs that terminate at all.
+  Do not add these two to the REF-contrast table above; the divergence is
+  the finding, not a number to fill in.
+- `Prog/counter` reads like an ordinary counter — `.times4(let count=0 in
+  proc() set count=add1(count))` — and gives `1`, not `4`, because the
+  operand is a thunk rebuilt on every one of `times4`'s four calls, so
+  each call gets a fresh `count`. `Prog/test` gives `10`, not `4`, because
+  the thunk `set x=add1(x)` is forced seven times, incrementing `x` each
+  time. Both are call-by-name working correctly, not regressions, and
+  both are worth pre-empting on a slide before a student reports either
+  as a bug.
