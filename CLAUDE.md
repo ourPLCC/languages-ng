@@ -1,5 +1,29 @@
 # CLAUDE.md
 
+## Anything worth remembering goes in a committed file
+
+Assistant memory does not survive this devcontainer. It lives under
+`~/.claude/` on the container's `overlay` filesystem, which is discarded
+when the container is rebuilt or a new one is created; only
+`/workspaces/languages-ng` is a host mount that persists, and
+`.devcontainer/devcontainer.json` declares no volume for `~/.claude`.
+Nothing written to memory reaches a teammate either, since it is per-user
+and per-machine.
+
+So a fact only matters as long as it is committed to this repository.
+Recording something in assistant memory alone means losing it at the next
+rebuild — and losing it silently, since nothing reports the gap. The same
+applies to scratch space inside a git worktree: `.superpowers/` and
+`.claude/worktrees/` are gitignored, so notes kept there vanish when the
+worktree is removed.
+
+This is why the conventions below are all file-based. When something is
+worth carrying forward, put it where it belongs and commit it: an issue in
+[dev-docs/issues/](dev-docs/issues/), a design decision in a
+`dev-docs/specs/` document, a course-material consequence in
+[dev-docs/course-material-impact.md](dev-docs/course-material-impact.md),
+or a working convention in this file.
+
 ## Creating and closing issues
 
 Issue workflow conventions live in [dev-docs/issue-conventions.md](dev-docs/issue-conventions.md). The short version:
