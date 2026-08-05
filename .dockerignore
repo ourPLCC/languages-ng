@@ -1,0 +1,8 @@
+# Build output -- see issue #25. Copying these into the image is the same
+# defect as copying them into a test tmpdir.
+plcc-ng/
+__pycache__/
+*.class
+
+# Agent worktrees and scratch state; never needed in the test image.
+.claude/
