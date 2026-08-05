@@ -2,7 +2,7 @@
 type: docs
 target: this repo
 opened: 2026-08-05
-closed:
+closed: 2026-08-05
 ---
 
 # 026 - apply-env-comment-missing-from-most-targets

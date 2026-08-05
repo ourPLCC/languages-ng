@@ -18,9 +18,6 @@
 - **[#22](issues/022-plcc-rep-parses-each-source-independently.md) — plcc-rep parses each SOURCE argument independently**
   A program split across two files no longer parses, where old PLCC's `rep` joined its file arguments into one stream; V6's `Prog/p1`/`Prog/p2` course example depends on the old behavior and now needs `cat p1 p2 | plcc-rep`. Targeted at ourPLCC/plcc-ng, not reported externally yet.
 
-- **[#26](issues/026-apply-env-comment-missing-from-most-targets.md) — apply's env parameter is unexplained in 13 of 15 spec files**
-  `ProcVal.apply` takes an environment it never reads, but only `src/SET/java` and `src/REF/java` say why; the other 13 leave a reader (or a tidying refactor) facing an unused parameter that must not be removed. The two existing comments also describe a homework assignment, which should not appear in files students read as appendices.
-
 ### Test
 
 - **[#25](issues/025-relocate-copies-stale-build-artifacts.md) — relocate copies stale build artifacts into test runs**
