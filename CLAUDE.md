@@ -21,6 +21,32 @@ This project keeps design specs and implementation plans under [dev-docs/](dev-d
 - Specs (from brainstorming) go in `dev-docs/specs/`, named `YYYY-MM-DD-<topic>-design.md`.
 - Plans (from writing-plans) go in `dev-docs/plans/`.
 
+### Shell and config embedded in a plan
+
+Review snippets inside a plan as rigorously as code going into the repo.
+They read as prose and get transcribed as-is, so a defect in one survives
+into `bin/` unless someone catches it first.
+
+Issue [#25](dev-docs/issues/025-relocate-copies-stale-build-artifacts.md)
+is the cautionary case: five defects were found across its eight tasks,
+and **every one originated in the plan's own snippets** rather than in the
+implementation — a false claim about when `tar` aborts, an
+`[[ -e ]] && printf` inside a `while` loop that left the loop at exit
+status 1 and broke a newly added `set -o pipefail`, `set -euo pipefail`
+placed after the `cd` in a destructive script, `.dockerignore` patterns
+written with `.gitignore` semantics, and a commit message that ignored
+this repo's own issue conventions. The plan's `Amended`/`Corrected` blocks
+record each one.
+
+Two habits catch these: mentally execute a snippet for exit-status
+propagation, subshell boundaries, and pattern semantics before dispatching
+it; and when a snippet asserts a factual claim about tool behavior
+("`tar` aborts", "this pattern matches"), verify it in a scratch directory
+rather than asserting it. If someone implementing the plan reports being
+blocked because reality contradicts it, assume they are right until shown
+otherwise — that happened three times on issue #25 and they were correct
+every time.
+
 ## Course-material impact log
 
 Some changes made while porting a language don't just change internals —

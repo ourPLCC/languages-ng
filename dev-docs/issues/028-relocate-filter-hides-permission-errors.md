@@ -72,6 +72,18 @@ issue is specifically about the parent-directory variant, which the
 
 ## Notes
 
+**A second condition the same filter swallows: dangling symlinks.**
+`[[ -e ]]` follows a symlink to its target, so a link whose target is
+missing reads as "does not exist" and is dropped. The previous `cp -R`
+preserved such a link as a link, regardless of whether its target
+resolved. This is a genuine behavior change introduced by the issue #25
+fix, and it is inert today only because the repository contains no tracked
+symlinks at all (`git ls-files -s | awk '$1 == "120000"'` is empty). It is
+recorded here rather than as its own issue because it shares both the root
+cause and the single line of code with the permission case above — the
+proposed fix below resolves both, since `git ls-files --deleted` reports a
+dangling symlink as present (the link itself exists) rather than deleted.
+
 **Why this is not urgent.** Nothing in this repository `chmod`s a spec
 directory during normal use, so the defect is dormant. It was triaged
 during the issue #25 review as confirmed but non-blocking for that
