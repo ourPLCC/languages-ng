@@ -17,3 +17,11 @@ load '../../../../bin/relocate.bash'
   expected_output=$(< "../tests/unused-arg-not-evaluated/NAME.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "NAME unused-arg-not-evaluated (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/unused-arg-not-evaluated/NAME.input)"
+  expected_output=$(< "../tests/unused-arg-not-evaluated/NAME.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
