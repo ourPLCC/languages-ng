@@ -675,13 +675,25 @@ task is verified by inspection; the PR's CI run and any local
 ```
 # Build output -- see issue #25. Copying these into the image is the same
 # defect as copying them into a test tmpdir.
-plcc-ng/
-__pycache__/
-*.class
+**/plcc-ng
+**/__pycache__
+**/*.class
 
 # Agent worktrees and scratch state; never needed in the test image.
 .claude/
 ```
+
+**The `**/` prefixes are load-bearing.** `.dockerignore` is not
+`.gitignore`: Docker matches patterns against the full path relative to the
+build-context root, and an unslashed pattern is *not* implicitly prefixed
+with `**/`. Written as bare `plcc-ng/`, the pattern would match only a
+root-level directory and miss `src/SET/java/plcc-ng/`, where the artifacts
+actually live — excluding nothing at all.
+
+`.claude/` correctly has no prefix: it only ever occurs at the repo root.
+
+**Amended 2026-08-05, mid-execution** — the original content used bare
+patterns and was caught in review.
 
 - [ ] **Step 2: Verify `.git` is NOT excluded**
 
