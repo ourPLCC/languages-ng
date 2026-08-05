@@ -1,0 +1,530 @@
+%include ../grammar.plcc
+%
+javascript
+
+%include ../../Env/envRef/javascript/env.plcc
+
+Val
+%%%
+const { LanguageError } = require('./runtime/base');
+
+class Val {
+
+    apply(args, env) {
+        throw new LanguageError(`Cannot apply ${this}`);
+    }
+
+    isTrue() {
+        return true;
+    }
+
+    intVal() {
+        throw new LanguageError(`${this}: not an Int`);
+    }
+}
+
+module.exports = { Val };
+%%%
+
+IntVal
+%%%
+const { Val } = require('./Val');
+
+class IntVal extends Val {
+
+    constructor(val) {
+        super();
+        this.val = typeof val === "string" ? parseInt(val, 10) : val;
+    }
+
+    intVal() {
+        return this;
+    }
+
+    toString() {
+        return String(this.val);
+    }
+
+    isTrue() {
+        return this.val !== 0;
+    }
+}
+
+module.exports = { IntVal };
+%%%
+
+Ref
+%%%
+class Ref {
+
+    static valsToRefs(valList) {
+        const { ValRef } = require('./ValRef');
+        return valList.map(v => new ValRef(v));
+    }
+
+    deRef() {
+        throw new Error("not implemented");
+    }
+
+    setRef(v) {
+        throw new Error("not implemented");
+    }
+}
+
+module.exports = { Ref };
+%%%
+
+ValRef
+%%%
+const { Ref } = require('./Ref');
+
+class ValRef extends Ref {
+
+    constructor(val) {
+        super();
+        this.val = val;
+    }
+
+    deRef() {
+        return this.val;
+    }
+
+    setRef(v) {
+        this.val = v;
+        return v;
+    }
+
+    toString() {
+        return `${this.val}`;
+    }
+}
+
+module.exports = { ValRef };
+%%%
+
+ProcVal
+%%%
+const { Val } = require('./Val');
+const { Bindings } = require('./Bindings');
+const { LanguageError } = require('./runtime/base');
+
+class ProcVal extends Val {
+
+    constructor(formals, body, env) {
+        super();
+        this.formals = formals;
+        this.body = body;
+        this.env = env;
+    }
+
+    apply(args, env) {
+        if (this.formals.symbolList.length !== args.length)
+            throw new LanguageError("formals/args number mismatch");
+        const bindings = new Bindings(this.formals.symbolList, args);
+        const nenv = this.env.extendEnvRef(bindings);
+        return this.body.eval(nenv);
+    }
+
+    toString() {
+        return "proc";
+    }
+}
+
+module.exports = { ProcVal };
+%%%
+
+Program:import
+%%%
+const { Env } = require('./Env');
+%%%
+
+Program
+%%%
+static env = Env.initEnv();
+%%%
+
+Define:import
+%%%
+const { Binding } = require('./Binding');
+const { ValRef } = require('./ValRef');
+%%%
+
+Define
+%%%
+_run() {
+    const env = Program.env;
+    const s = this.symbol.lexeme;
+    const val = this.exp.eval(env);
+    const ref = new ValRef(val);
+    const b = env.lookup(s);
+    if (b !== null)
+        b.ref = ref;
+    else
+        env.add(new Binding(s, ref));
+    return s;
+}
+%%%
+
+Eval
+%%%
+_run() {
+    return String(this.exp.eval(Program.env));
+}
+%%%
+
+Exp:import
+%%%
+const { ValRef } = require('./ValRef');
+%%%
+
+Exp
+%%%
+evalRef(env) {
+    return new ValRef(this.eval(env));
+}
+%%%
+
+LitExp:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+LitExp
+%%%
+eval(env) {
+    return new IntVal(this.lit.lexeme);
+}
+
+toString() {
+    return this.lit.lexeme;
+}
+%%%
+
+VarExp
+%%%
+eval(env) {
+    return env.applyEnv(this.symbol.lexeme);
+}
+
+evalRef(env) {
+    return env.applyEnvRef(this.symbol.lexeme);
+}
+
+toString() {
+    return this.symbol.lexeme;
+}
+%%%
+
+IfExp
+%%%
+eval(env) {
+    if (this.testExp.eval(env).isTrue())
+        return this.trueExp.eval(env);
+    else
+        return this.falseExp.eval(env);
+}
+
+toString() {
+    return `if ${this.testExp} then ${this.trueExp} else ${this.falseExp}`;
+}
+%%%
+
+PrimappExp
+%%%
+eval(env) {
+    const args = this.rands.evalRands(env);
+    return this.prim.apply(args);
+}
+
+toString() {
+    return `${this.prim}(${this.rands})`;
+}
+%%%
+
+LetExp
+%%%
+eval(env) {
+    const nenv = this.letDecls.addBindings(env);
+    return this.exp.eval(nenv);
+}
+
+toString() {
+    return " ...LetExp... ";
+}
+%%%
+
+LetrecExp
+%%%
+eval(env) {
+    env = this.letDecls.addLetrecBindings(env);
+    return this.exp.eval(env);
+}
+
+toString() {
+    return " ...LetrecExp... ";
+}
+%%%
+
+LetDecls:import
+%%%
+const { Env } = require('./Env');
+const { Binding } = require('./Binding');
+const { Bindings } = require('./Bindings');
+const { Ref } = require('./Ref');
+const { ValRef } = require('./ValRef');
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(this.symbolList, " in let/letrec LHS identifiers");
+%%%
+
+LetDecls
+%%%
+addBindings(env) {
+    const valList = this.expList.map(e => e.eval(env));
+    const refList = Ref.valsToRefs(valList);
+    const bindings = new Bindings(this.symbolList, refList);
+    return env.extendEnvRef(bindings);
+}
+
+addLetrecBindings(env) {
+    env = env.extendEnvRef(new Bindings());
+    for (let i = 0; i < this.symbolList.length; i++) {
+        const val = this.expList[i].eval(env);
+        env.add(new Binding(this.symbolList[i].lexeme, new ValRef(val)));
+    }
+    return env;
+}
+
+toString() {
+    return " ...LetDecls... ";
+}
+%%%
+
+ProcExp
+%%%
+eval(env) {
+    return this.proc.makeClosure(env);
+}
+
+toString() {
+    return " ...ProcExp... ";
+}
+%%%
+
+Proc:import
+%%%
+const { ProcVal } = require('./ProcVal');
+%%%
+
+Proc
+%%%
+makeClosure(env) {
+    return new ProcVal(this.formals, this.exp, env);
+}
+%%%
+
+Formals:import
+%%%
+const { Env } = require('./Env');
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(this.symbolList, " in proc formals");
+%%%
+
+AppExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    const args = this.rands.evalRandsRef(env);
+    return v.apply(args, env);
+}
+
+toString() {
+    return " ...AppExp... ";
+}
+%%%
+
+SeqExp
+%%%
+eval(env) {
+    let v = this.exp.eval(env);
+    for (const e of this.seqExps.expList)
+        v = e.eval(env);
+    return v;
+}
+
+toString() {
+    return " ...SeqExp... ";
+}
+%%%
+
+SetExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    const ref = env.applyEnvRef(this.symbol.lexeme);
+    return ref.setRef(v);
+}
+
+toString() {
+    return " ...SetExp... ";
+}
+%%%
+
+Rands
+%%%
+evalRands(env) {
+    return this.expList.map(e => e.eval(env));
+}
+
+evalRandsRef(env) {
+    return this.expList.map(e => e.evalRef(env));
+}
+
+toString() {
+    return this.expList.map(e => String(e)).join(",");
+}
+%%%
+
+AddPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+AddPrim
+%%%
+toString() {
+    return "+";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 + i1);
+}
+%%%
+
+SubPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+SubPrim
+%%%
+toString() {
+    return "-";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 - i1);
+}
+%%%
+
+MulPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+MulPrim
+%%%
+toString() {
+    return "*";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 * i1);
+}
+%%%
+
+DivPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+DivPrim
+%%%
+toString() {
+    return "/";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    if (i1 === 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(Math.trunc(i0 / i1));
+}
+%%%
+
+Add1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+Add1Prim
+%%%
+toString() {
+    return "add1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 + 1);
+}
+%%%
+
+Sub1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+Sub1Prim
+%%%
+toString() {
+    return "sub1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 - 1);
+}
+%%%
+
+ZeropPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+ZeropPrim
+%%%
+toString() {
+    return "zero?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 === 0 ? 1 : 0);
+}
+%%%
