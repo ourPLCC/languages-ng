@@ -2,6 +2,11 @@
 
 ## Open Issues
 
+### Feat
+
+- **[#24](issues/024-migrate-ref-to-plcc-ng.md) — Migrate REF to plcc-ng**
+  Ports REF's grammar (a zero-syntax-delta copy of SET's) and Java/Python/JavaScript semantics to plcc-ng. REF is SET + call-by-reference semantics: a five-method delta (`Exp.evalRef`, `VarExp.evalRef`, `Rands.evalRandsRef`, `AppExp.eval`, `Val`/`ProcVal.apply` on `Ref`s) over SET's reused classes; no `envRef` work, since SET already ported it.
+
 ### Chore
 
 - **[#12](issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — CI cannot run plcc-ng-migrated languages**
