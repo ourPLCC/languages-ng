@@ -9,3 +9,11 @@ load '../../../../bin/relocate.bash'
   expected_output=$(< "../tests/captured-ref/REF.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "REF captured-ref (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/captured-ref/REF.input)"
+  expected_output=$(< "../tests/captured-ref/REF.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}

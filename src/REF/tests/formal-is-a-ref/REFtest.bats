@@ -9,3 +9,11 @@ load '../../../../bin/relocate.bash'
   expected_output=$(< "../tests/formal-is-a-ref/REF.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "REF formal-is-a-ref (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/formal-is-a-ref/REF.input)"
+  expected_output=$(< "../tests/formal-is-a-ref/REF.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
