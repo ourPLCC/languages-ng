@@ -9,3 +9,11 @@ load '../../../../bin/relocate.bash'
   expected_output=$(< "../tests/jensen-device/NAME.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "NAME jensen-device (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/jensen-device/NAME.input)"
+  expected_output=$(< "../tests/jensen-device/NAME.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
