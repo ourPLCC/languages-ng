@@ -374,3 +374,49 @@ headings are added in the order each language is migrated.
   `x` by reference; run against SET's spec the same program gives
   `1 1 1`. Worth flagging if it appears in a lecture as an ordinary
   counter.
+
+## NAME
+
+- Identifier token is now `SYMBOL`, not `VAR`, and the corresponding
+  field is `symbol`, not `var` — the standing convention since V0.
+  `VarExp.eval` reads `env.applyEnv(self.symbol.lexeme)`, not
+  `env.applyEnv(self.var.lexeme)`.
+- `$run()` is now `_run()`, and it **returns** its output string rather
+  than printing it, the same `_run()` contract every migrated language
+  adopts.
+- `Define` now prints the defined name, where pre-migration NAME printed
+  nothing — its `// System.out.println(id);` line was commented out.
+  `Prog/jensen`, `Prog/sumsq`, `Prog/countdown`, and `Prog/looper` each
+  gain a leading output line naming what they define (`while` for the
+  first three, `p` then `g` for `looper`, which has two top-level
+  `define`s). This isn't a stylistic choice: plcc-ng's `_run()` must
+  return a string, so "print nothing" was never an option, and returning
+  `""` would print a blank line rather than nothing at all.
+- `ThunkRef` is a new `Ref` subclass living beside `ValRef`. Its `deRef`
+  re-evaluates the captured expression **every** time it's called — no
+  memoization — which is precisely what distinguishes call-by-name from
+  call-by-need. Its `setRef` raises `cannot modify a read-only
+  expression`: a thunk has no cell to write into.
+- `Exp.evalRef` now returns a `ThunkRef(self, env)` instead of wrapping
+  `eval(env)` in a `ValRef`. `LitExp` and `ProcExp` both override it back
+  to the old `ValRef`-wrapping behavior — a literal or a proc value gains
+  nothing from being thunked and eagerly evaluating them is harmless —
+  while `VarExp` keeps REF's `applyEnvRef` override unchanged, so a bare
+  variable operand is still passed by reference. This three-way split
+  (`ThunkRef` by default, `ValRef` for literals/procs, the inherited
+  reference override for variables) is the entire mechanism of
+  call-by-name and is worth a slide of its own.
+- `apply` now takes a `List<Ref>` **and** an `Env` (`apply(args, env)`
+  in Python/JavaScript, `apply(List<Ref> args, Env e)` in Java) — the
+  same unread `env` parameter REF introduced as a dynamic-scoping
+  homework seam. Pre-migration NAME's `apply(List<Ref>)` had no `Env`
+  parameter at all. `ProcVal.apply` also now raises
+  `formals/args number mismatch` on an arity error, rather than
+  whatever pre-migration NAME did.
+- `let` and `letrec` are untouched: both `LetDecls` methods still
+  evaluate their bindings eagerly, exactly as REF does. Call-by-name in
+  this language is a rule about **operands to a proc call**, not about
+  `let`.
+- The old `src/NAME/tests/let-proc/` is now
+  `tests/operand-evaluated-at-use/`. Same program (expected value still
+  `7`), renamed for what it actually demonstrates.
