@@ -17,3 +17,8 @@
   Direct language-level recursion (`letrec f = proc(x) ... .f(sub1(x)) ... in .f(N)`) dies in Python around `N=330` but survives past `N=2700` in Java and JavaScript, since each language-level call costs several Python interpreter frames; the Python failure also mislabels the cause as a specification error. Inherited from V0/V4, not a V5 defect, but `letrec` makes deep recursion the natural thing to write.
 - **[#22](issues/022-plcc-rep-parses-each-source-independently.md) — plcc-rep parses each SOURCE argument independently**
   A program split across two files no longer parses, where old PLCC's `rep` joined its file arguments into one stream; V6's `Prog/p1`/`Prog/p2` course example depends on the old behavior and now needs `cat p1 p2 | plcc-rep`. Targeted at ourPLCC/plcc-ng, not reported externally yet.
+
+### Test
+
+- **[#25](issues/025-relocate-copies-stale-build-artifacts.md) — relocate copies stale build artifacts into test runs**
+  `bin/relocate.bash` copies the whole `src/` tree into each test's tmpdir, sweeping up gitignored `plcc-ng/`, `__pycache__/`, and `*.class` output, so running `plcc-rep` by hand in a target directory silently corrupts the next `bin/test.bash` run while `git status` stays clean; it surfaces as a flaky failure in whichever language holds the artifacts, usually not the one being worked on.
