@@ -59,3 +59,31 @@ EOF
 
   [ "$(< "${TO}/LANG/java/spec.plcc")" = 'edited in the working tree' ]
 }
+
+@test "relocate_copy_tree tolerates a tracked file deleted with rm" {
+  rm "${FROM}/LANG/java/spec.plcc"
+
+  run relocate_copy_tree "${FROM}" "${TO}"
+
+  [ "$status" -eq 0 ]
+  [ ! -e "${TO}/LANG/java/spec.plcc" ]
+  [ -f "${TO}/.gitignore" ]
+  [[ "$output" != *"Cannot stat"* ]]
+}
+
+@test "relocate_copy_tree fails when the destination does not exist" {
+  run relocate_copy_tree "${FROM}" "${BATS_TEST_TMPDIR}/no-such-dir"
+
+  [ "$status" -ne 0 ]
+}
+
+@test "relocate_copy_tree fails when a listed file cannot be read" {
+  if [ "$(id -u)" -eq 0 ]; then
+    skip "root bypasses file permissions, so tar can always read the file"
+  fi
+  chmod 000 "${FROM}/LANG/java/spec.plcc"
+
+  run relocate_copy_tree "${FROM}" "${TO}"
+
+  [ "$status" -ne 0 ]
+}

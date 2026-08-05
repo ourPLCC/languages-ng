@@ -9,13 +9,27 @@
 # git ls-files yields a path list and tar reads those paths from the
 # working tree, so uncommitted edits and never-added files are copied,
 # while ignored files are not.
+#
+# The existence filter covers a tracked file deleted with plain `rm`
+# rather than `git rm`: --cached still lists the path, and tar would
+# otherwise emit a "Cannot stat" warning for it on every test run.
+#
+# pipefail matters more than it looks: without it this function returns
+# the *extract* tar's status and reports success even when git or the
+# archiving tar failed, handing the test a silently incomplete tree.
 function relocate_copy_tree () {
-  local from="$1" to="$2"
+  local from="$1" to="$2" to_abs
+  to_abs="$(cd "${to}" && pwd)" || return 1
   (
-    cd "${from}" || return 1
+    set -o pipefail
+    cd "${from}" || exit 1
     git ls-files -z --cached --others --exclude-standard \
-      | tar --null -T - -cf -
-  ) | tar -xf - -C "${to}"
+      | while IFS= read -r -d '' f; do
+          if [[ -e "${f}" ]]; then printf '%s\0' "${f}"; fi
+        done \
+      | tar --null -T - -cf - \
+      | ( cd "${to_abs}" && tar -xf - )
+  )
 }
 
 # BATS_TEST_DIRNAME is .../src/<LANG>/tests/<case>. Copy the whole src/
