@@ -58,9 +58,23 @@ Run: `bin/test.bash 2>&1 | tail -5`
 
 Record the three numbers it prints (total tests, passing, failing) in the
 task's commit message. Do **not** trust the "84 tests / 78 passing / 6
-failing" figure in issue #25 — REF landed since it was written and there
-are now 95 `@test`s. Everything below asserts a *delta* against whatever
-you measure here.
+failing" figure in issue #25 — REF landed since it was written and all
+three numbers are stale.
+
+Measured on this branch at `b29e1f4` (2026-08-05): **95 tests, 90 passing,
+5 failing**. The 5 failures are exactly the legacy `plccmk` languages:
+
+```
+not ok 1  NAME let-proc
+not ok 2  NEED let
+not ok 3  OBJ class
+not ok 31 TYPE0 boolean
+not ok 32 TYPE1 proc-types
+```
+
+Confirm you see the same before continuing. If the failure list differs,
+stop — something other than this plan is in play. Everything below asserts
+a *delta* against what you measure here.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -726,15 +740,17 @@ git commit -m "docs(issues): close issue 25 (relocate copies stale artifacts)"
 
 ## Verification Summary
 
-| | Before | After |
+| | Before (measured) | After (expected) |
 | --- | --- | --- |
-| Tests | baseline `N` | `N + 8` |
-| Passing | baseline `P` | `P + 8` |
-| Failing | baseline `F` | `F` (unchanged) |
+| Tests | 95 | 103 |
+| Passing | 90 | 98 |
+| Failing | 5 | 5 (unchanged) |
 
 The 8 new tests are 6 in `bin/tests/relocate.bats` (Tasks 1–4) and 2 in
 `bin/tests/clean.bats` (Task 5).
 
 The five legacy `plccmk` tests stay failing throughout — `plccmk`/`rep`
 are not installed in the devcontainer. That gap is pre-existing and out of
-scope.
+scope. **No language test may change state in either direction**; a
+migrated test that starts passing is as much a red flag as one that starts
+failing, since this plan touches only how files are copied.
