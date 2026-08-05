@@ -357,3 +357,20 @@ headings are added in the order each language is migrated.
 - The old `src/REF/tests/let/` is now `tests/nonvar-arg-is-a-copy/`. Same
   program, renamed for what it tests. Any handout citing the path needs
   updating.
+- REF's example programs are now all under `src/REF/Prog/`. The `Stuff/`
+  directory is gone — `counter1`–`counter5` moved into `Prog/`, and
+  `Stuff/factory` was dropped as a byte-identical duplicate of
+  `Prog/factory`. Any handout pointing at `src/REF/Stuff/...` needs the
+  path updated.
+- `Prog/oe` had an unbalanced `{` and never parsed; the stray brace is
+  removed and it now runs (`.odd?(5)` → `1`, `.even?(5)` → `0`). It also
+  moved from the top level into `Prog/`, matching V4, OBJ, and TYPE1.
+- `Prog/counter1` (`1 1 1`) and `Prog/counter3` (a parse error) are
+  **left as they were** — they read as deliberate counter-examples in a
+  five-program progression. `counter3`'s error text now comes from
+  plcc-ng and reads differently than old PLCC's did.
+- `Prog/counter4` is a second SET/REF contrast, alongside
+  `formal-is-a-ref`. It gives `1 2 3` under REF because `.next(x)` passes
+  `x` by reference; run against SET's spec the same program gives
+  `1 1 1`. Worth flagging if it appears in a lecture as an ordinary
+  counter.
