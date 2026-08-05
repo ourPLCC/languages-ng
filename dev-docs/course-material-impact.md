@@ -350,10 +350,10 @@ headings are added in the order each language is migrated.
   itself remains, since `LetDecls.addBindings` still uses it.
 - `apply` keeps the `env` parameter it does not read, for the same
   dynamic-scoping exercise SET's entry describes. It must not be removed.
-- `src/REF/tests/formal-is-a-ref/` is byte-identical to SET's
-  `tests/formal-is-a-copy/` and expects **`4`** where SET expects `3`.
-  Diffing the two expected files is the shortest possible demonstration of
-  what REF adds.
+- `src/REF/tests/formal-is-a-ref/` has the same input program as
+  SET's `tests/formal-is-a-copy/` but expects **`4`** where SET
+  expects `3`. Diffing the two expected files is the shortest
+  possible demonstration of what REF adds.
 - The old `src/REF/tests/let/` is now `tests/nonvar-arg-is-a-copy/`. Same
   program, renamed for what it tests. Any handout citing the path needs
   updating.
