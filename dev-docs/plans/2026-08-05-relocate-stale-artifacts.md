@@ -297,15 +297,34 @@ Refs #25"
 
 **Interfaces:**
 - Consumes: `relocate_copy_tree <from_dir> <to_dir>`, `setup()` fixture.
-- Produces: `relocate_copy_tree` gains tolerance for index entries with no
-  working-tree file. Signature unchanged.
+- Produces: `relocate_copy_tree` propagates pipeline failures and tolerates
+  index entries with no working-tree file. Signature unchanged.
 
-`git ls-files --cached` lists a path that no longer exists on disk when a
-tracked file is removed with `rm` rather than `git rm`. `tar` then aborts
-with `Cannot stat: No such file or directory`, failing **every** test in
-the suite. This was confirmed by experiment during design.
+> **Amended 2026-08-05, mid-execution.** This task originally claimed that
+> a tracked file deleted with `rm` makes `tar` abort and fail *every* test.
+> That is false, and the original test asserted conditions the unfixed code
+> already satisfied. Measured with GNU tar 1.35:
+>
+> ```
+> tar: LANG/java/spec.plcc: Cannot stat: No such file or directory
+> PIPESTATUS=2 0   overall $?=0
+> to/.gitignore   to/LANG/java/other.plcc     <- everything else copied
+> ```
+>
+> tar skips the unstattable path, copies the rest, and exits 2 — but that 2
+> is the *create* side of the pipe, and the pipeline's status is the
+> *extract* side's 0.
+>
+> That points at the defect actually worth fixing: **`relocate_copy_tree`
+> returns 0 even when the copy fails.** A failed `git ls-files` or a dead
+> tar-create yields a silently incomplete tree that tests then run against
+> — the same silent-corruption class as issue #25 itself. This task now
+> fixes that, and keeps the `[[ -e ]]` filter so the *legitimate*
+> `rm`-deleted case does not trip the new failure propagation.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing tests**
+
+Append all three:
 
 ```bash
 @test "relocate_copy_tree tolerates a tracked file deleted with rm" {
@@ -315,52 +334,108 @@ the suite. This was confirmed by experiment during design.
 
   [ "$status" -eq 0 ]
   [ ! -e "${TO}/LANG/java/spec.plcc" ]
+  [ -f "${TO}/.gitignore" ]
+  [[ "$output" != *"Cannot stat"* ]]
+}
+
+@test "relocate_copy_tree fails when the destination does not exist" {
+  run relocate_copy_tree "${FROM}" "${BATS_TEST_TMPDIR}/no-such-dir"
+
+  [ "$status" -ne 0 ]
+}
+
+@test "relocate_copy_tree fails when a listed file cannot be read" {
+  if [ "$(id -u)" -eq 0 ]; then
+    skip "root bypasses file permissions, so tar can always read the file"
+  fi
+  chmod 000 "${FROM}/LANG/java/spec.plcc"
+
+  run relocate_copy_tree "${FROM}" "${TO}"
+
+  [ "$status" -ne 0 ]
 }
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+The first test now asserts the two things that actually distinguish fixed
+from unfixed: no `Cannot stat` noise on stderr, and the rest of the tree
+still copied. The second and third pin the failure propagation.
+
+- [ ] **Step 2: Run to verify they fail for the right reasons**
 
 Run: `bats bin/tests/relocate.bats`
-Expected: FAIL — tar reports `LANG/java/spec.plcc: Cannot stat: No such
-file or directory` and exits non-zero.
+Expected: all three FAIL. Specifically — test 1 fails on the `Cannot stat`
+assertion (not on `$status`, which is already 0); tests 2 and 3 fail
+because `$status` is 0 where non-zero is required.
 
-- [ ] **Step 3: Filter the path list to entries that exist**
+If test 1 fails on `[ "$status" -eq 0 ]` instead, stop and report BLOCKED —
+that would mean tar behaves differently here than measured.
 
-In `relocate_copy_tree`, replace the pipeline body:
+- [ ] **Step 3: Rewrite the copy to propagate failure**
 
-```bash
-    git ls-files -z --cached --others --exclude-standard \
-      | tar --null -T - -cf -
-```
-
-with:
+Replace the whole `relocate_copy_tree` body (keep the existing comment
+block above it):
 
 ```bash
+function relocate_copy_tree () {
+  local from="$1" to="$2" to_abs
+  to_abs="$(cd "${to}" && pwd)" || return 1
+  (
+    set -o pipefail
+    cd "${from}" || exit 1
     git ls-files -z --cached --others --exclude-standard \
       | while IFS= read -r -d '' f; do
           [[ -e "${f}" ]] && printf '%s\0' "${f}"
         done \
-      | tar --null -T - -cf -
+      | tar --null -T - -cf - \
+      | ( cd "${to_abs}" && tar -xf - )
+  )
+}
 ```
 
-Add to the function's comment block:
+Two things are load-bearing:
+
+- `to` is resolved to an absolute path **before** `cd "${from}"`, because
+  `relocate` calls this with `.` as the destination.
+- The whole pipeline sits inside one `pipefail` subshell, so a failure in
+  *any* stage becomes the function's exit status. Without it the status is
+  whichever command happens to be last.
+
+Append to the function's comment block:
 
 ```bash
-# The existence filter handles a tracked file deleted with plain `rm`
-# rather than `git rm`: --cached still lists the path, and tar aborts the
-# whole copy if it cannot stat it.
+# The existence filter covers a tracked file deleted with plain `rm`
+# rather than `git rm`: --cached still lists the path, and tar would
+# otherwise emit a "Cannot stat" warning for it on every test run.
+#
+# pipefail matters more than it looks: without it this function returns
+# the *extract* tar's status and reports success even when git or the
+# archiving tar failed, handing the test a silently incomplete tree.
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 4: Run to verify they pass**
 
 Run: `bats bin/tests/relocate.bats`
-Expected: `5 tests, 0 failures`.
+Expected: `7 tests, 0 failures` (or 6 passing + 1 skipped if running as
+root).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Confirm `relocate` itself still works**
+
+The `to_abs` change touches how `relocate` calls this helper. Run one real
+language test end to end:
+
+Run: `bats src/V0/tests/*/V0test.bats`
+Expected: 3 tests, 0 failures.
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add bin/relocate.bash bin/tests/relocate.bats
-git commit -m "test(relocate): skip index entries with no working-tree file
+git commit -m "test(relocate): propagate copy failures instead of reporting success
+
+relocate_copy_tree returned the extract tar's status, so a failed
+git ls-files or archiving tar produced a silently incomplete tree that
+tests then ran against. Wrap the pipeline in a pipefail subshell and skip
+index entries with no working-tree file.
 
 Refs #25"
 ```
@@ -419,14 +494,15 @@ declaration:
 - [ ] **Step 4: Run to verify it passes**
 
 Run: `bats bin/tests/relocate.bats`
-Expected: `6 tests, 0 failures`.
+Expected: `8 tests, 0 failures` (or 7 passing + 1 skipped as root).
 
 - [ ] **Step 5: Run the full suite**
 
 Run: `bin/test.bash 2>&1 | tail -5`
-Expected: **+6 tests and +6 passing** versus the Task 1 Step 1 baseline
-(`relocate.bats` now holds 1 + 3 + 1 + 1 = 6 tests), failure count
-unchanged.
+Expected: **+8 tests and +8 passing** versus the Task 1 Step 1 baseline
+(`relocate.bats` now holds 1 + 3 + 3 + 1 = 8 tests), failure count
+unchanged. If running as root, one of the 8 is skipped rather than
+passing — bats counts a skip as not-failing.
 
 - [ ] **Step 6: Commit**
 
@@ -588,8 +664,8 @@ fail every test in the container with `not in a git checkout`.
 - [ ] **Step 3: Confirm the suite is unaffected**
 
 Run: `bin/test.bash 2>&1 | tail -5`
-Expected: identical to the end of Task 5 — **+8 tests and +8 passing**
-versus the Task 1 Step 1 baseline (6 in `relocate.bats`, 2 in
+Expected: identical to the end of Task 5 — **+10 tests and +10 passing**
+versus the Task 1 Step 1 baseline (8 in `relocate.bats`, 2 in
 `clean.bats`).
 
 - [ ] **Step 4: Commit**
@@ -699,7 +775,7 @@ git commit -m "docs(issues): file follow-up - use plcc-rep -s instead of copying
 - [ ] **Step 1: Final full-suite run**
 
 Run: `bin/test.bash 2>&1 | tail -5`
-Expected: +8 tests and +8 passing versus the Task 1 Step 1 baseline,
+Expected: +10 tests and +10 passing versus the Task 1 Step 1 baseline,
 failure count unchanged.
 
 - [ ] **Step 2: Attempt the end-to-end reproduction (bonus check)**
@@ -742,12 +818,13 @@ git commit -m "docs(issues): close issue 25 (relocate copies stale artifacts)"
 
 | | Before (measured) | After (expected) |
 | --- | --- | --- |
-| Tests | 95 | 103 |
-| Passing | 90 | 98 |
+| Tests | 95 | 105 |
+| Passing | 90 | 100 |
 | Failing | 5 | 5 (unchanged) |
 
-The 8 new tests are 6 in `bin/tests/relocate.bats` (Tasks 1–4) and 2 in
-`bin/tests/clean.bats` (Task 5).
+The 10 new tests are 8 in `bin/tests/relocate.bats` (Tasks 1–4) and 2 in
+`bin/tests/clean.bats` (Task 5). As root, one of the 8 skips rather than
+passes, giving 99 passing — bats does not count a skip as a failure.
 
 The five legacy `plccmk` tests stay failing throughout — `plccmk`/`rep`
 are not installed in the devcontainer. That gap is pre-existing and out of
