@@ -363,12 +363,19 @@ still copied. The second and third pin the failure propagation.
 - [ ] **Step 2: Run to verify they fail for the right reasons**
 
 Run: `bats bin/tests/relocate.bats`
-Expected: all three FAIL. Specifically — test 1 fails on the `Cannot stat`
-assertion (not on `$status`, which is already 0); tests 2 and 3 fail
-because `$status` is 0 where non-zero is required.
 
-If test 1 fails on `[ "$status" -eq 0 ]` instead, stop and report BLOCKED —
-that would mean tar behaves differently here than measured.
+Expected: test 1 FAILS on the `Cannot stat` assertion (not on `$status`,
+which is already 0), and test 3 FAILS because `$status` is 0 where non-zero
+is required.
+
+**Test 2 is expected to PASS already** — the extract `tar` is last in the
+pipeline, so a non-existent destination already surfaces as a non-zero
+status without `pipefail`. It stays as a regression guard for the `to_abs`
+resolution, not as a red test. Do not treat its passing as a problem.
+
+If test 1 fails on `[ "$status" -eq 0 ]` instead of on the `Cannot stat`
+assertion, stop and report BLOCKED — that would mean tar behaves
+differently here than measured.
 
 - [ ] **Step 3: Rewrite the copy to propagate failure**
 
@@ -384,12 +391,25 @@ function relocate_copy_tree () {
     cd "${from}" || exit 1
     git ls-files -z --cached --others --exclude-standard \
       | while IFS= read -r -d '' f; do
-          [[ -e "${f}" ]] && printf '%s\0' "${f}"
+          if [[ -e "${f}" ]]; then printf '%s\0' "${f}"; fi
         done \
       | tar --null -T - -cf - \
       | ( cd "${to_abs}" && tar -xf - )
   )
 }
+```
+
+**Use `if ...; then ...; fi`, never `[[ -e "${f}" ]] && printf ...`.** A
+`while` loop exits with the status of the last command its body ran. With
+the `&&` form, a final iteration whose path is filtered out leaves the loop
+at status 1, and `pipefail` then poisons the whole pipeline — reporting
+failure on a copy that was completely correct. This fires exactly when the
+`rm`-deleted path sorts last among non-ignored entries, which is the very
+case this task exists to handle. Verified:
+
+```
+&& form, last iteration filtered:  loop status=1
+if form, same input:               loop status=0
 ```
 
 Two things are load-bearing:
