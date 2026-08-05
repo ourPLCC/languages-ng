@@ -158,7 +158,7 @@ can be aimed at a synthetic tree.
 Each test builds a throwaway repo in `BATS_TEST_TMPDIR` (`git init`, a
 `.gitignore`, `git add`), calls `relocate_copy_tree`, and asserts. No
 commits are needed, since `--cached` reads the index — so no git identity
-configuration is required in CI. Five cases, one per property established
+configuration is required in CI. Eight cases, one per property established
 above:
 
 1. Ignored `plcc-ng/`, `__pycache__/`, and `*.class` are absent from the copy.
@@ -167,6 +167,10 @@ above:
    workflow: new files work before `git add`.)*
 4. An uncommitted edit's content arrives, not the committed content.
 5. A tracked file deleted with plain `rm` does not break the copy.
+6. The copy fails if the destination directory does not exist.
+7. The copy fails if any listed file cannot be read.
+8. An error message to stderr when the source is not in a git checkout,
+   replacing a wall of git noise. *(The `rev-parse` guard provides this.)*
 
 ### 4. `bin/test.bash`
 
