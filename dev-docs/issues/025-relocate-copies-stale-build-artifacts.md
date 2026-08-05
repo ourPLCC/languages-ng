@@ -2,7 +2,7 @@
 type: test
 target: this repo
 opened: 2026-08-05
-closed:
+closed: 2026-08-05
 ---
 
 # 025 - relocate-copies-stale-build-artifacts

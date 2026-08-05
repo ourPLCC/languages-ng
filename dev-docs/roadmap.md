@@ -20,7 +20,5 @@
 
 ### Test
 
-- **[#25](issues/025-relocate-copies-stale-build-artifacts.md) — relocate copies stale build artifacts into test runs**
-  `bin/relocate.bash` copies the whole `src/` tree into each test's tmpdir, sweeping up gitignored `plcc-ng/`, `__pycache__/`, and `*.class` output, so running `plcc-rep` by hand in a target directory silently corrupts the next `bin/test.bash` run while `git status` stays clean; it surfaces as a flaky failure in whichever language holds the artifacts, usually not the one being worked on.
 - **[#27](issues/027-use-spec-flag-instead-of-copying-tree.md) — use `plcc-rep -s` instead of copying `src/` into each test tmpdir**
   `plcc-rep -s <abs spec path>` resolves `%include` from the spec's real location while writing build output to the current directory, so the 30 migrated test files need no copied tree at all — isolation becomes structural rather than a filtered copy. The 5 legacy `plccmk` languages still need `relocate`, so both mechanisms coexist until they migrate.
