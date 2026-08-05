@@ -79,30 +79,69 @@ extract the copy into a new `relocate_copy_tree <from> <to>`:
 
 ```bash
 relocate_copy_tree () {
-  local from="$1" to="$2"
+  local from="$1" to="$2" to_abs
   git -C "${from}" rev-parse --git-dir >/dev/null 2>&1 \
     || { echo "relocate: ${from} is not in a git checkout" >&2; return 1; }
+  to_abs="$(cd "${to}" && pwd)" || return 1
   (
-    cd "${from}"
+    set -o pipefail
+    cd "${from}" || exit 1
     git ls-files -z --cached --others --exclude-standard \
       | while IFS= read -r -d '' f; do
-          [[ -e "${f}" ]] && printf '%s\0' "${f}"
+          if [[ -e "${f}" ]]; then printf '%s\0' "${f}"; fi
         done \
-      | tar --null -T - -cf -
-  ) | tar -xf - -C "${to}"
+      | tar --null -T - -cf - \
+      | ( cd "${to_abs}" && tar -xf - )
+  )
 }
 ```
 
-Three details earn their place:
+Four details earn their place:
 
 - `--others --exclude-standard` is what keeps uncommitted work visible
   while honoring `.gitignore`.
 - The `[[ -e ]]` filter handles a tracked file deleted with plain `rm`
-  rather than `git rm`. `--cached` still lists that path, tar cannot stat
-  it, and **every** test fails with `Cannot stat: No such file or
-  directory`. Confirmed by experiment; the filter is not speculative.
+  rather than `git rm`: `--cached` still lists that path, and tar skips
+  it with a `Cannot stat` warning on stderr rather than aborting the
+  archive. The filter suppresses that warning for the one case where it
+  is expected.
 - The `rev-parse` guard turns "not a git checkout" into one clear line
   instead of a wall of git errors.
+- The `pipefail` subshell and the `to_abs` resolution are what actually
+  fix issue #25's failure mode — see below. `to` is resolved to an
+  absolute path *before* the subshell changes directory, since the `cd
+  "${to_abs}"` on the extract side would otherwise resolve a relative
+  `to` against the wrong directory.
+
+> **Corrected 2026-08-05, during implementation.** This section originally
+> claimed, as established fact, that a tracked file deleted with plain
+> `rm` makes `tar` abort so that "**every** test fails with `Cannot stat:
+> No such file or directory`," and called this "confirmed by experiment;
+> the filter is not speculative." That premise is false. Measured with
+> GNU tar 1.35:
+>
+> ```
+> tar: LANG/java/spec.plcc: Cannot stat: No such file or directory
+> PIPESTATUS=2 0   overall $?=0
+> to/.gitignore   to/LANG/java/other.plcc     <- everything else copied
+> ```
+>
+> tar skips the unstattable path, copies everything else, and exits 2 —
+> but that 2 is the *create* side of the pipe, and (before this fix) the
+> pipeline's reported status was the *extract* side's 0. Nothing "failed
+> every test"; the `rm`-deleted case was already silently tolerated by
+> the unfixed code.
+>
+> The defect that measurement actually uncovered — and what the design
+> above and the shipped code fix — is that `relocate_copy_tree` returned
+> 0 even when the copy failed. A failed `git ls-files` or a dead
+> archiving `tar` produced a silently incomplete tree that tests then ran
+> against: the same silent-corruption class as issue #25 itself,
+> reintroduced one layer down. The `set -o pipefail` subshell and the
+> `to_abs` absolute-path resolution close that gap; the `[[ -e ]]` filter
+> stays so the legitimate `rm`-deleted case doesn't trip the new failure
+> propagation. See the plan's Task 3 "Amended 2026-08-05, mid-execution"
+> block for the full record.
 
 The file's existing comment explaining the tree-wide copy is updated. It
 currently justifies the width purely in terms of `%include`, which is now
