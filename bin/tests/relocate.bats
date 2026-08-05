@@ -36,3 +36,26 @@ EOF
   [ ! -e "${TO}/LANG/java/__pycache__" ]
   [ ! -e "${TO}/LANG/java/Val.class" ]
 }
+
+@test "relocate_copy_tree copies tracked source files" {
+  relocate_copy_tree "${FROM}" "${TO}"
+
+  [ -f "${TO}/LANG/java/spec.plcc" ]
+  [ "$(< "${TO}/LANG/java/spec.plcc")" = 'spec contents' ]
+}
+
+@test "relocate_copy_tree copies a new file that was never git added" {
+  echo 'brand new' > "${FROM}/LANG/java/newfile.plcc"
+
+  relocate_copy_tree "${FROM}" "${TO}"
+
+  [ "$(< "${TO}/LANG/java/newfile.plcc")" = 'brand new' ]
+}
+
+@test "relocate_copy_tree copies uncommitted edits, not indexed content" {
+  echo 'edited in the working tree' > "${FROM}/LANG/java/spec.plcc"
+
+  relocate_copy_tree "${FROM}" "${TO}"
+
+  [ "$(< "${TO}/LANG/java/spec.plcc")" = 'edited in the working tree' ]
+}
