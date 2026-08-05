@@ -1,0 +1,5 @@
+let
+    x = 1
+    f = proc(a,b) { set a = 9 ; b }
+in
+    { .f(x,x) ; x }

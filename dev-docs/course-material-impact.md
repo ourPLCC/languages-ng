@@ -327,3 +327,50 @@ headings are added in the order each language is migrated.
   `Val.toArray`. SET simply carries forward the shape V1–V6 were
   retro-fixed to match, so all three target appendices read alike from
   SET onward too.
+
+## REF
+
+- REF adds **no grammar changes at all** — `src/REF/grammar.plcc` is SET's
+  file with a different header comment. Anything a handout says about SET's
+  syntax is true of REF verbatim, including the `SET` token and
+  `<Exp:SetExp>`.
+- `Exp` gains `evalRef(env)`, which by default wraps `eval(env)` in a
+  **fresh** `ValRef`. `VarExp` overrides it to return
+  `env.applyEnvRef(...)` — the binding's own `Ref`. That one override is
+  call-by-reference: a bare variable operand passes its cell, and every
+  other kind of operand passes a copy.
+- `Rands` gains `evalRandsRef`, and `AppExp.eval` calls it. `evalRands`
+  and `PrimappExp` are unchanged — **primitives still take `Val`s**, so
+  `+(x,0)` never passes a reference. This is the distinction
+  `tests/nonvar-arg-is-a-copy/` pins down.
+- `Val.apply` and `ProcVal.apply` take a list of **`Ref`s**
+  (Java: `apply(List<Ref> args, Env e)`). `ProcVal` no longer wraps
+  anything, because its caller already did — deleting SET's
+  `Ref.valsToRefs(args)` line *is* the SET→REF change. `Ref.valsToRefs`
+  itself remains, since `LetDecls.addBindings` still uses it.
+- `apply` keeps the `env` parameter it does not read, for the same
+  dynamic-scoping exercise SET's entry describes. It must not be removed.
+- `src/REF/tests/formal-is-a-ref/` has the same input program as
+  SET's `tests/formal-is-a-copy/` but expects **`4`** where SET
+  expects `3`. Diffing the two expected files is the shortest
+  possible demonstration of what REF adds.
+- The old `src/REF/tests/let/` is now `tests/nonvar-arg-is-a-copy/`. Same
+  program, renamed for what it tests. Any handout citing the path needs
+  updating.
+- REF's example programs are now all under `src/REF/Prog/`. The `Stuff/`
+  directory is gone — `counter1`–`counter5` moved into `Prog/`, and
+  `Stuff/factory` was dropped as a byte-identical duplicate of
+  `Prog/factory`. Any handout pointing at `src/REF/Stuff/...` needs the
+  path updated.
+- `Prog/oe` had an unbalanced `{` and never parsed; the stray brace is
+  removed and it now runs (`.odd?(5)` → `1`, `.even?(5)` → `0`). It also
+  moved from the top level into `Prog/`, matching V4, OBJ, and TYPE1.
+- `Prog/counter1` (`1 1 1`) and `Prog/counter3` (a parse error) are
+  **left as they were** — they read as deliberate counter-examples in a
+  five-program progression. `counter3`'s error text now comes from
+  plcc-ng and reads differently than old PLCC's did.
+- `Prog/counter4` is a second SET/REF contrast, alongside
+  `formal-is-a-ref`. It gives `1 2 3` under REF because `.next(x)` passes
+  `x` by reference; run against SET's spec the same program gives
+  `1 1 1`. Worth flagging if it appears in a lecture as an ordinary
+  counter.

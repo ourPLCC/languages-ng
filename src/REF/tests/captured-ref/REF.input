@@ -1,0 +1,6 @@
+define x = 0
+define g = proc(t) proc() set t = add1(t)
+define h = .g(x)
+.h()
+.h()
+x
