@@ -19,6 +19,8 @@
 # archiving tar failed, handing the test a silently incomplete tree.
 function relocate_copy_tree () {
   local from="$1" to="$2" to_abs
+  git -C "${from}" rev-parse --git-dir >/dev/null 2>&1 \
+    || { echo "relocate: ${from} is not in a git checkout" >&2; return 1; }
   to_abs="$(cd "${to}" && pwd)" || return 1
   (
     set -o pipefail

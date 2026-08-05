@@ -87,3 +87,14 @@ EOF
 
   [ "$status" -ne 0 ]
 }
+
+@test "relocate_copy_tree fails clearly when not in a git checkout" {
+  local nogit="${BATS_TEST_TMPDIR}/nogit"
+  mkdir -p "${nogit}"
+  echo 'orphan' > "${nogit}/spec.plcc"
+
+  run relocate_copy_tree "${nogit}" "${TO}"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"not in a git checkout"* ]]
+}
