@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 load '../../../../bin/relocate.bash'
+load '../../../../bin/bats-tmpdir.bash'
 
 @test "REF alias-two-formals (python)" {
   relocate

@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 load '../../../../bin/relocate.bash'
+load '../../../../bin/bats-tmpdir.bash'
 
 @test "V5 sequential-binding (python)" {
   relocate

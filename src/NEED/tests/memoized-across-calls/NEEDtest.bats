@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 load '../../../../bin/relocate.bash'
+load '../../../../bin/bats-tmpdir.bash'
 
 @test "NEED memoized-across-calls (python)" {
   relocate

@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 load '../relocate.bash'
+load '../bats-tmpdir.bash'
 
 # Builds a throwaway git repo that mimics src/: one language directory
 # with a spec, plus the three kinds of build artifact .gitignore names.

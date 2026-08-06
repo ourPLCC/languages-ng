@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+load '../bats-tmpdir.bash'
+
 # Exercises bin/clean.bash against a throwaway repo laid out like this
 # one, so the real src/ is never touched.
 setup() {
