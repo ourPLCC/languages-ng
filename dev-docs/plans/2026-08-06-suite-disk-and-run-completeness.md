@@ -632,7 +632,37 @@ bin/test.bash
 echo "exit=$?"
 ```
 
-Expected: the run completes, `0 failures`, `exit=0`, and no banner. Note that the pretty progress output is unchanged from before — that is the point of using `--report-formatter` rather than piping stdout.
+> **Amended 2026-08-06, mid-execution.** This step originally expected
+> `0 failures` and `exit=0`. That is unreachable on this machine, and the
+> original text was written without ever having seen a completed run — the
+> suite could not finish before Task 2 landed, so the "clean baseline" was an
+> assumption, not an observation.
+>
+> Three tests fail here and always have: `OBJ class`, `TYPE0 boolean`, and
+> `TYPE1 proc-types` invoke old-PLCC's `plccmk` and `rep`, which this
+> devcontainer does not install (`command -v plccmk` → not found). Verified by
+> running `OBJ` at the pre-wiring commit and after: identical
+> `plccmk: command not found`, status 127, with only the line number shifted
+> by the added `load` line. Open issue
+> [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) documents
+> this as the local mirror of its CI complaint.
+
+Expected: the run reaches its final test and prints a failure count; `exit=1`;
+and **exactly three** failures, all `plccmk: command not found`:
+
+```
+not ok  OBJ class
+not ok  TYPE0 boolean
+not ok  TYPE1 proc-types
+```
+
+A fourth failure, or any different one, is a regression — **stop and
+investigate**. This is a stricter gate than `exit=0` would have been, because
+it names the tests rather than trusting a count.
+
+No banner should appear: the run completed, so `check_run_complete` stays
+silent. The pretty progress output is unchanged from before — that is the
+point of using `--report-formatter` rather than piping stdout.
 
 - [ ] **Step 3: Prove the failure path fires, using a deliberately truncated report**
 
@@ -851,7 +881,17 @@ bin/test.bash
 echo "exit=$?"
 ```
 
-Expected: completes, `0 failures`, `exit=0`. Do not close the issue on a run you did not watch finish.
+> **Amended 2026-08-06, mid-execution** — same correction as Task 4, Step 2.
+> `0 failures` / `exit=0` is unreachable here.
+
+Expected: the run reaches its final test; `exit=1`; **exactly three** failures,
+and they are precisely `OBJ class`, `TYPE0 boolean`, and `TYPE1 proc-types`,
+all `plccmk: command not found` (issue #12). Anything else is a regression —
+do not close the issue.
+
+Do not close on a run you did not watch finish. Issue #31 is about a harness
+that lies when it dies; closing it on an unwitnessed run would be its own
+small version of the same mistake.
 
 - [ ] **Step 2: Close the issue with the script**
 
@@ -894,7 +934,7 @@ EOF
 
 Before calling the branch done, every one of these must have been run and its output seen — not inferred:
 
-- [ ] `bin/test.bash` completes and reports `0 failures`, `exit=0`
+- [ ] `bin/test.bash` reaches its final test; `exit=1`; exactly 3 failures, and they are `OBJ class`, `TYPE0 boolean`, `TYPE1 proc-types` (issue #12, `plccmk` absent — see the amendment at Task 4, Step 2)
 - [ ] `bats bin/tests/bats-tmpdir.bats` — 4 tests, 0 failures
 - [ ] `bats bin/tests/check-run-complete.bats` — 7 tests, 0 failures
 - [ ] The truncated-report banner was printed and read (Task 4, Step 3)
