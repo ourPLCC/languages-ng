@@ -2,7 +2,7 @@
 type: test
 target: this repo
 opened: 2026-08-06
-closed:
+closed: 2026-08-06
 ---
 
 # 031 - suite-exhausts-disk-and-reports-spurious-failure
