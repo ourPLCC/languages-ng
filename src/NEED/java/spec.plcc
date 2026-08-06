@@ -1,0 +1,565 @@
+%include ../grammar.plcc
+%
+Java
+
+%include ../../Env/envRef/java/env.plcc
+
+Val
+%%%
+import java.util.List;
+import runtime.LanguageError;
+
+public abstract class Val {
+
+    public static Val [] toArray(List<Val> valList) {
+        int n = valList.size();
+        return valList.toArray(new Val[n]);
+    }
+
+    // Some Vals can be applied to a list of arguments (e.g. a ProcVal).
+    // Like the evaluation of an expression, the application of a Val takes
+    // place in the context of an environment, which arrives as the second
+    // parameter. An applied Val may use or ignore that environment as its
+    // own semantics require.
+    public Val apply(List<Ref> args, Env e) {
+        throw new LanguageError("Cannot apply " + this);
+    }
+
+    public boolean isTrue() {
+        return true;
+    }
+
+    public IntVal intVal() {
+        throw new LanguageError(this + ": not an Int");
+    }
+}
+%%%
+
+IntVal
+%%%
+public class IntVal extends Val {
+
+    public int val;
+
+    public IntVal(String s) {
+        val = Integer.parseInt(s);
+    }
+
+    public IntVal(int v) {
+        val = v;
+    }
+
+    public IntVal intVal() {
+        return this;
+    }
+
+    public String toString() {
+        return "" + val;
+    }
+
+    public boolean isTrue() {
+        return val != 0;
+    }
+}
+%%%
+
+Ref
+%%%
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class Ref {
+
+    public static List<Ref> valsToRefs(List<Val> valList) {
+        List<Ref> refList = new ArrayList<Ref>(valList.size());
+        for (Val v : valList)
+            refList.add(new ValRef(v));
+        return refList;
+    }
+
+    public abstract Val deRef();
+
+    public abstract Val setRef(Val v);
+}
+%%%
+
+ThunkRef
+%%%
+import runtime.LanguageError;
+
+public class ThunkRef extends Ref {
+
+    public Exp exp;
+    public Env env;
+    public Val val;
+
+    public ThunkRef(Exp exp, Env env) {
+        this.exp = exp;
+        this.env = env;
+        this.val = null; // memoized
+    }
+
+    // implements call-by-need:
+    // evaluate the expression, if needed, and memoize the result
+    public Val deRef() {
+        if (val == null)
+            val = exp.eval(env);
+        return val;
+    }
+
+    public Val setRef(Val v) {
+        throw new LanguageError("cannot modify a read-only expression");
+    }
+
+    public String toString() {
+        return "thunk";
+    }
+}
+%%%
+
+ValRef
+%%%
+public class ValRef extends Ref {
+
+    public Val val;
+
+    public ValRef(Val val) {
+        this.val = val;
+    }
+
+    public Val deRef() {
+        return val;
+    }
+
+    public Val setRef(Val v) {
+        val = v;
+        return v;
+    }
+
+    public String toString() {
+        return val.toString();
+    }
+}
+%%%
+
+# read-only value
+ValRORef
+%%%
+import runtime.LanguageError;
+
+public class ValRORef extends ValRef {
+
+    public ValRORef(Val val) {
+        super(val);
+    }
+
+    public Val setRef(Val v) {
+        throw new LanguageError("cannot modify a read-only reference");
+    }
+}
+%%%
+
+ProcVal
+%%%
+import java.util.List;
+import runtime.LanguageError;
+
+public class ProcVal extends Val {
+
+    public Formals formals;
+    public Exp body;
+    public Env env;
+
+    public ProcVal(Formals formals, Exp body, Env env) {
+        this.formals = formals;
+        this.body = body;
+        this.env = env;
+    }
+
+    public Val apply(List<Ref> args, Env e) {
+        if (formals.symbolList.size() != args.size())
+            throw new LanguageError("formals/args number mismatch");
+        Bindings bindings = new Bindings(formals.symbolList, args);
+        Env nenv = env.extendEnvRef(bindings);
+        return body.eval(nenv);
+    }
+
+    public String toString() {
+        return "proc";
+    }
+}
+%%%
+
+Program
+%%%
+public static Env env = Env.initEnv();
+%%%
+
+Define
+%%%
+public String _run() {
+    Env env = Program.env;
+    String s = symbol.lexeme;
+    Val val = exp.eval(env);
+    Ref ref = new ValRef(val);
+    Binding b = env.lookup(s);
+    if (b != null)
+        b.ref = ref;
+    else
+        env.add(new Binding(s, ref));
+    return s;
+}
+%%%
+
+Eval
+%%%
+public String _run() {
+    return exp.eval(env).toString();
+}
+%%%
+
+Exp
+%%%
+public abstract Val eval(Env env);
+
+// this covers all but a LitExp, ProcExp, and VarExp
+public Ref evalRef(Env env) {
+    return new ThunkRef(this, env);
+}
+%%%
+
+LitExp
+%%%
+public Val eval(Env env) {
+    return new IntVal(lit.lexeme);
+}
+
+public Ref evalRef(Env env) {
+    return new ValRORef(eval(env)); // a literal is read-only
+}
+
+public String toString() {
+    return lit.lexeme;
+}
+%%%
+
+VarExp
+%%%
+public Val eval(Env env) {
+    return env.applyEnv(symbol.lexeme);
+}
+
+public Ref evalRef(Env env) {
+    return env.applyEnvRef(symbol.lexeme);
+}
+
+public String toString() {
+    return symbol.lexeme;
+}
+%%%
+
+IfExp
+%%%
+public Val eval(Env env) {
+    Val testVal = testExp.eval(env);
+    if (testVal.isTrue())
+        return trueExp.eval(env);
+    else
+        return falseExp.eval(env);
+}
+
+public String toString() {
+    return "if " + testExp + " then " + trueExp + " else " + falseExp;
+}
+%%%
+
+PrimappExp
+%%%
+public Val eval(Env env) {
+    List<Val> args = rands.evalRands(env);
+    Val [] va = Val.toArray(args);
+    return prim.apply(va);
+}
+
+public String toString() {
+    return prim + "(" + rands + ")";
+}
+%%%
+
+LetExp
+%%%
+public Val eval(Env env) {
+    Env nenv = letDecls.addBindings(env);
+    return exp.eval(nenv);
+}
+
+public String toString() {
+    return " ...LetExp... ";
+}
+%%%
+
+LetrecExp
+%%%
+public Val eval(Env env) {
+    env = letDecls.addLetrecBindings(env);
+    return exp.eval(env);
+}
+
+public String toString() {
+    return " ...LetrecExp... ";
+}
+%%%
+
+LetDecls:import
+%%%
+import java.util.ArrayList;
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(symbolList, " in let/letrec LHS identifiers");
+%%%
+
+LetDecls
+%%%
+public Env addBindings(Env env) {
+    List<Val> valList = new ArrayList<Val>(expList.size());
+    for (Exp e : expList)
+        valList.add(e.eval(env));
+    List<Ref> refList = Ref.valsToRefs(valList);
+    Bindings bindings = new Bindings(symbolList, refList);
+    return env.extendEnvRef(bindings);
+}
+
+public Env addLetrecBindings(Env env) {
+    env = env.extendEnvRef(new Bindings());
+    for (int i = 0; i < symbolList.size(); i++) {
+        Val val = expList.get(i).eval(env);
+        env.add(new Binding(symbolList.get(i).lexeme, new ValRef(val)));
+    }
+    return env;
+}
+
+public String toString() {
+    return " ...LetDecls... ";
+}
+%%%
+
+ProcExp
+%%%
+public Val eval(Env env) {
+    return proc.makeClosure(env);
+}
+
+public Ref evalRef(Env env) {
+    return new ValRORef(eval(env)); // read-only
+}
+
+public String toString() {
+    return " ...ProcExp... ";
+}
+%%%
+
+Proc
+%%%
+public Val makeClosure(Env env) {
+    return new ProcVal(formals, exp, env);
+}
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(symbolList, " in proc formals");
+%%%
+
+AppExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    List<Ref> args = rands.evalRandsRef(env);
+    return v.apply(args, env);
+}
+
+public String toString() {
+    return " ...AppExp... ";
+}
+%%%
+
+SeqExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    for (Exp e : seqExps.expList)
+        v = e.eval(env);
+    return v;
+}
+
+public String toString() {
+    return " ...SeqExp... ";
+}
+%%%
+
+SetExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    Ref ref = env.applyEnvRef(symbol.lexeme);
+    return ref.setRef(v);
+}
+
+public String toString() {
+    return " ...SetExp... ";
+}
+%%%
+
+Rands:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Rands
+%%%
+public List<Val> evalRands(Env env) {
+    List<Val> args = new ArrayList<Val>(expList.size());
+    for (Exp e : expList)
+        args.add(e.eval(env));
+    return args;
+}
+
+public List<Ref> evalRandsRef(Env env) {
+    List<Ref> refList = new ArrayList<Ref>(expList.size());
+    for (Exp e : expList)
+        refList.add(e.evalRef(env));
+    return refList;
+}
+
+public String toString() {
+    String s = "";
+    String sep = "";
+    for (Exp e : expList) {
+        s += sep + e;
+        sep = ",";
+    }
+    return s;
+}
+%%%
+
+Prim
+%%%
+public abstract Val apply(Val [] va);
+%%%
+
+AddPrim
+%%%
+public String toString() {
+    return "+";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 + i1);
+}
+%%%
+
+SubPrim
+%%%
+public String toString() {
+    return "-";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 - i1);
+}
+%%%
+
+MulPrim
+%%%
+public String toString() {
+    return "*";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 * i1);
+}
+%%%
+
+DivPrim
+%%%
+public String toString() {
+    return "/";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    if (i1 == 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(i0 / i1);
+}
+%%%
+
+Add1Prim
+%%%
+public String toString() {
+    return "add1";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 + 1);
+}
+%%%
+
+Sub1Prim
+%%%
+public String toString() {
+    return "sub1";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 - 1);
+}
+%%%
+
+ZeropPrim
+%%%
+public String toString() {
+    return "zero?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 == 0 ? 1 : 0);
+}
+%%%
+
+ErrorPrim
+%%%
+public String toString() {
+    return "error";
+}
+
+public Val apply(Val [] va) {
+    throw new LanguageError("user-defined error");
+}
+%%%
