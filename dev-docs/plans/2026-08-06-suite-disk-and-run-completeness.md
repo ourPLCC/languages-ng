@@ -941,13 +941,36 @@ Before calling the branch done, every one of these must have been run and its ou
 - [ ] `ls -d /tmp/bats-run-*` reports nothing after a full run
 - [ ] `df -h /tmp` is essentially unchanged before and after a full run
 - [ ] `bin/issues/check.bash` reports no errors
-- [ ] `git log --oneline` shows **eight** commits on the branch, none typed `fix` or `feat`
+- [ ] `git log --oneline` shows **eleven** commits on the branch, none typed `fix` or `feat`
 
 The spec's Commits section lists six. This plan splits two of them for
 reviewability — the teardown library from its wiring (Tasks 1 and 2), and the
 completeness library from its use in `bin/test.bash` (Tasks 3 and 4) — so that
-a reviewer can accept a library and still reject how it is wired in. Eight is
-the correct number: the spec commit plus one per task.
+a reviewer can accept a library and still reject how it is wired in.
+
+> **Amended 2026-08-06, mid-execution.** This item originally said **eight**,
+> reasoning "the spec commit plus one per task." That arithmetic was wrong
+> twice over: it forgot the plan commit itself, and it could not know about
+> the acceptance-baseline amendment added while executing Task 2. The ten
+> commits of the work are below; **this correction is the eleventh**, which is
+> why the item above says eleven:
+>
+> ```
+> 72bb15b docs(specs): design
+> 20cd957 docs(plans): implementation plan
+> 420f558 Task 1  test(harness): empty each passing test's BATS_TEST_TMPDIR
+> bfb848b Task 2  test(harness): load the tmpdir teardown in every test file
+> 448e58b         docs(plans): correct the acceptance baseline   <- amendment
+> d931938 Task 3  test(harness): add a check that a run reached its last test
+> 558fd1d Task 4  test(harness): fail loudly when a run does not reach it
+> 27c5c52 Task 5  chore(bin): set -euo pipefail before cd, not after
+> a0f753f Task 6  docs(issues): correct issue 27 scope
+> 4633f0c Task 7  docs(issues): close issue 31
+> ```
+>
+> Caught by the Task 7 implementer, not by me. Worth recording rather than
+> quietly correcting: a plan that asserts a count a reader can check, and gets
+> it wrong, is a small instance of exactly what issue #31 is about.
 
 ## Out of Scope
 
