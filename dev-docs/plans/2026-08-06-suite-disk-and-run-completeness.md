@@ -941,32 +941,31 @@ Before calling the branch done, every one of these must have been run and its ou
 - [ ] `ls -d /tmp/bats-run-*` reports nothing after a full run
 - [ ] `df -h /tmp` is essentially unchanged before and after a full run
 - [ ] `bin/issues/check.bash` reports no errors
-- [ ] `git log --oneline` shows **eleven** commits on the branch, none typed `fix` or `feat`
+- [ ] `git log --format=%s b1d87d9..HEAD | grep -E '^(fix|feat)'` finds nothing — no commit type that would spin the release version
+- [ ] every commit on the branch ends with the `Co-Authored-By` trailer
 
 The spec's Commits section lists six. This plan splits two of them for
 reviewability — the teardown library from its wiring (Tasks 1 and 2), and the
 completeness library from its use in `bin/test.bash` (Tasks 3 and 4) — so that
 a reviewer can accept a library and still reject how it is wired in.
 
-> **Amended 2026-08-06, mid-execution.** This item originally said **eight**,
-> reasoning "the spec commit plus one per task." That arithmetic was wrong
-> twice over: it forgot the plan commit itself, and it could not know about
-> the acceptance-baseline amendment added while executing Task 2. The ten
-> commits of the work are below; **this correction is the eleventh**, which is
-> why the item above says eleven:
+> **Amended 2026-08-06, mid-execution — twice, which is the point.**
 >
-> ```
-> 72bb15b docs(specs): design
-> 20cd957 docs(plans): implementation plan
-> 420f558 Task 1  test(harness): empty each passing test's BATS_TEST_TMPDIR
-> bfb848b Task 2  test(harness): load the tmpdir teardown in every test file
-> 448e58b         docs(plans): correct the acceptance baseline   <- amendment
-> d931938 Task 3  test(harness): add a check that a run reached its last test
-> 558fd1d Task 4  test(harness): fail loudly when a run does not reach it
-> 27c5c52 Task 5  chore(bin): set -euo pipefail before cd, not after
-> a0f753f Task 6  docs(issues): correct issue 27 scope
-> 4633f0c Task 7  docs(issues): close issue 31
-> ```
+> This item originally asserted a commit count: **eight**, reasoning "the spec
+> commit plus one per task." That was wrong — it forgot the plan commit, and it
+> could not know about the acceptance-baseline amendment added during Task 2.
+> Corrected to ten. Committing that correction made it eleven. The final
+> review's fix wave then made it fifteen.
+>
+> Three corrections, each one invalidated by the act of making it. The defect
+> was never the arithmetic; it was asserting a number that the assertion itself
+> changes. So the item no longer counts commits — it checks the two properties
+> that actually matter and that no later commit can silently falsify: no
+> release-spinning commit type, and the required trailer on every commit.
+>
+> Worth leaving on the record. Issue #31 is about a harness that reports a
+> number a reader is inclined to trust and shouldn't; a plan checklist that
+> does the same thing is the documentation version of it.
 >
 > Caught by the Task 7 implementer, not by me. Worth recording rather than
 > quietly correcting: a plan that asserts a count a reader can check, and gets
