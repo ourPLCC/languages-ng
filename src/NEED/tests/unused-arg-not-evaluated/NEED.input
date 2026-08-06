@@ -1,0 +1,1 @@
+let p = proc(t,u) t in .p(11,error())

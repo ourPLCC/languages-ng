@@ -454,3 +454,48 @@ headings are added in the order each language is migrated.
   time. Both are call-by-name working correctly, not regressions, and
   both are worth pre-empting on a slide before a student reports either
   as a bug.
+
+## NEED
+
+- Identifier token is now `SYMBOL`, not `VAR`, and the corresponding
+  field is `symbol`, not `var` — the standing convention since V0.
+  `VarExp.eval` reads `env.applyEnv(self.symbol.lexeme)`, not
+  `env.applyEnv(self.var.lexeme)`.
+- `$run()` is now `_run()`, and it **returns** its output string rather
+  than printing it, the same `_run()` contract every migrated language
+  adopts.
+- `ThunkRef` now memoizes: a `val` field initialized to `None`/`null`,
+  and a `deRef` that evaluates the captured expression on first call and
+  returns the cached value on every call after. This one method is the
+  entire difference between NAME and NEED — nothing else in `ThunkRef`
+  changes, and no other class needs to. `Prog/test` demonstrates it
+  directly: the same program that gives `10` under NAME (the thunk
+  `set x=add1(x)` re-forced on all seven uses) gives `4` under NEED (the
+  thunk forced once, on first use, and cached thereafter).
+- `ValRORef` is a new `ValRef` subclass, read-only: it inherits
+  `deRef`, but overrides `setRef` to raise `cannot modify a read-only
+  reference`. `LitExp.evalRef` and `ProcExp.evalRef` both return a
+  `ValRORef` where NAME returned a plain `ValRef` — a literal or a proc
+  value is being handed out as an operand with nothing to assign into.
+  The observable: `let p = proc(t) set t=9 in .p(11)` now raises
+  `cannot modify a read-only reference`, where NAME's same program
+  returns `9`. `VarExp.evalRef` is untouched, so assigning through a
+  bare variable formal still works exactly as it does under NAME —
+  `let x=3 p=proc(t) set t=add1(t) in {.p(x); x}` still gives `4`.
+- A new `ERROR` token and `<Prim:ErrorPrim>` production — NEED's only
+  syntax delta from NAME. `ErrorPrim.apply` raises `user-defined error`
+  regardless of how `error()` is called; the primitive ignores its
+  argument list entirely.
+- `apply` now takes a `List<Ref>` **and** an `Env` (`apply(args, env)`
+  in Python/JavaScript, `apply(List<Ref> args, Env e)` in Java) — the
+  same unread `env` parameter, for the same dynamic-scoping exercise
+  SET's and NAME's entries describe. Pre-migration NEED's
+  `apply(List<Ref>)` had no `Env` parameter at all. `ProcVal.apply` also
+  now raises `formals/args number mismatch` on an arity error;
+  pre-migration NEED had no arity check at all.
+- The old `src/NEED/tests/let/` is now `tests/thunk-forced-once/`, and
+  its input was upgraded from a three-use program to the seven-use
+  `Prog/test` — the same file NAME's `tests/thunk-reevaluated-per-use/`
+  runs (ignoring one blank line NAME's copy carries and NEED's does
+  not). One program, two expected values: `4` under NEED, `10` under
+  NAME, both correct for their language.
