@@ -17,3 +17,11 @@ load '../../../../bin/relocate.bash'
   expected_output=$(< "../tests/thunk-forced-once/NEED.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "NEED thunk-forced-once (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/thunk-forced-once/NEED.input)"
+  expected_output=$(< "../tests/thunk-forced-once/NEED.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
