@@ -523,8 +523,7 @@ headings are added in the order each language is migrated.
   specs — `src/NEED/Prog/test`/`counter` interpreted first by NEED's own
   `spec.plcc` and then by `src/NAME/python/spec.plcc` — so the contrast is a
   live demo, not a claim: `Prog/test` gives `4` under NEED versus `10` under
-  NAME, because the thunk `set x=add1(x)` is forced once and cached under
-  NEED but re-forced on all seven uses under NAME. `Prog/counter` gives `4`
+  NAME (mechanism above, in the `ThunkRef` bullet). `Prog/counter` gives `4`
   under NEED versus `1` under NAME, because `let count=0 in proc() ...` is
   built once and shared across `.times4`'s four calls under NEED but rebuilt
   fresh on each of the four calls under NAME. `test` falls under NEED because
