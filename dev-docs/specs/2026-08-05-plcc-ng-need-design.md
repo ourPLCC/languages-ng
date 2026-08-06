@@ -354,11 +354,18 @@ predicted, and `infinite-stream/`'s output is md5-identical across the three:
 `thunk-forced-once/` **is** NEED's existing `src/NEED/tests/let/` — ported off
 the old `plccmk`/`rep -n` invocation, renamed for what it tests, and upgraded
 from the three-use variant to the seven-use program already on disk at
-`Prog/test`. The upgrade is deliberate: `Prog/test` is byte-identical to NAME's
-`tests/thunk-reevaluated-per-use/NAME.input`, so the NAME↔NEED contrast becomes
-a one-file diff — same input, different expected value — rather than a claim in
-prose. This is the mirror case NAME's design asked NEED to ship. Neither
-language drops its copy as redundant.
+`Prog/test`. The upgrade is deliberate: `src/NEED/Prog/test` and NAME's
+`tests/thunk-reevaluated-per-use/NAME.input` are the **same program**, so the
+NAME↔NEED contrast becomes essentially a one-file diff — same input, different
+expected value — rather than a claim in prose. This is the mirror case NAME's
+design asked NEED to ship. Neither language drops its copy as redundant.
+
+The two files are not quite byte-identical: NAME's carries one blank line after
+the `p = proc(t) …` binding that NEED's does not. Whitespace is `skip`ped by
+the lexer, so this changes nothing about what either language runs, and each
+language's test input stays sourced from its own `Prog/` directory rather than
+reaching across into its neighbour's. A comparison that ignores blank lines is
+exact.
 
 `memoized-across-calls/` requires copying `counter` from `src/NAME/Prog/` into
 `src/NEED/Prog/`; it is the second NAME↔NEED mirror pair, and NAME's design
