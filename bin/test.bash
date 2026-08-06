@@ -27,7 +27,12 @@ bats --recursive --report-formatter tap --output "${report_dir}" src bin \
   || bats_status=$?
 
 # Exit 2, distinct from bats's 1, so a dead harness is never read as a test
-# failure by a caller, a CI step, or a person.
+# failure by a caller, a CI step, or a person. Full contract: 0 means every
+# test passed, 1 means the run completed with real test failures, 2 means
+# the harness itself did not finish. Any other value below is bats's own
+# exit status passed through untouched -- e.g. 130 if bats was SIGINT'd, or
+# 137 for an OOM kill that lands after the last `ok N` is written, so
+# check_run_complete sees a complete report and this branch is never taken.
 if ! check_run_complete "${report_dir}/report.tap"; then
   keep_report=1     # kept on the failure path; the banner names it
   exit 2
