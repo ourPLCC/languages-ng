@@ -77,7 +77,7 @@ EOF
   # The child exits 1 because its first test fails by design. What matters is
   # that its second test passed.
   [ "$status" -eq 1 ]
-  [[ "$output" == *'ok 2 sees evidence survived'* ]]
+  [[ "$output" == *$'\nok 2 sees evidence survived'* ]]
 }
 
 @test "--no-tempdir-cleanup preserves the tree" {
