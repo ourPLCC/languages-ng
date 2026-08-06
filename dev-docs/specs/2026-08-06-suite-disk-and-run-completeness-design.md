@@ -363,11 +363,16 @@ what `check_run_complete` checks.
 Tests first within each commit.
 
 1. `docs(specs): design for bounding suite disk use and detecting truncated runs`
-2. `test(harness): empty each passing test's BATS_TEST_TMPDIR`
-3. `test(harness): fail loudly when a bats run does not reach its last test`
-4. `chore(bin): set -euo pipefail before cd in test-using-pipeline-container`
-5. `docs(issues): correct issue 27 scope and clarify -s shrinks rather than bounds`
-6. `bin/issues/close.bash` for 031 — final commit of the branch, per CLAUDE.md
+2. `test(harness): empty each passing test's BATS_TEST_TMPDIR` — the library
+3. `test(harness): load the tmpdir teardown in every test file` — the wiring
+4. `test(harness): add a check that a bats run reached its last test` — the library
+5. `test(harness): fail loudly when a bats run does not reach its last test` — `bin/test.bash`
+6. `chore(bin): set -euo pipefail before cd in test-using-pipeline-container`
+7. `docs(issues): correct issue 27 scope and clarify -s shrinks rather than bounds`
+8. `bin/issues/close.bash` for 031 — final commit of the branch, per CLAUDE.md
+
+Each library is committed separately from its wiring so a reviewer can accept
+one and still reject the other.
 
 All `test`, `chore`, or `docs`. Nothing in `src/` changes, so the release
 version does not spin — matching the issue template's rule and issue #31's own
