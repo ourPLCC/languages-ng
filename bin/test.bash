@@ -15,13 +15,22 @@ report_dir="$(mktemp -d)" || {
   exit 2
 }
 
+# Remove the report dir on any exit -- normal completion, an error under
+# set -e, or this script itself being killed (Ctrl-C, CI timeout, OOM) --
+# unless keep_report is set, which happens on the harness-failure path below
+# so the banner's named path still exists to inspect.
+keep_report=
+trap '[[ -n "${keep_report}" ]] || rm -rf "${report_dir}"' EXIT
+
 bats_status=0
 bats --recursive --report-formatter tap --output "${report_dir}" src bin \
   || bats_status=$?
 
 # Exit 2, distinct from bats's 1, so a dead harness is never read as a test
 # failure by a caller, a CI step, or a person.
-check_run_complete "${report_dir}/report.tap" || exit 2
+if ! check_run_complete "${report_dir}/report.tap"; then
+  keep_report=1     # kept on the failure path; the banner names it
+  exit 2
+fi
 
-rm -rf "${report_dir}"     # kept on the failure path; the banner names it
 exit "${bats_status}"
