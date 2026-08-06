@@ -16,18 +16,22 @@
 
 - **Copy from `src/REF/`, never from `src/NEED/`.** TYPE0 forks REF *before* the NAME/NEED laziness branch: `src/TYPE0/code` uses eager `ValRef` operands with no `ThunkRef` and no `ValRORef`. NEED is the most recently ported language, which makes it the tempting starting point and the wrong one — copying it would silently give TYPE0 call-by-need semantics it does not have. Every "copy the spec" step below names `src/REF/` explicitly.
 
-- **`bin/test.bash` cannot complete on this container.** Issue [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md): the disk fills partway through and bats reports a spurious `not ok` for whatever innocent test was running. Use the split-`TMPDIR` workaround everywhere this plan says "run the full suite":
+- **Run the full suite with plain `bin/test.bash`.** Everywhere this plan says "run the full suite", that means:
 
   ```bash
-  mkdir -p /workspaces/languages-ng/.claude/worktrees/.bats-tmp
-  TMPDIR=/workspaces/languages-ng/.claude/worktrees/.bats-tmp \
-      bats --recursive src > /tmp/type0-pass1.txt 2>&1
-  bats --recursive bin > /tmp/type0-pass2.txt 2>&1
+  cd /workspaces/languages-ng/.claude/worktrees/type0
+  bin/test.bash > /tmp/type0-<task>.txt 2>&1; echo "EXIT=$?"
   ```
 
-  Pass 2 **must** keep the default `TMPDIR` — `relocate_copy_tree fails clearly when not in a git checkout` builds its fixture under `BATS_TEST_TMPDIR` and needs that path outside a git checkout. Sum the counts across both passes, and **check each pass reached its final test line before trusting its numbers** (`tail -1` should be `ok 120 …` for pass 1 and `ok 10 …` for pass 2). A truncated run counts cleanly and lies. Remove `.bats-tmp` when the phase is done.
+  Read the exit status, not just the counts. Issue [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md) gave `bin/test.bash` a three-value contract: **0** every test passed, **1** the run completed with real test failures, **2** the harness itself did not finish. **Exit 2 means the numbers in the file are meaningless — do not count them, and do not report a result.** Throughout this phase the expected status is **1**, because `OBJ class` and `TYPE1 proc-types` stay red from start to finish; a `0` would mean something unexpected started passing and is just as much a reason to stop as a `2`.
 
-- **Baseline, measured 2026-08-06 with the workaround above:** **130 tests, 127 passing, 3 failing.** Pass 1 gives 120 tests / 117 passing / 3 failing; pass 2 gives 10 / 10 / 0. The 3 failures are `OBJ class`, `TYPE0 boolean`, and `TYPE1 proc-types` — all `plccmk: command not found`.
+  Then count with `grep -c '^ok '` and `grep -c '^not ok '`, and list the failures with `grep '^not ok '`.
+
+  > **Amended 2026-08-06, pre-execution.** This constraint originally read "**`bin/test.bash` cannot complete on this container**" and prescribed a split-`TMPDIR` workaround (`TMPDIR=…/.bats-tmp bats --recursive src`, then a second default-`TMPDIR` pass over `bin`) with a manual `tail -1` check on each pass. Both halves of its premise have since expired. Issue #31 landed on `main`, so a dead run now exits 2 with a banner instead of reporting a spurious `not ok` against an innocent test — the manual `tail -1` check is now the harness's own job. And the disk that motivated it is no longer full: #31 was observed at ~230 MB free, where this container now has 25 GB. Measured 2026-08-06 after rebasing onto `main`: `bin/test.bash` runs unaided end to end, one invocation, exit 1, disk flat throughout. The workaround is removed rather than kept as a fallback, because its per-pass counts are a second set of numbers to keep in sync and its `.bats-tmp` directory is one more thing to leak.
+
+- **Baseline, re-measured 2026-08-06 after the rebase onto `main`:** **141 tests, 138 passing, 3 failing**, exit status 1. The 3 failures are `OBJ class`, `TYPE0 boolean`, and `TYPE1 proc-types` — all `plccmk: command not found`.
+
+  > **Amended 2026-08-06, pre-execution.** The baseline was originally **130 / 127 / 3**, measured before this branch was rebased onto `main`. The `src` half is unchanged at tests 1–120; all 11 new tests are in `bin/`, added by issue #31's own work (the `check_run_complete` cases, `clean.bash`, and the expanded `relocate_copy_tree` set). The failure set did not change. Every "run the full suite" gate in Tasks 2–5 shifted by the same +11 and has been restated; the deltas between them (−1 old TYPE0 test, +4 per target) are untouched.
 
 - **No test that passes may start failing.** There is no retro-fix in this phase touching already-passing languages, so a `V`-prefixed, `SET`, `REF`, `NAME`, or `NEED` failure means a genuine regression, not expected churn.
 
@@ -62,7 +66,7 @@ Pure bookkeeping plus the gate every later task's expected counts depend on.
 **Files:**
 - Create: `dev-docs/issues/0NN-migrate-type0-to-plcc-ng.md` (number assigned by the script)
 - Modify: `dev-docs/roadmap.md`
-- Test: the existing suite, via the split-`TMPDIR` workaround
+- Test: the existing suite, via `bin/test.bash`
 
 **Interfaces:**
 - Consumes: nothing.
@@ -94,22 +98,18 @@ Expected: exit status 0, no output about drift. If it complains, fix the roadmap
 - [ ] **Step 4: Capture the baseline**
 
 ```bash
-df -h / | tail -1
-mkdir -p /workspaces/languages-ng/.claude/worktrees/.bats-tmp
-TMPDIR=/workspaces/languages-ng/.claude/worktrees/.bats-tmp \
-    bats --recursive src > /tmp/type0-base1.txt 2>&1
-bats --recursive bin > /tmp/type0-base2.txt 2>&1
-tail -1 /tmp/type0-base1.txt   # must be: ok 120 V6 redefine (javascript)
-tail -1 /tmp/type0-base2.txt   # must be: ok 10 relocate_copy_tree fails clearly when not in a git checkout
-grep -c '^ok ' /tmp/type0-base1.txt      # expect 117
-grep -c '^not ok ' /tmp/type0-base1.txt  # expect 3
-grep -c '^ok ' /tmp/type0-base2.txt      # expect 10
-grep '^not ok ' /tmp/type0-base1.txt
+cd /workspaces/languages-ng/.claude/worktrees/type0
+bin/test.bash > /tmp/type0-base.txt 2>&1; echo "EXIT=$?"   # expect EXIT=1
+grep -c '^ok ' /tmp/type0-base.txt      # expect 138
+grep -c '^not ok ' /tmp/type0-base.txt  # expect 3
+grep '^not ok ' /tmp/type0-base.txt
 ```
 
-Expected: **130 tests total, 127 passing, 3 failing** — `OBJ class`, `TYPE0 boolean`, `TYPE1 proc-types`, all `plccmk: command not found`.
+Expected: **141 tests total, 138 passing, 3 failing** — `OBJ class`, `TYPE0 boolean`, `TYPE1 proc-types`, all `plccmk: command not found`.
 
-If either `tail -1` is not the final test line, the run died early — free disk and rerun rather than trusting the counts. If the failure set differs, **stop**: the plan's counts are stale and every later task's expectation is wrong.
+On `EXIT=2` the harness died and the counts in the file mean nothing; investigate (`df -h /` first) and rerun rather than reporting them. On `EXIT=0` something that was failing now passes — also stop. If the failure set differs from the three above, **stop**: the plan's counts are stale and every later task's expectation is wrong.
+
+> **Amended 2026-08-06, pre-execution** — restated for `bin/test.bash` and the post-rebase baseline. See the two amendment notes under Global Constraints.
 
 - [ ] **Step 5: Commit**
 
@@ -636,9 +636,11 @@ Expected: `duplicate ID x in let/letrec LHS identifiers`. A bare `1` means the c
 
 - [ ] **Step 9: Run the full suite**
 
-Use the split-`TMPDIR` workaround from Global Constraints, writing to `/tmp/type0-task2-{1,2}.txt`. Check each pass's final test line, then count.
+Run `bin/test.bash` per Global Constraints, writing to `/tmp/type0-task2.txt`. Confirm `EXIT=1`, then count.
 
-Expected: **133 tests, 131 passing, 2 failing.** That is the baseline's 130, minus TYPE0's 1 old test, plus 4 new Python tests. Pass 1 becomes 123 tests / 121 passing / 2 failing; pass 2 is unchanged at 10 / 10 / 0. The 2 remaining failures are `OBJ class` and `TYPE1 proc-types` — both `plccmk: command not found`. Any `V`-prefixed, `SET`, `REF`, `NAME`, or `NEED` failure is a regression; stop and fix it.
+Expected: **144 tests, 142 passing, 2 failing.** That is the baseline's 141, minus TYPE0's 1 old test, plus 4 new Python tests. The 2 remaining failures are `OBJ class` and `TYPE1 proc-types` — both `plccmk: command not found`. Any `V`-prefixed, `SET`, `REF`, `NAME`, or `NEED` failure is a regression; stop and fix it.
+
+> **Amended 2026-08-06, pre-execution** — was 133 / 131 / 2 against the pre-rebase baseline of 130.
 
 - [ ] **Step 10: Add the course-material impact entries**
 
@@ -940,9 +942,11 @@ Expected: **8 tests, 8 passing** — four Python, four Java.
 
 - [ ] **Step 5: Run the full suite**
 
-Use the split-`TMPDIR` workaround, writing to `/tmp/type0-task3-{1,2}.txt`. Check each pass's final test line, then count.
+Run `bin/test.bash` per Global Constraints, writing to `/tmp/type0-task3.txt`. Confirm `EXIT=1`, then count.
 
-Expected: **137 tests, 135 passing, 2 failing.** Pass 1 becomes 127 tests / 125 passing / 2 failing; pass 2 unchanged at 10 / 10 / 0. The 2 failures remain `OBJ class` and `TYPE1 proc-types`.
+Expected: **148 tests, 146 passing, 2 failing.** The 2 failures remain `OBJ class` and `TYPE1 proc-types`.
+
+> **Amended 2026-08-06, pre-execution** — was 137 / 135 / 2 against the pre-rebase baseline of 130.
 
 - [ ] **Step 6: Commit**
 
@@ -1283,9 +1287,11 @@ Expected: `1` on every line. Note the `md5sum` is inside the inner loop — hash
 
 - [ ] **Step 6: Run the full suite**
 
-Use the split-`TMPDIR` workaround, writing to `/tmp/type0-task4-{1,2}.txt`. Check each pass's final test line, then count.
+Run `bin/test.bash` per Global Constraints, writing to `/tmp/type0-task4.txt`. Confirm `EXIT=1`, then count.
 
-Expected: **141 tests, 139 passing, 2 failing.** Pass 1 becomes 131 tests / 129 passing / 2 failing; pass 2 unchanged at 10 / 10 / 0. The 2 failures remain `OBJ class` and `TYPE1 proc-types` — the phase's load-bearing invariant is that the `command not found` count dropped by **exactly 1** from the baseline's 3.
+Expected: **152 tests, 150 passing, 2 failing.** The 2 failures remain `OBJ class` and `TYPE1 proc-types` — the phase's load-bearing invariant is that the `command not found` count dropped by **exactly 1** from the baseline's 3. Check that invariant directly (`grep -c 'command not found' /tmp/type0-task4.txt`) rather than inferring it from the totals: it is the one gate here that does not move when the suite grows underneath this branch.
+
+> **Amended 2026-08-06, pre-execution** — was 141 / 139 / 2 against the pre-rebase baseline of 130. Note that the old expected total, 141, is exactly the *new* baseline; anyone working from the stale number would have seen 141 tests on an untouched tree and read it as success.
 
 - [ ] **Step 7: Commit**
 
@@ -1339,9 +1345,11 @@ Expected: `grammar.plcc`, `java`, `javascript`, `python`, `tests` — and nothin
 
 - [ ] **Step 3: Run the full suite**
 
-Use the split-`TMPDIR` workaround, writing to `/tmp/type0-task5-{1,2}.txt`. Check each pass's final test line, then count.
+Run `bin/test.bash` per Global Constraints, writing to `/tmp/type0-task5.txt`. Confirm `EXIT=1`, then count.
 
-Expected: **141 tests, 139 passing, 2 failing** — unchanged from Task 4. Deleting the old-PLCC sources removes no test, because Task 2 already replaced TYPE0's only old test file.
+Expected: **152 tests, 150 passing, 2 failing** — unchanged from Task 4. Deleting the old-PLCC sources removes no test, because Task 2 already replaced TYPE0's only old test file.
+
+> **Amended 2026-08-06, pre-execution** — was 141 / 139 / 2 against the pre-rebase baseline of 130.
 
 - [ ] **Step 4: Commit the deletion**
 
@@ -1360,13 +1368,13 @@ bin/issues/check.bash
 
 `close.bash` fills in the issue's `closed` date and removes its roadmap entry. Because this was the only `### Feat` entry, that heading should disappear with it — the roadmap's contract is that a type group exists only while it has open entries. `check.bash` must exit 0.
 
-- [ ] **Step 6: Clean up the bats scratch directory**
+- [ ] **Step 6: Commit**
 
-```bash
-rm -rf /workspaces/languages-ng/.claude/worktrees/.bats-tmp
-```
-
-- [ ] **Step 7: Commit**
+> **Amended 2026-08-06, pre-execution.** This was Step 7. The original Step 6
+> was `rm -rf /workspaces/languages-ng/.claude/worktrees/.bats-tmp`, cleaning
+> up after the split-`TMPDIR` workaround; nothing creates that directory
+> anymore. Removed rather than left as a harmless no-op, so no one goes
+> looking for the mechanism that was supposed to have made it.
 
 ```bash
 git add dev-docs/issues dev-docs/roadmap.md
