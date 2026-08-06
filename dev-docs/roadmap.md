@@ -18,11 +18,6 @@
 - **[#22](issues/022-plcc-rep-parses-each-source-independently.md) — plcc-rep parses each SOURCE argument independently**
   A program split across two files no longer parses, where old PLCC's `rep` joined its file arguments into one stream; V6's `Prog/p1`/`Prog/p2` course example depends on the old behavior and now needs `cat p1 p2 | plcc-rep`. Targeted at ourPLCC/plcc-ng, not reported externally yet.
 
-### Feat
-
-- **[#30](issues/030-migrate-need-to-plcc-ng.md) — migrate-need-to-plcc-ng**
-  Port NEED (NAME + memoization) to plcc-ng in Python, Java, and JavaScript: an `ERROR` token and `ErrorPrim` production, a memoizing `ThunkRef`, a read-only `ValRORef`, and four value-only test cases.
-
 ### Test
 
 - **[#27](issues/027-use-spec-flag-instead-of-copying-tree.md) — use `plcc-rep -s` instead of copying `src/` into each test tmpdir**
