@@ -196,7 +196,9 @@ class ValRORef(ValRef):
 %%%
 ```
 
-Java's block is the same class with `import runtime.LanguageError;`.
+Java's block is the same class with `import runtime.LanguageError;` and an
+explicit constructor, `public ValRORef(Val val) { super(val); }`, that Python
+and JavaScript inherit implicitly.
 JavaScript's needs `const { ValRef } = require('./ValRef');` and
 `const { LanguageError } = require('./runtime/base');` — free-standing classes
 get no auto-injected requires — and ends with `module.exports = { ValRORef };`.

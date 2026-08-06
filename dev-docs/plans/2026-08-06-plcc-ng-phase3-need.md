@@ -461,7 +461,7 @@ Append a `## NEED` section to `dev-docs/course-material-impact.md`, after the ex
 - `ValRORef`, a new read-only `ValRef` subclass, returned by `LitExp.evalRef` and `ProcExp.evalRef` where NAME returned a plain `ValRef`. Give the observable: `let p = proc(t) set t=9 in .p(11)` now raises `cannot modify a read-only reference`, where NAME returns `9`. `VarExp.evalRef` is unchanged, so assigning through a bare variable formal still works.
 - The new `ERROR` token and `ErrorPrim` production — NEED's only syntax delta from NAME — whose `apply` raises `user-defined error` regardless of its arguments.
 - `apply` taking a `List<Ref>` **and** an `Env` (the dynamic-scoping homework seam), where pre-migration NEED's `apply(List<Ref>)` had no `Env`, and `ProcVal.apply` now raising `formals/args number mismatch` on an arity error, which pre-migration NEED did not check.
-- The `tests/let/` → `tests/thunk-forced-once/` rename, and that its input was upgraded to the seven-use `Prog/test` so it is byte-identical to NAME's `thunk-reevaluated-per-use/` input — the same program, `4` under NEED and `10` under NAME.
+- The `tests/let/` → `tests/thunk-forced-once/` rename, and that its input was upgraded to the seven-use `Prog/test` — the same program NAME's `thunk-reevaluated-per-use/` runs, ignoring one blank line NAME's copy carries and NEED's does not — giving `4` under NEED and `10` under NAME.
 
 - [ ] **Step 12: Commit**
 

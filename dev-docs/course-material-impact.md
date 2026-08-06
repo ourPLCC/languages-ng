@@ -553,3 +553,17 @@ headings are added in the order each language is migrated.
   correct — every one of its example applications is commented out in the
   source — not a porting bug; an instructor seeing an apparently empty
   result from `jeh` should check the source before suspecting the port.
+- All rows below are measured, run against both languages' shipped specs
+  on the same source files (the design's [Validated
+  Mechanics](specs/2026-08-05-plcc-ng-need-design.md#validated-mechanics)
+  table), giving a live NEED-versus-NAME contrast:
+
+  | program | NEED | NAME |
+  |---|---|---|
+  | `Prog/test` | `4` | `10` |
+  | `Prog/counter` | `4` | `1` |
+  | `Prog/jensen` | stack exhaustion | `55` |
+  | `Prog/sumsq` | stack exhaustion | `385` |
+  | `Prog/countdown` | stack exhaustion | `42` |
+  | `let p = proc(t,u) t in .p(11,error())` | `11` | parse error — no `ERROR` token |
+  | `let p = proc(t) set t=9 in .p(11)` | `cannot modify a read-only reference` | `9` |
