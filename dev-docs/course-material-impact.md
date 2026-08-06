@@ -499,3 +499,58 @@ headings are added in the order each language is migrated.
   runs (ignoring one blank line NAME's copy carries and NEED's does
   not). One program, two expected values: `4` under NEED, `10` under
   NAME, both correct for their language.
+- **The Jensen device does not terminate under call-by-need.** `Prog/jensen`,
+  `Prog/sumsq`, and `Prog/countdown` (all in `src/NAME/`, not copied into
+  `src/NEED/`) build a `while` loop out of nothing but call-by-name: the
+  loop's `test?` and `do` arguments arrive as thunks, and the loop depends on
+  re-forcing `test?` on every iteration. NEED's memoization removes exactly
+  that — `test?` is evaluated once, caches a `true` value, and every later
+  iteration reads the cache, so the loop condition can never become false and
+  `.loop()` recurses until the stack is exhausted. Run live against all three
+  NEED targets on `Prog/jensen` (Task 5), each prints its leading `while` line
+  and then a target-specific stack-exhaustion error: `RecursionError:
+  maximum recursion depth exceeded` (Python), `StackOverflowError` (Java),
+  `RangeError: Maximum call stack size exceeded` (JavaScript). **This is
+  correct call-by-need semantics, not a defect** — do not copy these three
+  programs into `src/NEED/Prog/`, write a test for the divergence, or weaken
+  the memoization to make them run. The pedagogical point is the pair, not
+  either language alone: NAME gains the ability to express a loop that
+  call-by-value cannot, and NEED gives that ability back. Worth a slide on
+  its own, right next to NAME's `Prog/jensen` giving `while` `55`.
+- **The NEED-versus-NAME contrast for `Prog/test` and `Prog/counter`**, the
+  two memoization discriminators, moves in opposite directions for the same
+  reason. Both are run (Task 5) as the same source file against two shipped
+  specs — `src/NEED/Prog/test`/`counter` interpreted first by NEED's own
+  `spec.plcc` and then by `src/NAME/python/spec.plcc` — so the contrast is a
+  live demo, not a claim: `Prog/test` gives `4` under NEED versus `10` under
+  NAME, because the thunk `set x=add1(x)` is forced once and cached under
+  NEED but re-forced on all seven uses under NAME. `Prog/counter` gives `4`
+  under NEED versus `1` under NAME, because `let count=0 in proc() ...` is
+  built once and shared across `.times4`'s four calls under NEED but rebuilt
+  fresh on each of the four calls under NAME. `test` falls under NEED because
+  the side effect runs once instead of seven times; `counter` rises because
+  the counter is built once instead of four times — the same mechanism,
+  pulling the two programs' numbers in opposite directions.
+- **`Prog/nn` runs in Java and JavaScript but not Python**, dying with
+  `RecursionError: maximum recursion depth exceeded` at `.nth(1000,natno)` —
+  [issue #19](issues/019-python-recursion-ceiling.md)'s recursion ceiling.
+  This is inherited, not introduced by the port: the identical file run
+  against NAME's own shipped Python spec (`src/NAME/python`) fails the same
+  way (Task 5 confirms this live). An instructor should demo `nn` in Java or
+  JavaScript, or pick a shallower lookup, rather than expect it to run under
+  Python.
+- **`Prog/nn`'s premise does not hold.** It calls `.nth(1000,natno)` twice,
+  which reads like a demonstration that memoization pays off, and it is not
+  one: measured in Java, NEED and NAME take the same time to run it, because
+  `nth` walks each level of the stream exactly once and no thunk is ever
+  forced twice — a `pair` closure is a `ProcExp`, whose `evalRef` returns an
+  eagerly built value rather than a thunk, so rebuilding one level is cheap
+  either way. The programs where memoization is actually observable are
+  `Prog/test` and `Prog/counter` above, not the streams (`natno`, `seq`,
+  `nn`, `fib`, `squares` all behave identically, and at the same speed,
+  under NAME and NEED).
+- `Prog/jeh` prints only its `define` names (`pair first rest nth fib
+  fibonacci recmult addall f`) and no result, in all three targets. That is
+  correct — every one of its example applications is commented out in the
+  source — not a porting bug; an instructor seeing an apparently empty
+  result from `jeh` should check the source before suspecting the port.
