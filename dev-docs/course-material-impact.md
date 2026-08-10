@@ -676,9 +676,9 @@ headings are added in the order each language is migrated.
   printed the bare word `proc`.
 - The new `type-errors/` test case is a scoped exception to the
   value-cases-only rule every language since V3 has followed: it is
-  justified because rejection *is* TYPE1's feature — all six
-  `checkEquals`/`checkEqualTypes`/`procType` call sites could be
-  deleted and a value-only suite would still pass. It needs no harness
+  justified because rejection *is* TYPE1's feature — all seven
+  `checkEquals`/`checkEqualTypes`/`checkBoolType`/`procType` call sites
+  could be deleted and a value-only suite would still pass. It needs no harness
   support beyond what already exists: a language error goes to
   stdout, `plcc-rep` exits 0, and evaluation continues to the next
   expression, all three measured directly from the fixture. It is not

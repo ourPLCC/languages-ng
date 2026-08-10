@@ -457,10 +457,11 @@ driven by `plcc-rep` — the same shape every language since V3 uses.
 
 Every earlier language's suite tests what the language *computes*. TYPE1's
 contribution is what it *refuses*, and a value-only suite cannot reach it. All
-six of these could be deleted and a value-only suite would still pass:
+seven of these could be deleted and a value-only suite would still pass:
 
 | Check | Original site |
 |---|---|
+| `checkBoolType(Type.boolType())` on the `if` test | `IfExp.evalType` |
 | `checkEquals(trueExpType, falseExpType)` | `IfExp.evalType` |
 | `checkEqualTypes(pt.paramTypeList, argTypeList)` | `PrimappExp.evalType`, `AppExp.evalType` |
 | `checkEquals(varType, expType)` on `set` | `SetExp.evalType` |
@@ -492,9 +493,9 @@ sit in the same input file as value lines.
 | `boolean-ops/` | value | `and`, `or`, `not`, alone and composed with relational prims |
 | `declare-define/` | value | `declare`-then-`define`, mutual recursion, and the printed `sym:type` lines |
 | `call-by-reference/` | value | pins the aliasing restored above, so it cannot be silently dropped again |
-| `type-errors/` | error | the six rejection sites |
+| `type-errors/` | error | the seven rejection sites |
 
-`type-errors/` is one directory rather than six, since `plcc-rep` continues
+`type-errors/` is one directory rather than seven, since `plcc-rep` continues
 after an error and a single input reads as a checklist. Measured output, all
 three targets byte-identical:
 

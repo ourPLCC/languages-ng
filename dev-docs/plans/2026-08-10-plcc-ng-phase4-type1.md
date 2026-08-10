@@ -1559,7 +1559,7 @@ printf 'type mismatch: int != bool\ntype mismatch: bool != int\ntype mismatch: b
 
 Every one of those expected files is measured output, byte-identical across all three targets.
 
-`type-errors/` is the scoped exception to the value-cases-only rule that every language since V3 has followed. It is justified because rejection *is* TYPE1's feature: all six `checkEquals`/`checkEqualTypes`/`procType` sites could be deleted and a value-only suite would still pass. It needs no harness support — a language error goes to **stdout**, `plcc-rep` exits **0**, and evaluation **continues to the next expression**, all measured. Do not extend it to inherited runtime diagnostics (divide by zero, unbound identifier, duplicate ID, `not an Int`, `formals/args number mismatch`); those belong to languages that already shipped.
+`type-errors/` is the scoped exception to the value-cases-only rule that every language since V3 has followed. It is justified because rejection *is* TYPE1's feature: all seven `checkEquals`/`checkEqualTypes`/`checkBoolType`/`procType` sites could be deleted and a value-only suite would still pass. It needs no harness support — a language error goes to **stdout**, `plcc-rep` exits **0**, and evaluation **continues to the next expression**, all measured. Do not extend it to inherited runtime diagnostics (divide by zero, unbound identifier, duplicate ID, `not an Int`, `formals/args number mismatch`); those belong to languages that already shipped.
 
 - [ ] **Step 6: Create the five `.bats` files with their Python blocks**
 
