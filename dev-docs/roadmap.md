@@ -18,11 +18,6 @@
 - **[#22](issues/022-plcc-rep-parses-each-source-independently.md) — plcc-rep parses each SOURCE argument independently**
   A program split across two files no longer parses, where old PLCC's `rep` joined its file arguments into one stream; V6's `Prog/p1`/`Prog/p2` course example depends on the old behavior and now needs `cat p1 p2 | plcc-rep`. Targeted at ourPLCC/plcc-ng, not reported externally yet.
 
-### Feat
-
-- **[#34](issues/034-migrate-type1-to-plcc-ng.md) — migrate TYPE1 to plcc-ng**
-  Port TYPE1 (TYPE0 + declare + and/or/not + strong type checking) to plcc-ng in Python, Java, and JavaScript: nine new free-standing classes for the type and type-environment hierarchies, an `evalType` pass run before every evaluation, and restoring call-by-reference, which a pre-migration drift had silently dropped.
-
 ### Test
 
 - **[#27](issues/027-use-spec-flag-instead-of-copying-tree.md) — use `plcc-rep -s` instead of copying `src/` into each test tmpdir**
