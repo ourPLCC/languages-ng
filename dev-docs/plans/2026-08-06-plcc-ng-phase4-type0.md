@@ -94,12 +94,23 @@ Note the number it prints — that is `NN` for the rest of this plan. Fill in th
 
 - [ ] **Step 2: Add the roadmap entry**
 
-Add an entry to the **Open Issues** section of `dev-docs/roadmap.md`, under a `### Feat` heading. That heading does **not** exist today — the roadmap's contract is that a type group exists only while it has open entries, and `close.bash` removed the last one at the end of NEED's phase. Create it, placed alphabetically among the existing `### Chore`, `### Docs`, and `### Test` headings (so: Chore, Docs, **Feat**, Test). Use this exact two-line format, which the scripts parse:
+Add an entry to the **Open Issues** section of `dev-docs/roadmap.md`, under a `### Feat` heading. That heading does **not** exist today — the roadmap's contract is that a type group exists only while it has open entries, and `close.bash` removed the last one at the end of NEED's phase. Create it, placed alphabetically among the existing `### Chore`, `### Docs`, and `### Test` headings (so: Chore, Docs, **Feat**, Test). Use this exact two-line format, which the scripts parse — note that the display number is **unpadded** (`#NN`) while the filename it links to is zero-padded (`0NN-…`):
 
 ```markdown
-- **[#0NN](issues/0NN-migrate-type0-to-plcc-ng.md) — migrate-type0-to-plcc-ng**
+- **[#NN](issues/0NN-migrate-type0-to-plcc-ng.md) — migrate-type0-to-plcc-ng**
   Port TYPE0 (REF + type declarations, no type checking) to plcc-ng in Python, Java, and JavaScript: a `BoolVal` with `true`/`false` literals and six relational prims, strict booleans in `if`, a type-annotation grammar whose classes carry no semantics, and four value-only test cases.
 ```
+
+> **Amended 2026-08-10.** The display number here originally read `[#0NN]`,
+> matching the zero-padded filename. Read literally that produces `[#032]`
+> on this branch, but `bin/issues/check.bash` computes
+> `id=$(( 10#${basename%%-*} ))` — stripping leading zeros — and greps for
+> `^- \*\*\[#${id}\](issues/${basename})`, so `[#032]` matches nothing and
+> Step 3's own `check.bash` run would have failed against the template as
+> written. The implementer caught this while executing the step and used
+> `[#32]` instead; the committed roadmap entry is correct. This correction
+> just fixes the plan text so the next language's phase does not copy the
+> broken template.
 
 - [ ] **Step 3: Verify the issue bookkeeping is consistent**
 
@@ -1339,7 +1350,13 @@ grep -rnE 'TYPE0/(grammar([^.]|$)|code|prim|envRef|val|ref)' \
     | grep -v '^\./dev-docs/'
 ```
 
-Expected: no output. Hits under `dev-docs/` are design and plan prose and are fine. A hit anywhere else means something still depends on a file about to be deleted — resolve it before deleting.
+Expected: no output. Hits under `dev-docs/` are design and plan prose and are fine; so are hits under `.superpowers/`, the workflow's own scratch directory, which the `grep -v '^\./dev-docs/'` filter above does not touch. A hit anywhere else means something still depends on a file about to be deleted — resolve it before deleting.
+
+> **Amended 2026-08-10.** This paragraph originally said only "Expected: no
+> output," which was slightly optimistic: under real GNU grep the command
+> as written is correct, but a run also surfaces hits under `.superpowers/`
+> that the `dev-docs/` filter doesn't catch. The command itself is
+> unchanged — only this prose was clarified.
 
 The `grammar([^.]|$)` branch is deliberate and must not be simplified to `grammar\b`: a word boundary matches between `grammar` and the `.` of `grammar.plcc`, so `TYPE0/grammar\b` flags the very file this task must keep. Verified — `\b` matches both spellings, the `-E` form only the extensionless one.
 

@@ -38,7 +38,7 @@ function relocate_copy_tree () {
 # tree (not just <LANG>/) for two reasons: migrated specs %include a
 # sibling top-level directory -- e.g. V1's spec.plcc reaching into
 # ../../Env/envRN/<target>/env.plcc -- and the not-yet-migrated languages
-# (OBJ, TYPE0, TYPE1) run plccmk, which builds in place and
+# (OBJ, TYPE1) run plccmk, which builds in place and
 # has no way to be pointed at a spec elsewhere.
 #
 # The %include half of that is now avoidable: plcc-rep -s <abs spec path>

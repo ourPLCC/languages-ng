@@ -586,9 +586,9 @@ headings are added in the order each language is migrated.
   return `1`. TYPE1 does *not* subsume this into type checking — it
   keeps the same parse-time call — so TYPE0 was simply the odd one out.
 - `apply` now takes a `List<Ref>` **and** an `Env` (`apply(args, env)`
-  in Python, `apply(List<Ref> args, Env e)` in Java) — the same unread
-  `env` parameter, the dynamic-scoping homework seam described in
-  SET's, NAME's, and NEED's entries. Pre-migration TYPE0's
+  in Python/JavaScript, `apply(List<Ref> args, Env e)` in Java) — the
+  same unread `env` parameter, the dynamic-scoping homework seam
+  described in SET's, NAME's, and NEED's entries. Pre-migration TYPE0's
   `apply(List<Ref>)` had no `Env` parameter. `ProcVal.apply` also now
   raises `formals/args number mismatch` on an arity error, which
   pre-migration TYPE0 did not check.
@@ -597,7 +597,11 @@ headings are added in the order each language is migrated.
 - The old `src/TYPE0/tests/boolean/` is now `tests/relational-prims/`,
   widened from a single `<=?(3,3)` program to all six relational
   operators (`<?`, `<=?`, `>?`, `>=?`, `=?`, `<>?`) plus `zero?` on both
-  a zero and a non-zero argument.
+  a zero and a non-zero argument — and, per a final-review finding, each
+  operator is now pinned on both sides of its boundary (e.g. `<?(1,2)`
+  *and* `<?(2,2)`), since the six prim bodies are near-identical by
+  design and a single data point per operator did not always
+  distinguish it from a copy-pasted neighbor.
 - **The REF↔TYPE0 contrast** is lecture material in its own right. Two
   rows carry the weight: `if` now requires a genuine boolean, so
   `if 1 then 1 else 2` raises `boolean expression expected` where REF

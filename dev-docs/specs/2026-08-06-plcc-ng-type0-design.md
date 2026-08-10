@@ -508,20 +508,12 @@ for cross-language copying applied only because a test required the file.
 
 ### Expected test counts
 
-Measured on this branch at design time using the split-`TMPDIR` workaround from
-issue [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md) —
-a plain `bin/test.bash` run exhausts the disk on this container and reports a
-spurious `not ok` for whichever test was running when it died. The counts below
-come from two passes each checked for its final test line, not from a truncated
-run, and the 130 total is cross-checked against `grep -c '^@test'` over every
-`.bats` file in the repository.
-
-The suite today is **130 tests: 127 passing and 3 failing** — `OBJ class`,
+The suite today is **141 tests: 138 passing and 3 failing** — `OBJ class`,
 `TYPE0 boolean`, and `TYPE1 proc-types`, every failure a
 `plccmk: command not found` from a language still on old PLCC.
 
-After this phase: **141 tests** — 130, minus TYPE0's 1 old test, plus 12
-(4 cases × 3 targets) — **139 passing and 2 failing**, the same
+After this phase: **152 tests** — 141, minus TYPE0's 1 old test, plus 12
+(4 cases × 3 targets) — **150 passing and 2 failing**, the same
 `command not found` set minus TYPE0.
 
 The load-bearing invariant is the delta, not the totals: the
@@ -530,8 +522,25 @@ before may fail after. There is no retro-fix in this phase touching
 already-passing languages, so a V-prefixed, SET, REF, NAME, or NEED failure
 would be a genuine regression rather than expected churn.
 
-Anyone running the suite for this phase should use issue #31's workaround from
-the start rather than rediscovering the disk problem.
+A plain `bin/test.bash` run now completes unaided in one invocation.
+
+> **Amended 2026-08-10.** This section originally read "**130 tests: 127
+> passing and 3 failing**" for the baseline and "**141 tests** … **139
+> passing and 2 failing**" after the phase, measured using the split-`TMPDIR`
+> workaround from issue
+> [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md)
+> and a claim that "a plain `bin/test.bash` run exhausts the disk on this
+> container." Both premises expired: #31 landed on `main` and added
+> `bin/bats-tmpdir.bash`, a teardown that empties each passing test's
+> `BATS_TEST_TMPDIR`, so peak disk is now one test's footprint rather than
+> the whole suite's, and `bin/test.bash` completes on its own. The plan
+> ([`f0fc522`](../plans/2026-08-06-plcc-ng-phase4-type0.md)) was corrected
+> for this at the time; this design document was not, and drifted. The trap
+> worth flagging: the stale after-phase figure, 141, is exactly the
+> *current* baseline, so a reader running an untouched tree against the old
+> text would see 141 tests and read it as success. The load-bearing
+> invariant — the `command not found` count dropping by exactly 1 — did not
+> change and is unaffected by this correction.
 
 ## Noted for Later Phases
 
