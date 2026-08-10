@@ -27,7 +27,7 @@
 
   Then count with `grep -c '^ok '` and `grep -c '^not ok '`, and list the failures with `grep '^not ok '`.
 
-  > **Amended 2026-08-06, pre-execution.** This constraint originally read "**`bin/test.bash` cannot complete on this container**" and prescribed a split-`TMPDIR` workaround (`TMPDIR=…/.bats-tmp bats --recursive src`, then a second default-`TMPDIR` pass over `bin`) with a manual `tail -1` check on each pass. Both halves of its premise have since expired. Issue #31 landed on `main`, so a dead run now exits 2 with a banner instead of reporting a spurious `not ok` against an innocent test — the manual `tail -1` check is now the harness's own job. And the disk that motivated it is no longer full: #31 was observed at ~230 MB free, where this container now has 25 GB. Measured 2026-08-06 after rebasing onto `main`: `bin/test.bash` runs unaided end to end, one invocation, exit 1, disk flat throughout. The workaround is removed rather than kept as a fallback, because its per-pass counts are a second set of numbers to keep in sync and its `.bats-tmp` directory is one more thing to leak.
+  > **Amended 2026-08-06, pre-execution.** This constraint originally read "**`bin/test.bash` cannot complete on this container**" and prescribed a split-`TMPDIR` workaround (`TMPDIR=…/.bats-tmp bats --recursive src`, then a second default-`TMPDIR` pass over `bin`) with a manual `tail -1` check on each pass. Both halves of its premise have since expired. Issue #31 landed on `main`, so a dead run now exits 2 with a banner instead of reporting a spurious `not ok` against an innocent test — the manual `tail -1` check is now the harness's own job. And the accumulation that motivated it is gone: #31 also added `bin/bats-tmpdir.bash`, a `teardown` that empties each *passing* test's `BATS_TEST_TMPDIR`, so peak disk is now one test's footprint instead of the sum of all of them. Free space helps too (#31 was observed at ~230 MB free, where this container now has 25 GB), but the teardown is the mechanism — it keeps the peak flat as the suite grows, which free space alone does not. Measured 2026-08-06 after rebasing onto `main`: `bin/test.bash` runs unaided end to end, one invocation, exit 1, disk flat throughout. The workaround is removed rather than kept as a fallback, because its per-pass counts are a second set of numbers to keep in sync and its `.bats-tmp` directory is one more thing to leak.
 
 - **Baseline, re-measured 2026-08-06 after the rebase onto `main`:** **141 tests, 138 passing, 3 failing**, exit status 1. The 3 failures are `OBJ class`, `TYPE0 boolean`, and `TYPE1 proc-types` — all `plccmk: command not found`.
 
@@ -52,6 +52,17 @@
 - **Input and expected files carry no trailing newline** — verified against all four of REF's. Use `printf`, never `echo` or a bare heredoc. This is cosmetic (`$(< file)` and `$(...)` both strip trailing newlines) but matches the convention.
 
 - **Course-material impact entries go in the same commit as the change they describe**, under a `## TYPE0` heading in [dev-docs/course-material-impact.md](../course-material-impact.md), added after the existing `## NEED` section. Never batch them.
+
+- **Every `.bats` file loads both helpers**, in this order, as its only two `load` lines:
+
+  ```bash
+  load '../../../../bin/relocate.bash'
+  load '../../../../bin/bats-tmpdir.bash'
+  ```
+
+  All 42 existing `src/**/*test.bats` files do. `bats-tmpdir.bash` is the `teardown` that empties a passing test's `BATS_TEST_TMPDIR`; a file that omits it silently reintroduces the per-test accumulation of issue #31 for its own tests, and nothing fails to announce it — the suite just gets heavier. Only Task 2 writes these headers; Tasks 3 and 4 append `@test` blocks to files that already have them, and must not add a second `load` pair.
+
+  > **Amended 2026-08-06, pre-execution.** This constraint is new. The four `.bats` templates in Task 2 originally carried only the `relocate.bash` line, which was *correct when the plan was written*: at the plan's base commit `b1d87d9`, `bin/bats-tmpdir.bash` did not exist and REF's own test files loaded `relocate.bash` alone. Issue #31's commit `420f558` added the helper and retrofitted the `load` line into all 42 existing test files. The plan's four new files would have been the only ones in the repository without it. Same rebase drift as the count staleness above, in a place a grep for `TMPDIR` and test counts did not reach.
 
 - **Never assign issue numbers by hand.** Use `bin/issues/new.bash` and `bin/issues/close.bash`.
 
@@ -523,6 +534,7 @@ Then write `src/TYPE0/tests/relational-prims/TYPE0test.bats` with the Python blo
 #!/usr/bin/env bats
 
 load '../../../../bin/relocate.bash'
+load '../../../../bin/bats-tmpdir.bash'
 
 @test "TYPE0 relational-prims (python)" {
   relocate
@@ -564,6 +576,7 @@ Now write the three `TYPE0test.bats` files, Python block only. `src/TYPE0/tests/
 #!/usr/bin/env bats
 
 load '../../../../bin/relocate.bash'
+load '../../../../bin/bats-tmpdir.bash'
 
 @test "TYPE0 boolean-literals (python)" {
   relocate
@@ -580,6 +593,7 @@ load '../../../../bin/relocate.bash'
 #!/usr/bin/env bats
 
 load '../../../../bin/relocate.bash'
+load '../../../../bin/bats-tmpdir.bash'
 
 @test "TYPE0 type-annotations-ignored (python)" {
   relocate
@@ -596,6 +610,7 @@ load '../../../../bin/relocate.bash'
 #!/usr/bin/env bats
 
 load '../../../../bin/relocate.bash'
+load '../../../../bin/bats-tmpdir.bash'
 
 @test "TYPE0 declared-type-not-checked (python)" {
   relocate
