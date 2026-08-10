@@ -567,3 +567,42 @@ headings are added in the order each language is migrated.
   | `Prog/countdown` | stack exhaustion | `42` |
   | `let p = proc(t,u) t in .p(11,error())` | `11` | parse error — no `ERROR` token |
   | `let p = proc(t) set t=9 in .p(11)` | `cannot modify a read-only reference` | `9` |
+
+## TYPE0
+
+- Identifier token is now `SYMBOL`, not `VAR`, and the corresponding
+  field is `symbol`, not `var` — the standing convention since V0.
+  `VarExp.eval` reads `env.applyEnv(self.symbol.lexeme)`, not
+  `env.applyEnv(self.var.lexeme)`.
+- `$run()` is now `_run()`, and it **returns** its output string rather
+  than printing it, the same `_run()` contract every migrated language
+  adopts.
+- The grammar symbol `BoolPrimtype` is renamed `BoolPrimType`, bringing
+  TYPE0 in line with its own `IntPrimType` and with TYPE1's spelling.
+- `LetDecls:init` now runs a duplicate-LHS check, absent from
+  pre-migration TYPE0 and present in every other language in the
+  repository. The observable: `let x = 1 x = 2 in x` now raises
+  `duplicate ID x in let/letrec LHS identifiers` where it used to
+  return `1`. TYPE1 does *not* subsume this into type checking — it
+  keeps the same parse-time call — so TYPE0 was simply the odd one out.
+- `apply` now takes a `List<Ref>` **and** an `Env` (`apply(args, env)`
+  in Python, `apply(List<Ref> args, Env e)` in Java) — the same unread
+  `env` parameter, the dynamic-scoping homework seam described in
+  SET's, NAME's, and NEED's entries. Pre-migration TYPE0's
+  `apply(List<Ref>)` had no `Env` parameter. `ProcVal.apply` also now
+  raises `formals/args number mismatch` on an arity error, which
+  pre-migration TYPE0 did not check.
+- `Val.toArray` is dropped, as in every migrated language before this
+  one.
+- The old `src/TYPE0/tests/boolean/` is now `tests/relational-prims/`,
+  widened from a single `<=?(3,3)` program to all six relational
+  operators (`<?`, `<=?`, `>?`, `>=?`, `=?`, `<>?`) plus `zero?` on both
+  a zero and a non-zero argument.
+- **The REF↔TYPE0 contrast** is lecture material in its own right. Two
+  rows carry the weight: `if` now requires a genuine boolean, so
+  `if 1 then 1 else 2` raises `boolean expression expected` where REF
+  returns `1`; and `zero?` returns `true`/`false` where REF returns
+  `1`/`0`. Those are the two places a REF program stops behaving the
+  same under TYPE0. TYPE0's type annotations are parsed and then
+  ignored — `proc(x:int):bool 5` returns `5` rather than raising a type
+  error — which is exactly the distinction TYPE1 exists to remove.

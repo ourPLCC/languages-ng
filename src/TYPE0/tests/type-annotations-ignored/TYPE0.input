@@ -1,0 +1,8 @@
+let
+    f = proc(x:int, g:[int,int=>bool]):bool .g(x,x)
+in
+    .f(3, proc(a:int,b:int):bool <=?(a,b))
+let
+    p = proc():[=>int] proc():int 7
+in
+    .p()
