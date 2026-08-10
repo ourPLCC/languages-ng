@@ -18,3 +18,11 @@ load '../../../../bin/bats-tmpdir.bash'
   expected_output=$(< "../tests/boolean-literals/TYPE0.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "TYPE0 boolean-literals (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/boolean-literals/TYPE0.input)"
+  expected_output=$(< "../tests/boolean-literals/TYPE0.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}

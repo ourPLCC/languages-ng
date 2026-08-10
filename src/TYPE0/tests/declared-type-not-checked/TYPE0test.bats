@@ -18,3 +18,11 @@ load '../../../../bin/bats-tmpdir.bash'
   expected_output=$(< "../tests/declared-type-not-checked/TYPE0.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "TYPE0 declared-type-not-checked (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/declared-type-not-checked/TYPE0.input)"
+  expected_output=$(< "../tests/declared-type-not-checked/TYPE0.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
