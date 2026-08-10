@@ -595,13 +595,16 @@ headings are added in the order each language is migrated.
 - `Val.toArray` is dropped, as in every migrated language before this
   one.
 - The old `src/TYPE0/tests/boolean/` is now `tests/relational-prims/`,
-  widened from a single `<=?(3,3)` program to all six relational
-  operators (`<?`, `<=?`, `>?`, `>=?`, `=?`, `<>?`) plus `zero?` on both
-  a zero and a non-zero argument — and, per a final-review finding, each
-  operator is now pinned on both sides of its boundary (e.g. `<?(1,2)`
-  *and* `<?(2,2)`), since the six prim bodies are near-identical by
-  design and a single data point per operator did not always
-  distinguish it from a copy-pasted neighbor.
+  widened from a single `<=?(3,3)` program to 20 programs: each of the
+  six relational operators (`<?`, `<=?`, `>?`, `>=?`, `=?`, `<>?`)
+  exercised at all three orderings of its arguments (less-than, equal,
+  greater-than), plus `zero?` on both a zero and a non-zero argument.
+  The six prim bodies are near-identical by design, differing only in
+  which comparison they perform, so copy-paste between them is the
+  realistic failure mode; a truth-triple across all three orderings is
+  what makes each operator's expected output unique and distinguishable
+  from every other operator, where a single data point per operator was
+  not.
 - **The REF↔TYPE0 contrast** is lecture material in its own right. Two
   rows carry the weight: `if` now requires a genuine boolean, so
   `if 1 then 1 else 2` raises `boolean expression expected` where REF
