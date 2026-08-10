@@ -638,16 +638,25 @@ headings are added in the order each language is migrated.
   visible at every call site that types an application or an `if`.
 - `Val.isTrue()` now raises `boolean expression expected` where
   pre-migration TYPE1 returned `false`, restoring the shape TYPE0
-  introduced. The body is unreachable in a well-typed program — the
-  type checker rejects a non-boolean `if`/`AndPrim`/`OrPrim`/`NotPrim`
-  argument before `isTrue()` is ever called on it — so this is only
-  observable by deliberately bypassing the type checker.
-- The prim arity guards (`if len(args) != N: raise ...`) are retained
-  from pre-migration TYPE1, and `ProcVal.apply` gains a
-  `formals/args number mismatch` check that pre-migration TYPE1 did
-  not have. Neither is reachable from a well-typed program: the type
-  checker catches both mismatches statically first, always reporting
-  them as `argument number mismatch`.
+  introduced. `isTrue()` has exactly one call site — `IfExp.eval`'s
+  `self.testExp.eval(env).isTrue()` — and the body is unreachable
+  there in a well-typed program, since the type checker rejects a
+  non-boolean `if` test before that call is ever reached. This is
+  only observable by deliberately bypassing the type checker.
+  `AndPrim`/`OrPrim`/`NotPrim` are a separate, similarly-unreachable
+  case: they guard their arguments with `boolVal()`, not `isTrue()`,
+  raising the distinct `<self>: not a Bool` message, and the type
+  checker rules out that path the same way.
+- The prim arity guards (`if len(args) != N: raise ...`) come from
+  TYPE0's plcc-ng port and are deliberately kept across the
+  TYPE0→TYPE1 port; pre-migration TYPE1 (still in the tree as
+  `src/TYPE1/prim`) had dropped them when it added static typing, so
+  this is a reintroduction, not a carry-over from pre-migration
+  TYPE1. `ProcVal.apply` gains a `formals/args number mismatch` check
+  that pre-migration TYPE1 did not have. Neither guard is reachable
+  from a well-typed program: the type checker catches both mismatches
+  statically first, always reporting them as `argument number
+  mismatch`.
 - **Call-by-reference is restored.** With
   `define g = proc(x:int):int set x = 5`, calling `.g(a)` now mutates
   the caller's `a`, as in REF and TYPE0 (pre-migration TYPE1 had lost
