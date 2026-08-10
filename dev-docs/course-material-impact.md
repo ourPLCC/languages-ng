@@ -649,10 +649,11 @@ headings are added in the order each language is migrated.
   checker rules out that path the same way.
 - The prim arity guards (`if len(args) != N: raise ...`) come from
   TYPE0's plcc-ng port and are deliberately kept across the
-  TYPE0→TYPE1 port; pre-migration TYPE1 (still in the tree as
-  `src/TYPE1/prim`) had dropped them when it added static typing, so
-  this is a reintroduction, not a carry-over from pre-migration
-  TYPE1. `ProcVal.apply` gains a `formals/args number mismatch` check
+  TYPE0→TYPE1 port; pre-migration TYPE1's flat `src/TYPE1/prim` —
+  gone from the working tree and preserved only in git history — had
+  dropped them when it added static typing, so this is a
+  reintroduction, not a carry-over from pre-migration TYPE1.
+  `ProcVal.apply` gains a `formals/args number mismatch` check
   that pre-migration TYPE1 did not have. Neither guard is reachable
   from a well-typed program: the type checker catches both mismatches
   statically first, always reporting them as `argument number
