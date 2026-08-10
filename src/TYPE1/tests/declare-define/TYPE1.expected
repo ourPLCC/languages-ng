@@ -1,0 +1,6 @@
+odd?:[int=>bool]
+even?:[int=>bool]
+odd?:[int=>bool]
+even?:[int=>bool]
+true
+false

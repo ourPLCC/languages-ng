@@ -1,0 +1,5 @@
+a:int
+a:int
+g:[int=>int]
+5
+5

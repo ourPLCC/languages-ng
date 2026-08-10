@@ -1,0 +1,9 @@
+if 1 then 1 else 2
+if true then 1 else false
++(1,true)
++(1)
+.1(2)
+let x = 1 in set x = true
+proc(x:int):bool 5
+declare b : int
+define b = true

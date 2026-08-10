@@ -1,0 +1,90 @@
+# Language TYPE1
+#   Language TYPE0 with strong type checking
+skip WHITESPACE '\s+'
+skip COMMENT '%.*'
+token LIT '\d+'
+token LPAREN '\('
+token RPAREN '\)'
+token COMMA ','
+token ADDOP '\+'
+token SUBOP '\-'
+token MULOP '\*'
+token DIVOP '/'
+token ADD1OP 'add1'
+token SUB1OP 'sub1'
+token ANDOP 'and'
+token OROP 'or'
+token NOTOP 'not'
+token LTP '<\?'
+token LEP '<=\?'
+token GTP '>\?'
+token GEP '>=\?'
+token EQP '=\?'
+token NEP '<>\?'
+token ZEROP 'zero\?'
+token IF 'if'
+token THEN 'then'
+token ELSE 'else'
+token LET 'let'
+token LETREC 'letrec'
+token DEFINE 'define'
+token DECLARE 'declare'
+token IN 'in'
+token EQUALS '='
+token PROC 'proc'
+token SET 'set'
+token DOT '\.'
+token LBRACE '\{'
+token RBRACE '\}'
+token LBRACK '\['
+token RBRACK '\]'
+token COLON ':'
+token RARROW '=>'
+token BOOL 'bool'
+token INT  'int'
+token TRUE 'true'
+token FALSE 'false'
+token SEMI ';'
+token SYMBOL '[A-Za-z][\w?]*'
+%
+<Program:Declare>       ::= DECLARE <SYMBOL> COLON <TypeExp>
+<Program:Define>        ::= DEFINE <SYMBOL> EQUALS <Exp>
+<Program:Eval>          ::= <Exp>
+<TypeExp:PrimTypeExp>   ::= <PrimType>
+<TypeExp:ProcTypeExp>   ::= LBRACK <TypeExps> RARROW <TypeExp> RBRACK
+<PrimType:BoolPrimType> ::= BOOL
+<PrimType:IntPrimType>  ::= INT
+<TypeExps>              **= <TypeExp> +COMMA
+<Exp:LitExp>            ::= <LIT>
+<Exp:TrueExp>           ::= TRUE
+<Exp:FalseExp>          ::= FALSE
+<Exp:VarExp>            ::= <SYMBOL>
+<Exp:IfExp>             ::= IF <Exp:testExp> THEN <Exp:trueExp> ELSE <Exp:falseExp>
+<Exp:PrimappExp>        ::= <Prim> LPAREN <Rands> RPAREN
+<Exp:LetExp>            ::= LET <LetDecls> IN <Exp>
+<Exp:LetrecExp>         ::= LETREC <LetDecls> IN <Exp>
+<Exp:ProcExp>           ::= <Proc>
+<Exp:AppExp>            ::= DOT <Exp> LPAREN <Rands> RPAREN
+<Exp:SeqExp>            ::= LBRACE <Exp> <SeqExps> RBRACE
+<Exp:SetExp>            ::= SET <SYMBOL> EQUALS <Exp>
+<SeqExps>               **= SEMI <Exp>
+<Proc>                  ::= PROC LPAREN <Formals> RPAREN COLON <TypeExp> <Exp>
+<Formals>               **= <SYMBOL> COLON <TypeExp> +COMMA
+<LetDecls>              **= <SYMBOL> EQUALS <Exp>
+<Rands>                 **= <Exp> +COMMA
+<Prim:AddPrim>          ::= ADDOP
+<Prim:SubPrim>          ::= SUBOP
+<Prim:MulPrim>          ::= MULOP
+<Prim:DivPrim>          ::= DIVOP
+<Prim:Add1Prim>         ::= ADD1OP
+<Prim:Sub1Prim>         ::= SUB1OP
+<Prim:ZeropPrim>        ::= ZEROP
+<Prim:LTPrim>           ::= LTP
+<Prim:LEPrim>           ::= LEP
+<Prim:GTPrim>           ::= GTP
+<Prim:GEPrim>           ::= GEP
+<Prim:EQPrim>           ::= EQP
+<Prim:NEPrim>           ::= NEP
+<Prim:AndPrim>          ::= ANDOP
+<Prim:OrPrim>           ::= OROP
+<Prim:NotPrim>          ::= NOTOP

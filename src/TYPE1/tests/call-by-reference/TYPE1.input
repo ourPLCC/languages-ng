@@ -1,0 +1,5 @@
+declare a : int
+define a = 1
+define g = proc(x:int):int set x = 5
+.g(a)
+a

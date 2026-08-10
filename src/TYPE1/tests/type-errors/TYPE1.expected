@@ -1,0 +1,9 @@
+type mismatch: int != bool
+type mismatch: bool != int
+type mismatch: bool != int
+argument number mismatch
+int: attempt to apply a non-procedure
+type mismatch: bool != int
+type mismatch: int != bool
+b:int
+type mismatch: bool != int

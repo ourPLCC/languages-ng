@@ -613,3 +613,66 @@ headings are added in the order each language is migrated.
   same under TYPE0. TYPE0's type annotations are parsed and then
   ignored — `proc(x:int):bool 5` returns `5` rather than raising a type
   error — which is exactly the distinction TYPE1 exists to remove.
+
+## TYPE1
+
+- Identifier token is `SYMBOL`, not `VAR`, and the corresponding field
+  is `symbol`, not `var` — the standing convention since V0.
+- `$run()` is now `_run()`, and it **returns** its output string rather
+  than printing it, in `Declare` and `Define` as well as `Eval` —
+  the same `_run()` contract every migrated language adopts.
+- `Type.intType` is now `Type.intType()`, and the six prim-signature
+  helpers likewise — `Type.ii_b` is now `Type.ii_b()`, and so on —
+  with `Type.compile("ii>b")` and `decodeType` gone entirely. A class
+  attribute is evaluated at class-definition time, which would force
+  `Type` to import its own subclasses at module scope and make the
+  `Type`/`IntType` import cycle load-order dependent in Python and
+  JavaScript; factory methods that import inside the method body defer
+  that far enough to break the cycle. Java adopts the same
+  method-call shape even though it has no import-order problem of its
+  own, so all three targets read alike.
+- `Type.checkEquals(a, b)` is now `a.checkEquals(b)`, and the
+  0-argument `checkProcType()` is folded into `procType()` — both
+  changes forced by the fact that Python and JavaScript cannot carry
+  Java's overloaded `checkEquals`/`checkProcType` signatures, and both
+  visible at every call site that types an application or an `if`.
+- `Val.isTrue()` now raises `boolean expression expected` where
+  pre-migration TYPE1 returned `false`, restoring the shape TYPE0
+  introduced. The body is unreachable in a well-typed program — the
+  type checker rejects a non-boolean `if`/`AndPrim`/`OrPrim`/`NotPrim`
+  argument before `isTrue()` is ever called on it — so this is only
+  observable by deliberately bypassing the type checker.
+- The prim arity guards (`if len(args) != N: raise ...`) are retained
+  from pre-migration TYPE1, and `ProcVal.apply` gains a
+  `formals/args number mismatch` check that pre-migration TYPE1 did
+  not have. Neither is reachable from a well-typed program: the type
+  checker catches both mismatches statically first, always reporting
+  them as `argument number mismatch`.
+- **Call-by-reference is restored.** With
+  `define g = proc(x:int):int set x = 5`, calling `.g(a)` now mutates
+  the caller's `a`, as in REF and TYPE0 (pre-migration TYPE1 had lost
+  this — see `call-by-reference/`). The soundness argument is lecture
+  material in its own right: aliasing a formal to an actual is safe
+  here only because `checkEquals` is *exact* structural equality, with
+  no subtyping or variance. `AppExp.evalType` requires the actual
+  argument's type to equal the formal's declared type, and
+  `SetExp.evalType` requires an assignment's right-hand-side type to
+  equal the variable's declared type; composed, those two checks
+  guarantee that only a value of `a`'s own declared type can ever reach
+  `a`'s cell through `x`. That is the concrete answer to "why must
+  `[int=>int]` match exactly rather than merely be compatible?"
+- `ProcVal.toString()` now prints the full proc type —
+  `proc():int`, `proc(x:int,g:[int,int=>bool]):bool` — where TYPE0
+  printed the bare word `proc`.
+- The new `type-errors/` test case is a scoped exception to the
+  value-cases-only rule every language since V3 has followed: it is
+  justified because rejection *is* TYPE1's feature — all six
+  `checkEquals`/`checkEqualTypes`/`procType` call sites could be
+  deleted and a value-only suite would still pass. It needs no harness
+  support beyond what already exists: a language error goes to
+  stdout, `plcc-rep` exits 0, and evaluation continues to the next
+  expression, all three measured directly from the fixture. It is not
+  a precedent for testing inherited runtime diagnostics (divide by
+  zero, unbound identifier, duplicate ID, `not an Int`,
+  `formals/args number mismatch`) — those belong to languages that
+  already shipped.

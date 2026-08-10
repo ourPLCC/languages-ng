@@ -1,0 +1,1205 @@
+%include ../grammar.plcc
+%
+Python
+
+%include ../../Env/envRef/python/env.plcc
+
+Val
+%%%
+from runtime.base import LanguageError
+
+
+class Val:
+
+    def apply(self, args, env):
+        raise LanguageError(f"Cannot apply {self}")
+
+    def isTrue(self):
+        raise LanguageError("boolean expression expected")
+
+    def intVal(self):
+        raise LanguageError(f"{self}: not an Int")
+
+    def boolVal(self):
+        raise LanguageError(f"{self}: not a Bool")
+%%%
+
+IntVal
+%%%
+from Val import Val
+
+
+class IntVal(Val):
+
+    def __init__(self, val):
+        self.val = int(val)
+
+    def intVal(self):
+        return self
+
+    def __str__(self):
+        return str(self.val)
+%%%
+
+BoolVal
+%%%
+from Val import Val
+
+
+class BoolVal(Val):
+
+    def __init__(self, val):
+        self.val = val
+
+    def isTrue(self):
+        return self.val
+
+    def boolVal(self):
+        return self
+
+    def __str__(self):
+        return "true" if self.val else "false"
+%%%
+
+Ref
+%%%
+class Ref:
+
+    @staticmethod
+    def valsToRefs(valList):
+        from ValRef import ValRef
+        return [ValRef(v) for v in valList]
+
+    def deRef(self):
+        raise NotImplementedError
+
+    def setRef(self, v):
+        raise NotImplementedError
+%%%
+
+ValRef
+%%%
+from Ref import Ref
+
+
+class ValRef(Ref):
+
+    def __init__(self, val):
+        self.val = val
+
+    def deRef(self):
+        return self.val
+
+    def setRef(self, v):
+        self.val = v
+        return v
+
+    def __str__(self):
+        return str(self.val)
+%%%
+
+ProcVal
+%%%
+from Bindings import Bindings
+from Val import Val
+from runtime.base import LanguageError
+
+
+class ProcVal(Val):
+
+    def __init__(self, formals, returnTypeExp, body, env):
+        self.formals = formals
+        self.returnTypeExp = returnTypeExp
+        self.body = body
+        self.env = env
+
+    def apply(self, args, env):
+        if len(self.formals.symbolList) != len(args):
+            raise LanguageError("formals/args number mismatch")
+        bindings = Bindings(self.formals.symbolList, args)
+        nenv = self.env.extendEnvRef(bindings)
+        return self.body.eval(nenv)
+
+    def __str__(self):
+        return f"proc({self.formals}):{self.returnTypeExp.toType()}"
+%%%
+
+Type
+%%%
+from runtime.base import LanguageError
+
+
+class Type:
+
+    # The canonical types are factory methods rather than class
+    # attributes. A class attribute is evaluated when the class body
+    # runs, which would force Type to import its own subclasses at
+    # module scope and leave the Type/IntType import cycle depending on
+    # load order. Deferring the import into the method body is the same
+    # fix Env.initEnv() uses. Java follows suit so the three targets
+    # read alike, even though only Python and JavaScript need it.
+    #
+    # Returning a fresh instance per call is safe: the types are
+    # stateless and checkEquals is structural, never identity.
+
+    @staticmethod
+    def intType():
+        from IntType import IntType
+        return IntType()
+
+    @staticmethod
+    def boolType():
+        from BoolType import BoolType
+        return BoolType()
+
+    @staticmethod
+    def ii_i():
+        from ProcType import ProcType
+        return ProcType([Type.intType(), Type.intType()], Type.intType())
+
+    @staticmethod
+    def i_i():
+        from ProcType import ProcType
+        return ProcType([Type.intType()], Type.intType())
+
+    @staticmethod
+    def ii_b():
+        from ProcType import ProcType
+        return ProcType([Type.intType(), Type.intType()], Type.boolType())
+
+    @staticmethod
+    def i_b():
+        from ProcType import ProcType
+        return ProcType([Type.intType()], Type.boolType())
+
+    @staticmethod
+    def bb_b():
+        from ProcType import ProcType
+        return ProcType([Type.boolType(), Type.boolType()], Type.boolType())
+
+    @staticmethod
+    def b_b():
+        from ProcType import ProcType
+        return ProcType([Type.boolType()], Type.boolType())
+
+    # this Type as a ProcType, or an error if it is not one
+    def procType(self):
+        raise LanguageError(f"{self}: attempt to apply a non-procedure")
+
+    def checkEquals(self, t):
+        raise NotImplementedError
+
+    @staticmethod
+    def checkEqualTypes(typeList1, typeList2):
+        if len(typeList1) != len(typeList2):
+            raise LanguageError("argument number mismatch")
+        for t1, t2 in zip(typeList1, typeList2):
+            t1.checkEquals(t2)
+
+    def checkIntType(self, t):
+        Type.typeMismatch(self, t)
+
+    def checkBoolType(self, t):
+        Type.typeMismatch(self, t)
+
+    def checkProcType(self, t):
+        Type.typeMismatch(self, t)
+
+    @staticmethod
+    def typeMismatch(t1, t2):
+        raise LanguageError(f"type mismatch: {t1} != {t2}")
+%%%
+
+IntType
+%%%
+from Type import Type
+
+
+class IntType(Type):
+
+    def checkEquals(self, t):
+        t.checkIntType(self)
+
+    def checkIntType(self, t):
+        pass    # this IntType equals any other IntType
+
+    def __str__(self):
+        return "int"
+%%%
+
+BoolType
+%%%
+from Type import Type
+
+
+class BoolType(Type):
+
+    def checkEquals(self, t):
+        t.checkBoolType(self)
+
+    def checkBoolType(self, t):
+        pass    # this BoolType equals any other BoolType
+
+    def __str__(self):
+        return "bool"
+%%%
+
+ProcType
+%%%
+from Type import Type
+
+
+# the declared type of a procedure
+class ProcType(Type):
+
+    def __init__(self, paramTypeList, returnType):
+        self.paramTypeList = paramTypeList
+        self.returnType = returnType
+
+    def procType(self):
+        return self
+
+    def checkEquals(self, t):
+        t.checkProcType(self)
+
+    def checkProcType(self, t):
+        self.returnType.checkEquals(t.returnType)
+        Type.checkEqualTypes(self.paramTypeList, t.paramTypeList)
+
+    def __str__(self):
+        params = ",".join(str(t) for t in self.paramTypeList)
+        return f"[{params}=>{self.returnType}]"
+%%%
+
+TypeEnv
+%%%
+from runtime.base import LanguageError
+
+
+class TypeEnv:
+
+    @staticmethod
+    def initTypeEnv():
+        from TypeEnvNode import TypeEnvNode
+        from TypeEnvNull import TypeEnvNull
+        from TypeBindings import TypeBindings
+        return TypeEnvNode(TypeBindings(), TypeEnvNull())
+
+    def applyTypeEnv(self, sym):
+        raise LanguageError("no type binding for " + sym)
+
+    def add(self, b):
+        raise LanguageError("no type bindings to add to")
+
+    def extendTypeEnv(self, bindings):
+        from TypeEnvNode import TypeEnvNode
+        return TypeEnvNode(bindings, self)
+%%%
+
+TypeEnvNode
+%%%
+from TypeEnv import TypeEnv
+
+
+class TypeEnvNode(TypeEnv):
+
+    def __init__(self, bindings, typeEnv):
+        self.bindings = bindings
+        self.typeEnv = typeEnv
+
+    def applyTypeEnv(self, sym):
+        for b in self.bindings.bindingList:
+            if sym == b.id:
+                return b.type
+        return self.typeEnv.applyTypeEnv(sym)
+
+    def add(self, b):
+        self.bindings.add(b)
+
+    def __str__(self):
+        return f"{self.bindings}\n{self.typeEnv}"
+%%%
+
+TypeEnvNull
+%%%
+from TypeEnv import TypeEnv
+
+
+class TypeEnvNull(TypeEnv):
+
+    def __str__(self):
+        return "\n"
+%%%
+
+TypeBinding
+%%%
+class TypeBinding:
+
+    def __init__(self, id, type):
+        self.id = id
+        self.type = type
+
+    def __str__(self):
+        return f"[{self.id}->{self.type}]"
+%%%
+
+TypeBindings
+%%%
+from TypeBinding import TypeBinding
+from runtime.base import LanguageError
+
+
+class TypeBindings:
+
+    def __init__(self, idList=None, typeList=None):
+        self.bindingList = []
+        if idList is not None:
+            if typeList is None or len(idList) != len(typeList):
+                raise LanguageError("list sizes mismatch")
+            for sym, t in zip(idList, typeList):
+                self.bindingList.append(TypeBinding(sym.lexeme, t))
+
+    def add(self, b):
+        self.bindingList.append(b)
+
+    def __str__(self):
+        s = ""
+        for b in self.bindingList:
+            s += " " + str(b)
+        return s
+%%%
+
+Program:import
+%%%
+from Env import Env
+from TypeEnv import TypeEnv
+%%%
+
+Program
+%%%
+env = Env.initEnv()
+tenv = TypeEnv.initTypeEnv()
+%%%
+
+Declare:import
+%%%
+from TypeBinding import TypeBinding
+from runtime.base import LanguageError
+%%%
+
+Declare
+%%%
+def _run(self):
+    tenv = Program.tenv
+    sym = self.symbol.lexeme
+    try:
+        tenv.applyTypeEnv(sym)
+    except LanguageError:
+        # no type binding -- a new type declaration, which we add
+        # to the top-level type environment
+        varType = self.typeExp.toType()
+        tenv.add(TypeBinding(sym, varType))
+        return f"{sym}:{varType}"
+    raise LanguageError(f"{sym}: duplicate variable declaration")
+%%%
+
+Define:import
+%%%
+from Binding import Binding
+from ValRef import ValRef
+from TypeBinding import TypeBinding
+from runtime.base import LanguageError
+%%%
+
+Define
+%%%
+def _run(self):
+    env = Program.env
+    tenv = Program.tenv
+    sym = self.symbol.lexeme
+    try:
+        lhsVarType = tenv.applyTypeEnv(sym)
+    except LanguageError:
+        # no type binding -- a new variable definition
+        rhsExpType = self.exp.evalType(tenv)
+        tenv.add(TypeBinding(sym, rhsExpType))
+        rhsExpVal = self.exp.eval(env)
+        env.add(Binding(sym, ValRef(rhsExpVal)))
+        return f"{sym}:{rhsExpType}"
+    # the variable has a declared type -- see if it still needs a value
+    try:
+        env.applyEnv(sym)
+    except LanguageError:
+        rhsExpType = self.exp.evalType(tenv)
+        # the declared and defined types must be the same
+        lhsVarType.checkEquals(rhsExpType)
+        rhsExpVal = self.exp.eval(env)
+        env.add(Binding(sym, ValRef(rhsExpVal)))
+        return f"{sym}:{rhsExpType}"
+    # the variable has a value too -- can't redefine it
+    raise LanguageError(f"{sym}: duplicate variable definition")
+%%%
+
+Eval
+%%%
+def _run(self):
+    self.exp.evalType(Program.tenv)     # type check first
+    return str(self.exp.eval(Program.env))
+%%%
+
+Exp:import
+%%%
+from ValRef import ValRef
+%%%
+
+Exp
+%%%
+def evalRef(self, env):
+    return ValRef(self.eval(env))
+
+def evalType(self, tenv):
+    raise NotImplementedError
+%%%
+
+LitExp:import
+%%%
+from IntVal import IntVal
+from Type import Type
+%%%
+
+LitExp
+%%%
+def eval(self, env):
+    return IntVal(self.lit.lexeme)
+
+def evalType(self, tenv):
+    return Type.intType()
+
+def __str__(self):
+    return self.lit.lexeme
+%%%
+
+TrueExp:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+%%%
+
+TrueExp
+%%%
+def eval(self, env):
+    return BoolVal(True)
+
+def evalType(self, tenv):
+    return Type.boolType()
+
+def __str__(self):
+    return "true"
+%%%
+
+FalseExp:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+%%%
+
+FalseExp
+%%%
+def eval(self, env):
+    return BoolVal(False)
+
+def evalType(self, tenv):
+    return Type.boolType()
+
+def __str__(self):
+    return "false"
+%%%
+
+VarExp
+%%%
+def eval(self, env):
+    return env.applyEnv(self.symbol.lexeme)
+
+def evalRef(self, env):
+    return env.applyEnvRef(self.symbol.lexeme)
+
+def evalType(self, tenv):
+    return tenv.applyTypeEnv(self.symbol.lexeme)
+
+def __str__(self):
+    return self.symbol.lexeme
+%%%
+
+IfExp:import
+%%%
+from Type import Type
+%%%
+
+IfExp
+%%%
+def eval(self, env):
+    if self.testExp.eval(env).isTrue():
+        return self.trueExp.eval(env)
+    else:
+        return self.falseExp.eval(env)
+
+def evalType(self, tenv):
+    testType = self.testExp.evalType(tenv)
+    testType.checkBoolType(Type.boolType())
+    trueExpType = self.trueExp.evalType(tenv)
+    falseExpType = self.falseExp.evalType(tenv)
+    trueExpType.checkEquals(falseExpType)
+    return trueExpType
+
+def __str__(self):
+    return f"if {self.testExp} then {self.trueExp} else {self.falseExp}"
+%%%
+
+PrimappExp:import
+%%%
+from Type import Type
+%%%
+
+PrimappExp
+%%%
+def eval(self, env):
+    args = self.rands.evalRands(env)
+    return self.prim.apply(args)
+
+def evalType(self, tenv):
+    pt = self.prim.definedType()
+    argTypeList = self.rands.evalTypeRands(tenv)
+    Type.checkEqualTypes(pt.paramTypeList, argTypeList)
+    return pt.returnType
+
+def __str__(self):
+    return f"{self.prim}({self.rands})"
+%%%
+
+LetExp
+%%%
+def eval(self, env):
+    nenv = self.letDecls.addBindings(env)
+    return self.exp.eval(nenv)
+
+def evalType(self, tenv):
+    ntenv = self.letDecls.addTypeBindings(tenv)
+    return self.exp.evalType(ntenv)
+
+def __str__(self):
+    return " ...LetExp... "
+%%%
+
+LetrecExp
+%%%
+def eval(self, env):
+    env = self.letDecls.addLetrecBindings(env)
+    return self.exp.eval(env)
+
+def evalType(self, tenv):
+    ntenv = self.letDecls.addLetrecTypeBindings(tenv)
+    return self.exp.evalType(ntenv)
+
+def __str__(self):
+    return " ...LetrecExp... "
+%%%
+
+LetDecls:import
+%%%
+from Env import Env
+from Binding import Binding
+from Bindings import Bindings
+from Ref import Ref
+from ValRef import ValRef
+from TypeBinding import TypeBinding
+from TypeBindings import TypeBindings
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(self.symbolList, " in let/letrec LHS identifiers")
+%%%
+
+LetDecls
+%%%
+def addBindings(self, env):
+    valList = [e.eval(env) for e in self.expList]
+    refList = Ref.valsToRefs(valList)
+    bindings = Bindings(self.symbolList, refList)
+    return env.extendEnvRef(bindings)
+
+def addLetrecBindings(self, env):
+    env = env.extendEnvRef(Bindings())
+    for sym, e in zip(self.symbolList, self.expList):
+        val = e.eval(env)
+        env.add(Binding(sym.lexeme, ValRef(val)))
+    return env
+
+def addTypeBindings(self, tenv):
+    typeList = [e.evalType(tenv) for e in self.expList]
+    return tenv.extendTypeEnv(TypeBindings(self.symbolList, typeList))
+
+def addLetrecTypeBindings(self, tenv):
+    tenv = tenv.extendTypeEnv(TypeBindings())
+    for sym, e in zip(self.symbolList, self.expList):
+        typ = e.evalType(tenv)
+        tenv.add(TypeBinding(sym.lexeme, typ))
+    return tenv
+
+def __str__(self):
+    return " ...LetDecls... "
+%%%
+
+ProcExp
+%%%
+def eval(self, env):
+    return self.proc.makeClosure(env)
+
+def evalType(self, tenv):
+    return self.proc.evalType(tenv)
+
+def __str__(self):
+    return " ...ProcExp... "
+%%%
+
+Proc:import
+%%%
+from ProcVal import ProcVal
+from ProcType import ProcType
+%%%
+
+Proc
+%%%
+def makeClosure(self, env):
+    return ProcVal(self.formals, self.typeExp, self.exp, env)
+
+def evalType(self, tenv):
+    # the declared return type of the proc
+    declaredReturnType = self.typeExp.toType()
+    # bind the formal parameters to their declared types
+    ntenv = tenv.extendTypeEnv(self.formals.declaredTypeBindings())
+    # type the body in that extended type environment
+    expType = self.exp.evalType(ntenv)
+    # and check that the declared return type matches the body's
+    declaredReturnType.checkEquals(expType)
+    return ProcType(self.formals.formalTypeList(), declaredReturnType)
+%%%
+
+Formals:import
+%%%
+from Env import Env
+from TypeBindings import TypeBindings
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(self.symbolList, " in proc formals")
+%%%
+
+Formals
+%%%
+def formalTypeList(self):
+    return [texp.toType() for texp in self.typeExpList]
+
+def declaredTypeBindings(self):
+    return TypeBindings(self.symbolList, self.formalTypeList())
+
+def __str__(self):
+    return ",".join(f"{sym.lexeme}:{texp.toType()}"
+                    for sym, texp in zip(self.symbolList, self.typeExpList))
+%%%
+
+AppExp:import
+%%%
+from Type import Type
+%%%
+
+AppExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    args = self.rands.evalRandsRef(env)
+    return v.apply(args, env)
+
+def evalType(self, tenv):
+    pt = self.exp.evalType(tenv).procType()
+    argTypeList = self.rands.evalTypeRands(tenv)
+    Type.checkEqualTypes(pt.paramTypeList, argTypeList)
+    return pt.returnType
+
+def __str__(self):
+    return " ...AppExp... "
+%%%
+
+SeqExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    for e in self.seqExps.expList:
+        v = e.eval(env)
+    return v
+
+def evalType(self, tenv):
+    t = self.exp.evalType(tenv)
+    for e in self.seqExps.expList:
+        t = e.evalType(tenv)
+    return t
+
+def __str__(self):
+    return " ...SeqExp... "
+%%%
+
+SetExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    ref = env.applyEnvRef(self.symbol.lexeme)
+    return ref.setRef(v)
+
+def evalType(self, tenv):
+    varType = tenv.applyTypeEnv(self.symbol.lexeme)
+    expType = self.exp.evalType(tenv)
+    varType.checkEquals(expType)
+    return varType
+
+def __str__(self):
+    return " ...SetExp... "
+%%%
+
+Rands
+%%%
+def evalRands(self, env):
+    return [e.eval(env) for e in self.expList]
+
+def evalRandsRef(self, env):
+    return [e.evalRef(env) for e in self.expList]
+
+def evalTypeRands(self, tenv):
+    return [e.evalType(tenv) for e in self.expList]
+
+def __str__(self):
+    return ",".join(str(e) for e in self.expList)
+%%%
+
+TypeExp
+%%%
+def toType(self):
+    raise NotImplementedError
+%%%
+
+PrimTypeExp
+%%%
+def toType(self):
+    return self.primType.toType()
+%%%
+
+ProcTypeExp:import
+%%%
+from ProcType import ProcType
+%%%
+
+ProcTypeExp
+%%%
+def toType(self):
+    return ProcType(self.typeExps.toTypes(), self.typeExp.toType())
+%%%
+
+TypeExps
+%%%
+def toTypes(self):
+    return [te.toType() for te in self.typeExpList]
+%%%
+
+PrimType
+%%%
+def toType(self):
+    raise NotImplementedError
+%%%
+
+BoolPrimType:import
+%%%
+from Type import Type
+%%%
+
+BoolPrimType
+%%%
+def toType(self):
+    return Type.boolType()
+%%%
+
+IntPrimType:import
+%%%
+from Type import Type
+%%%
+
+IntPrimType
+%%%
+def toType(self):
+    return Type.intType()
+%%%
+
+AddPrim:import
+%%%
+from IntVal import IntVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+AddPrim
+%%%
+def __str__(self):
+    return "+"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 + i1)
+
+def definedType(self):
+    return Type.ii_i()
+%%%
+
+SubPrim:import
+%%%
+from IntVal import IntVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+SubPrim
+%%%
+def __str__(self):
+    return "-"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 - i1)
+
+def definedType(self):
+    return Type.ii_i()
+%%%
+
+MulPrim:import
+%%%
+from IntVal import IntVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+MulPrim
+%%%
+def __str__(self):
+    return "*"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 * i1)
+
+def definedType(self):
+    return Type.ii_i()
+%%%
+
+DivPrim:import
+%%%
+from IntVal import IntVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+DivPrim
+%%%
+def __str__(self):
+    return "/"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    if i1 == 0:
+        raise LanguageError("attempt to divide by zero")
+    return IntVal(int(i0 / i1))
+
+def definedType(self):
+    return Type.ii_i()
+%%%
+
+Add1Prim:import
+%%%
+from IntVal import IntVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+Add1Prim
+%%%
+def __str__(self):
+    return "add1"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(i0 + 1)
+
+def definedType(self):
+    return Type.i_i()
+%%%
+
+Sub1Prim:import
+%%%
+from IntVal import IntVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+Sub1Prim
+%%%
+def __str__(self):
+    return "sub1"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(i0 - 1)
+
+def definedType(self):
+    return Type.i_i()
+%%%
+
+ZeropPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+ZeropPrim
+%%%
+def __str__(self):
+    return "zero?"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return BoolVal(i0 == 0)
+
+def definedType(self):
+    return Type.i_b()
+%%%
+
+LTPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+LTPrim
+%%%
+def __str__(self):
+    return "<?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return BoolVal(i0 < i1)
+
+def definedType(self):
+    return Type.ii_b()
+%%%
+
+LEPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+LEPrim
+%%%
+def __str__(self):
+    return "<=?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return BoolVal(i0 <= i1)
+
+def definedType(self):
+    return Type.ii_b()
+%%%
+
+GTPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+GTPrim
+%%%
+def __str__(self):
+    return ">?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return BoolVal(i0 > i1)
+
+def definedType(self):
+    return Type.ii_b()
+%%%
+
+GEPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+GEPrim
+%%%
+def __str__(self):
+    return ">=?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return BoolVal(i0 >= i1)
+
+def definedType(self):
+    return Type.ii_b()
+%%%
+
+EQPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+EQPrim
+%%%
+def __str__(self):
+    return "=?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return BoolVal(i0 == i1)
+
+def definedType(self):
+    return Type.ii_b()
+%%%
+
+NEPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+NEPrim
+%%%
+def __str__(self):
+    return "<>?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return BoolVal(i0 != i1)
+
+def definedType(self):
+    return Type.ii_b()
+%%%
+
+AndPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+AndPrim
+%%%
+def __str__(self):
+    return "and"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    b0 = args[0].boolVal().val
+    b1 = args[1].boolVal().val
+    return BoolVal(b0 and b1)
+
+def definedType(self):
+    return Type.bb_b()
+%%%
+
+OrPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+OrPrim
+%%%
+def __str__(self):
+    return "or"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    b0 = args[0].boolVal().val
+    b1 = args[1].boolVal().val
+    return BoolVal(b0 or b1)
+
+def definedType(self):
+    return Type.bb_b()
+%%%
+
+NotPrim:import
+%%%
+from BoolVal import BoolVal
+from Type import Type
+from runtime.base import LanguageError
+%%%
+
+NotPrim
+%%%
+def __str__(self):
+    return "not"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    b0 = args[0].boolVal().val
+    return BoolVal(not b0)
+
+def definedType(self):
+    return Type.b_b()
+%%%

@@ -3,10 +3,10 @@
 load '../../../../bin/relocate.bash'
 load '../../../../bin/bats-tmpdir.bash'
 
-@test "TYPE1 proc-types (python)" {
+@test "TYPE1 type-errors (python)" {
   relocate
   cd python
-  RESULT="$(plcc-rep < ../tests/proc-types/TYPE1.input)"
-  expected_output=$(< "../tests/proc-types/TYPE1.expected")
+  RESULT="$(plcc-rep < ../tests/type-errors/TYPE1.input)"
+  expected_output=$(< "../tests/type-errors/TYPE1.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
