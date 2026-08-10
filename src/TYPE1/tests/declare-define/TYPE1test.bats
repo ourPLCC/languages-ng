@@ -10,3 +10,11 @@ load '../../../../bin/bats-tmpdir.bash'
   expected_output=$(< "../tests/declare-define/TYPE1.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "TYPE1 declare-define (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/declare-define/TYPE1.input)"
+  expected_output=$(< "../tests/declare-define/TYPE1.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}

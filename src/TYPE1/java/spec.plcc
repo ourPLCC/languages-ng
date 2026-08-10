@@ -1,0 +1,1238 @@
+%include ../grammar.plcc
+%
+Java
+
+%include ../../Env/envRef/java/env.plcc
+
+Val
+%%%
+import java.util.List;
+import runtime.LanguageError;
+
+public abstract class Val {
+
+    public static Val [] toArray(List<Val> valList) {
+        int n = valList.size();
+        return valList.toArray(new Val[n]);
+    }
+
+    public Val apply(List<Ref> args, Env e) {
+        throw new LanguageError("Cannot apply " + this);
+    }
+
+    public boolean isTrue() {
+        throw new LanguageError("boolean expression expected");
+    }
+
+    public IntVal intVal() {
+        throw new LanguageError(this + ": not an Int");
+    }
+
+    public BoolVal boolVal() {
+        throw new LanguageError(this + ": not a Bool");
+    }
+}
+%%%
+
+IntVal
+%%%
+public class IntVal extends Val {
+
+    public int val;
+
+    public IntVal(String s) {
+        val = Integer.parseInt(s);
+    }
+
+    public IntVal(int v) {
+        val = v;
+    }
+
+    public IntVal intVal() {
+        return this;
+    }
+
+    public String toString() {
+        return "" + val;
+    }
+}
+%%%
+
+BoolVal
+%%%
+public class BoolVal extends Val {
+
+    public boolean val;
+
+    public BoolVal(boolean b) {
+        val = b;
+    }
+
+    public boolean isTrue() {
+        return val;
+    }
+
+    public BoolVal boolVal() {
+        return this;
+    }
+
+    public String toString() {
+        return "" + val;
+    }
+}
+%%%
+
+Ref
+%%%
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class Ref {
+
+    public static List<Ref> valsToRefs(List<Val> valList) {
+        List<Ref> refList = new ArrayList<Ref>(valList.size());
+        for (Val v : valList)
+            refList.add(new ValRef(v));
+        return refList;
+    }
+
+    public abstract Val deRef();
+
+    public abstract Val setRef(Val v);
+}
+%%%
+
+ValRef
+%%%
+public class ValRef extends Ref {
+
+    public Val val;
+
+    public ValRef(Val val) {
+        this.val = val;
+    }
+
+    public Val deRef() {
+        return val;
+    }
+
+    public Val setRef(Val v) {
+        val = v;
+        return v;
+    }
+
+    public String toString() {
+        return val.toString();
+    }
+}
+%%%
+
+ProcVal
+%%%
+import java.util.List;
+import runtime.LanguageError;
+
+public class ProcVal extends Val {
+
+    public Formals formals;
+    public TypeExp returnTypeExp;
+    public Exp body;
+    public Env env;
+
+    public ProcVal(Formals formals, TypeExp returnTypeExp, Exp body, Env env) {
+        this.formals = formals;
+        this.returnTypeExp = returnTypeExp;
+        this.body = body;
+        this.env = env;
+    }
+
+    public Val apply(List<Ref> args, Env e) {
+        if (formals.symbolList.size() != args.size())
+            throw new LanguageError("formals/args number mismatch");
+        Bindings bindings = new Bindings(formals.symbolList, args);
+        Env nenv = env.extendEnvRef(bindings);
+        return body.eval(nenv);
+    }
+
+    public String toString() {
+        return "proc(" + formals + "):" + returnTypeExp.toType();
+    }
+}
+%%%
+
+Type
+%%%
+import java.util.Arrays;
+import java.util.List;
+import runtime.LanguageError;
+
+public abstract class Type {
+
+    // The canonical types are factory methods rather than static
+    // fields. Java could hold them as static finals, but Python and
+    // JavaScript cannot: a class-body attribute is evaluated when the
+    // class body runs, which would force Type to import its own
+    // subclasses at module scope and leave the Type/IntType import
+    // cycle depending on load order. Java follows the same shape so
+    // the three targets read alike.
+    //
+    // Returning a fresh instance per call is safe: the types are
+    // stateless and checkEquals is structural, never identity.
+
+    public static IntType intType() {
+        return new IntType();
+    }
+
+    public static BoolType boolType() {
+        return new BoolType();
+    }
+
+    public static ProcType ii_i() {
+        return new ProcType(Arrays.asList(intType(), intType()), intType());
+    }
+
+    public static ProcType i_i() {
+        return new ProcType(Arrays.asList((Type) intType()), intType());
+    }
+
+    public static ProcType ii_b() {
+        return new ProcType(Arrays.asList(intType(), intType()), boolType());
+    }
+
+    public static ProcType i_b() {
+        return new ProcType(Arrays.asList((Type) intType()), boolType());
+    }
+
+    public static ProcType bb_b() {
+        return new ProcType(Arrays.asList(boolType(), boolType()), boolType());
+    }
+
+    public static ProcType b_b() {
+        return new ProcType(Arrays.asList((Type) boolType()), boolType());
+    }
+
+    // this Type as a ProcType, or an error if it is not one
+    public ProcType procType() {
+        throw new LanguageError(this + ": attempt to apply a non-procedure");
+    }
+
+    public abstract void checkEquals(Type t);
+
+    public static void checkEqualTypes(List<Type> typeList1,
+                                       List<Type> typeList2) {
+        if (typeList1.size() != typeList2.size())
+            throw new LanguageError("argument number mismatch");
+        for (int i = 0; i < typeList1.size(); i++)
+            typeList1.get(i).checkEquals(typeList2.get(i));
+    }
+
+    public void checkIntType(IntType t) {
+        typeMismatch(this, t);
+    }
+
+    public void checkBoolType(BoolType t) {
+        typeMismatch(this, t);
+    }
+
+    public void checkProcType(ProcType t) {
+        typeMismatch(this, t);
+    }
+
+    public static void typeMismatch(Type t1, Type t2) {
+        throw new LanguageError("type mismatch: " + t1 + " != " + t2);
+    }
+}
+%%%
+
+IntType
+%%%
+public class IntType extends Type {
+
+    public void checkEquals(Type t) {
+        t.checkIntType(this);
+    }
+
+    public void checkIntType(IntType t) {
+        // this IntType equals any other IntType
+    }
+
+    public String toString() {
+        return "int";
+    }
+}
+%%%
+
+BoolType
+%%%
+public class BoolType extends Type {
+
+    public void checkEquals(Type t) {
+        t.checkBoolType(this);
+    }
+
+    public void checkBoolType(BoolType t) {
+        // this BoolType equals any other BoolType
+    }
+
+    public String toString() {
+        return "bool";
+    }
+}
+%%%
+
+ProcType
+%%%
+import java.util.List;
+
+// the declared type of a procedure
+public class ProcType extends Type {
+
+    public List<Type> paramTypeList;
+    public Type returnType;
+
+    public ProcType(List<Type> paramTypeList, Type returnType) {
+        this.paramTypeList = paramTypeList;
+        this.returnType = returnType;
+    }
+
+    public ProcType procType() {
+        return this;
+    }
+
+    public void checkEquals(Type t) {
+        t.checkProcType(this);
+    }
+
+    public void checkProcType(ProcType t) {
+        this.returnType.checkEquals(t.returnType);
+        checkEqualTypes(this.paramTypeList, t.paramTypeList);
+    }
+
+    public String toString() {
+        String s = "[";
+        String sep = "";
+        for (Type t : paramTypeList) {
+            s += sep + t;
+            sep = ",";
+        }
+        return s + "=>" + returnType + "]";
+    }
+}
+%%%
+
+TypeEnv
+%%%
+import runtime.LanguageError;
+
+public abstract class TypeEnv {
+
+    public static TypeEnv initTypeEnv() {
+        return new TypeEnvNode(new TypeBindings(), new TypeEnvNull());
+    }
+
+    public Type applyTypeEnv(String sym) {
+        throw new LanguageError("no type binding for " + sym);
+    }
+
+    public void add(TypeBinding b) {
+        throw new LanguageError("no type bindings to add to");
+    }
+
+    public TypeEnv extendTypeEnv(TypeBindings bindings) {
+        return new TypeEnvNode(bindings, this);
+    }
+}
+%%%
+
+TypeEnvNode
+%%%
+public class TypeEnvNode extends TypeEnv {
+
+    public TypeBindings bindings;   // local type bindings
+    public TypeEnv typeEnv;         // next set of type bindings
+
+    public TypeEnvNode(TypeBindings bindings, TypeEnv typeEnv) {
+        this.bindings = bindings;
+        this.typeEnv = typeEnv;
+    }
+
+    public Type applyTypeEnv(String sym) {
+        for (TypeBinding b : bindings.bindingList)
+            if (sym.equals(b.id))
+                return b.type;
+        return typeEnv.applyTypeEnv(sym);
+    }
+
+    public void add(TypeBinding b) {
+        bindings.add(b);
+    }
+
+    public String toString() {
+        return bindings + "\n" + typeEnv;
+    }
+}
+%%%
+
+TypeEnvNull
+%%%
+public class TypeEnvNull extends TypeEnv {
+
+    public String toString() {
+        return "\n";
+    }
+}
+%%%
+
+TypeBinding
+%%%
+public class TypeBinding {
+
+    public String id;
+    public Type type;
+
+    public TypeBinding(String id, Type type) {
+        this.id = id;
+        this.type = type;
+    }
+
+    public String toString() {
+        return "[" + id + "->" + type + "]";
+    }
+}
+%%%
+
+TypeBindings
+%%%
+import java.util.ArrayList;
+import java.util.List;
+import runtime.Token;
+import runtime.LanguageError;
+
+public class TypeBindings {
+
+    public List<TypeBinding> bindingList;
+
+    public TypeBindings() {
+        bindingList = new ArrayList<TypeBinding>();
+    }
+
+    public TypeBindings(List<Token> idList, List<Type> typeList) {
+        if (idList.size() != typeList.size())
+            throw new LanguageError("list sizes mismatch");
+        bindingList = new ArrayList<TypeBinding>(idList.size());
+        for (int i = 0; i < idList.size(); i++)
+            bindingList.add(new TypeBinding(idList.get(i).lexeme,
+                                            typeList.get(i)));
+    }
+
+    public void add(TypeBinding b) {
+        bindingList.add(b);
+    }
+
+    public String toString() {
+        String s = "";
+        for (TypeBinding b : bindingList)
+            s += " " + b;
+        return s;
+    }
+}
+%%%
+
+Program
+%%%
+public static Env env = Env.initEnv();
+public static TypeEnv tenv = TypeEnv.initTypeEnv();
+%%%
+
+Declare
+%%%
+public String _run() {
+    TypeEnv tenv = Program.tenv;
+    String sym = symbol.lexeme;
+    try {
+        tenv.applyTypeEnv(sym);
+    } catch (LanguageError e) {
+        // no type binding -- a new type declaration, which we add
+        // to the top-level type environment
+        Type varType = typeExp.toType();
+        tenv.add(new TypeBinding(sym, varType));
+        return sym + ":" + varType;
+    }
+    throw new LanguageError(sym + ": duplicate variable declaration");
+}
+%%%
+
+Define
+%%%
+public String _run() {
+    Env env = Program.env;
+    TypeEnv tenv = Program.tenv;
+    String sym = symbol.lexeme;
+    Type lhsVarType;
+    try {
+        lhsVarType = tenv.applyTypeEnv(sym);
+    } catch (LanguageError e) {
+        // no type binding -- a new variable definition
+        Type rhsExpType = exp.evalType(tenv);
+        tenv.add(new TypeBinding(sym, rhsExpType));
+        Val rhsExpVal = exp.eval(env);
+        env.add(new Binding(sym, new ValRef(rhsExpVal)));
+        return sym + ":" + rhsExpType;
+    }
+    // the variable has a declared type -- see if it still needs a value
+    try {
+        env.applyEnv(sym);
+    } catch (LanguageError e) {
+        Type rhsExpType = exp.evalType(tenv);
+        // the declared and defined types must be the same
+        lhsVarType.checkEquals(rhsExpType);
+        Val rhsExpVal = exp.eval(env);
+        env.add(new Binding(sym, new ValRef(rhsExpVal)));
+        return sym + ":" + rhsExpType;
+    }
+    // the variable has a value too -- can't redefine it
+    throw new LanguageError(sym + ": duplicate variable definition");
+}
+%%%
+
+Eval
+%%%
+public String _run() {
+    exp.evalType(Program.tenv);     // type check first
+    return exp.eval(Program.env).toString();
+}
+%%%
+
+Exp
+%%%
+public abstract Val eval(Env env);
+
+public Ref evalRef(Env env) {
+    return new ValRef(eval(env));
+}
+
+public abstract Type evalType(TypeEnv tenv);
+%%%
+
+LitExp
+%%%
+public Val eval(Env env) {
+    return new IntVal(lit.lexeme);
+}
+
+public Type evalType(TypeEnv tenv) {
+    return Type.intType();
+}
+
+public String toString() {
+    return lit.lexeme;
+}
+%%%
+
+TrueExp
+%%%
+public Val eval(Env env) {
+    return new BoolVal(true);
+}
+
+public Type evalType(TypeEnv tenv) {
+    return Type.boolType();
+}
+
+public String toString() {
+    return "true";
+}
+%%%
+
+FalseExp
+%%%
+public Val eval(Env env) {
+    return new BoolVal(false);
+}
+
+public Type evalType(TypeEnv tenv) {
+    return Type.boolType();
+}
+
+public String toString() {
+    return "false";
+}
+%%%
+
+VarExp
+%%%
+public Val eval(Env env) {
+    return env.applyEnv(symbol.lexeme);
+}
+
+public Ref evalRef(Env env) {
+    return env.applyEnvRef(symbol.lexeme);
+}
+
+public Type evalType(TypeEnv tenv) {
+    return tenv.applyTypeEnv(symbol.lexeme);
+}
+
+public String toString() {
+    return symbol.lexeme;
+}
+%%%
+
+IfExp
+%%%
+public Val eval(Env env) {
+    if (testExp.eval(env).isTrue())
+        return trueExp.eval(env);
+    else
+        return falseExp.eval(env);
+}
+
+public Type evalType(TypeEnv tenv) {
+    Type testType = testExp.evalType(tenv);
+    testType.checkBoolType(Type.boolType());
+    Type trueExpType = trueExp.evalType(tenv);
+    Type falseExpType = falseExp.evalType(tenv);
+    trueExpType.checkEquals(falseExpType);
+    return trueExpType;
+}
+
+public String toString() {
+    return "if " + testExp + " then " + trueExp + " else " + falseExp;
+}
+%%%
+
+PrimappExp
+%%%
+public Val eval(Env env) {
+    List<Val> args = rands.evalRands(env);
+    Val [] va = Val.toArray(args);
+    return prim.apply(va);
+}
+
+public Type evalType(TypeEnv tenv) {
+    ProcType pt = prim.definedType();
+    List<Type> argTypeList = rands.evalTypeRands(tenv);
+    Type.checkEqualTypes(pt.paramTypeList, argTypeList);
+    return pt.returnType;
+}
+
+public String toString() {
+    return prim + "(" + rands + ")";
+}
+%%%
+
+LetExp
+%%%
+public Val eval(Env env) {
+    Env nenv = letDecls.addBindings(env);
+    return exp.eval(nenv);
+}
+
+public Type evalType(TypeEnv tenv) {
+    TypeEnv ntenv = letDecls.addTypeBindings(tenv);
+    return exp.evalType(ntenv);
+}
+
+public String toString() {
+    return " ...LetExp... ";
+}
+%%%
+
+LetrecExp
+%%%
+public Val eval(Env env) {
+    Env nenv = letDecls.addLetrecBindings(env);
+    return exp.eval(nenv);
+}
+
+public Type evalType(TypeEnv tenv) {
+    TypeEnv ntenv = letDecls.addLetrecTypeBindings(tenv);
+    return exp.evalType(ntenv);
+}
+
+public String toString() {
+    return " ...LetrecExp... ";
+}
+%%%
+
+LetDecls:import
+%%%
+import java.util.ArrayList;
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(symbolList, " in let/letrec LHS identifiers");
+%%%
+
+LetDecls
+%%%
+public Env addBindings(Env env) {
+    List<Val> valList = new ArrayList<Val>(expList.size());
+    for (Exp e : expList)
+        valList.add(e.eval(env));
+    List<Ref> refList = Ref.valsToRefs(valList);
+    Bindings bindings = new Bindings(symbolList, refList);
+    return env.extendEnvRef(bindings);
+}
+
+public Env addLetrecBindings(Env env) {
+    env = env.extendEnvRef(new Bindings());
+    for (int i = 0; i < symbolList.size(); i++) {
+        Val val = expList.get(i).eval(env);
+        env.add(new Binding(symbolList.get(i).lexeme, new ValRef(val)));
+    }
+    return env;
+}
+
+public TypeEnv addTypeBindings(TypeEnv tenv) {
+    List<Type> typeList = new ArrayList<Type>(expList.size());
+    for (Exp e : expList)
+        typeList.add(e.evalType(tenv));
+    return tenv.extendTypeEnv(new TypeBindings(symbolList, typeList));
+}
+
+public TypeEnv addLetrecTypeBindings(TypeEnv tenv) {
+    tenv = tenv.extendTypeEnv(new TypeBindings());
+    for (int i = 0; i < symbolList.size(); i++) {
+        Type typ = expList.get(i).evalType(tenv);
+        tenv.add(new TypeBinding(symbolList.get(i).lexeme, typ));
+    }
+    return tenv;
+}
+
+public String toString() {
+    return " ...LetDecls... ";
+}
+%%%
+
+ProcExp
+%%%
+public Val eval(Env env) {
+    return proc.makeClosure(env);
+}
+
+public Type evalType(TypeEnv tenv) {
+    return proc.evalType(tenv);
+}
+
+public String toString() {
+    return " ...ProcExp... ";
+}
+%%%
+
+Proc
+%%%
+public Val makeClosure(Env env) {
+    return new ProcVal(formals, typeExp, exp, env);
+}
+
+public Type evalType(TypeEnv tenv) {
+    // the declared return type of the proc
+    Type declaredReturnType = typeExp.toType();
+    // bind the formal parameters to their declared types
+    TypeEnv ntenv = tenv.extendTypeEnv(formals.declaredTypeBindings());
+    // type the body in that extended type environment
+    Type expType = exp.evalType(ntenv);
+    // and check that the declared return type matches the body's
+    declaredReturnType.checkEquals(expType);
+    return new ProcType(formals.formalTypeList(), declaredReturnType);
+}
+%%%
+
+Formals:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(symbolList, " in proc formals");
+%%%
+
+Formals
+%%%
+public List<Type> formalTypeList() {
+    List<Type> typeList = new ArrayList<Type>(typeExpList.size());
+    for (TypeExp texp : typeExpList)
+        typeList.add(texp.toType());
+    return typeList;
+}
+
+public TypeBindings declaredTypeBindings() {
+    return new TypeBindings(symbolList, formalTypeList());
+}
+
+public String toString() {
+    String s = "";
+    String sep = "";
+    for (int i = 0; i < symbolList.size(); i++) {
+        s += sep + symbolList.get(i).lexeme + ":"
+                 + typeExpList.get(i).toType();
+        sep = ",";
+    }
+    return s;
+}
+%%%
+
+AppExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    List<Ref> args = rands.evalRandsRef(env);
+    return v.apply(args, env);
+}
+
+public Type evalType(TypeEnv tenv) {
+    ProcType pt = exp.evalType(tenv).procType();
+    List<Type> argTypeList = rands.evalTypeRands(tenv);
+    Type.checkEqualTypes(pt.paramTypeList, argTypeList);
+    return pt.returnType;
+}
+
+public String toString() {
+    return " ...AppExp... ";
+}
+%%%
+
+SeqExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    for (Exp e : seqExps.expList)
+        v = e.eval(env);
+    return v;
+}
+
+public Type evalType(TypeEnv tenv) {
+    Type t = exp.evalType(tenv);
+    for (Exp e : seqExps.expList)
+        t = e.evalType(tenv);
+    return t;
+}
+
+public String toString() {
+    return " ...SeqExp... ";
+}
+%%%
+
+SetExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    Ref ref = env.applyEnvRef(symbol.lexeme);
+    return ref.setRef(v);
+}
+
+public Type evalType(TypeEnv tenv) {
+    Type varType = tenv.applyTypeEnv(symbol.lexeme);
+    Type expType = exp.evalType(tenv);
+    varType.checkEquals(expType);
+    return varType;
+}
+
+public String toString() {
+    return " ...SetExp... ";
+}
+%%%
+
+Rands:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Rands
+%%%
+public List<Val> evalRands(Env env) {
+    List<Val> args = new ArrayList<Val>(expList.size());
+    for (Exp e : expList)
+        args.add(e.eval(env));
+    return args;
+}
+
+public List<Ref> evalRandsRef(Env env) {
+    List<Ref> refList = new ArrayList<Ref>(expList.size());
+    for (Exp e : expList)
+        refList.add(e.evalRef(env));
+    return refList;
+}
+
+public List<Type> evalTypeRands(TypeEnv tenv) {
+    List<Type> typeList = new ArrayList<Type>(expList.size());
+    for (Exp e : expList)
+        typeList.add(e.evalType(tenv));
+    return typeList;
+}
+
+public String toString() {
+    String s = "";
+    String sep = "";
+    for (Exp e : expList) {
+        s += sep + e;
+        sep = ",";
+    }
+    return s;
+}
+%%%
+
+TypeExp
+%%%
+public abstract Type toType();
+%%%
+
+PrimTypeExp
+%%%
+public Type toType() {
+    return primType.toType();
+}
+%%%
+
+ProcTypeExp
+%%%
+public Type toType() {
+    return new ProcType(typeExps.toTypes(), typeExp.toType());
+}
+%%%
+
+TypeExps:import
+%%%
+import java.util.ArrayList;
+%%%
+
+TypeExps
+%%%
+public List<Type> toTypes() {
+    List<Type> paramTypeList = new ArrayList<Type>(typeExpList.size());
+    for (TypeExp te : typeExpList)
+        paramTypeList.add(te.toType());
+    return paramTypeList;
+}
+%%%
+
+PrimType
+%%%
+public abstract Type toType();
+%%%
+
+BoolPrimType
+%%%
+public Type toType() {
+    return Type.boolType();
+}
+%%%
+
+IntPrimType
+%%%
+public Type toType() {
+    return Type.intType();
+}
+%%%
+
+Prim
+%%%
+public abstract Val apply(Val [] va);
+
+public abstract ProcType definedType();
+%%%
+
+AddPrim
+%%%
+public String toString() {
+    return "+";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 + i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_i();
+}
+%%%
+
+SubPrim
+%%%
+public String toString() {
+    return "-";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 - i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_i();
+}
+%%%
+
+MulPrim
+%%%
+public String toString() {
+    return "*";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 * i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_i();
+}
+%%%
+
+DivPrim
+%%%
+public String toString() {
+    return "/";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    if (i1 == 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(i0 / i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_i();
+}
+%%%
+
+Add1Prim
+%%%
+public String toString() {
+    return "add1";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 + 1);
+}
+
+public ProcType definedType() {
+    return Type.i_i();
+}
+%%%
+
+Sub1Prim
+%%%
+public String toString() {
+    return "sub1";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 - 1);
+}
+
+public ProcType definedType() {
+    return Type.i_i();
+}
+%%%
+
+ZeropPrim
+%%%
+public String toString() {
+    return "zero?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new BoolVal(i0 == 0);
+}
+
+public ProcType definedType() {
+    return Type.i_b();
+}
+%%%
+
+LTPrim
+%%%
+public String toString() {
+    return "<?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new BoolVal(i0 < i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_b();
+}
+%%%
+
+LEPrim
+%%%
+public String toString() {
+    return "<=?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new BoolVal(i0 <= i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_b();
+}
+%%%
+
+GTPrim
+%%%
+public String toString() {
+    return ">?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new BoolVal(i0 > i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_b();
+}
+%%%
+
+GEPrim
+%%%
+public String toString() {
+    return ">=?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new BoolVal(i0 >= i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_b();
+}
+%%%
+
+EQPrim
+%%%
+public String toString() {
+    return "=?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new BoolVal(i0 == i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_b();
+}
+%%%
+
+NEPrim
+%%%
+public String toString() {
+    return "<>?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new BoolVal(i0 != i1);
+}
+
+public ProcType definedType() {
+    return Type.ii_b();
+}
+%%%
+
+AndPrim
+%%%
+public String toString() {
+    return "and";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    boolean b0 = va[0].boolVal().val;
+    boolean b1 = va[1].boolVal().val;
+    return new BoolVal(b0 && b1);
+}
+
+public ProcType definedType() {
+    return Type.bb_b();
+}
+%%%
+
+OrPrim
+%%%
+public String toString() {
+    return "or";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    boolean b0 = va[0].boolVal().val;
+    boolean b1 = va[1].boolVal().val;
+    return new BoolVal(b0 || b1);
+}
+
+public ProcType definedType() {
+    return Type.bb_b();
+}
+%%%
+
+NotPrim
+%%%
+public String toString() {
+    return "not";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    boolean b0 = va[0].boolVal().val;
+    return new BoolVal(!b0);
+}
+
+public ProcType definedType() {
+    return Type.b_b();
+}
+%%%

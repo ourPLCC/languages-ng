@@ -10,3 +10,11 @@ load '../../../../bin/bats-tmpdir.bash'
   expected_output=$(< "../tests/call-by-reference/TYPE1.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "TYPE1 call-by-reference (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/call-by-reference/TYPE1.input)"
+  expected_output=$(< "../tests/call-by-reference/TYPE1.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
