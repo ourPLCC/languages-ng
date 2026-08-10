@@ -1,0 +1,1399 @@
+%include ../grammar.plcc
+%
+javascript
+
+%include ../../Env/envRef/javascript/env.plcc
+
+Val
+%%%
+const { LanguageError } = require('./runtime/base');
+
+class Val {
+
+    apply(args, env) {
+        throw new LanguageError(`Cannot apply ${this}`);
+    }
+
+    isTrue() {
+        throw new LanguageError("boolean expression expected");
+    }
+
+    intVal() {
+        throw new LanguageError(`${this}: not an Int`);
+    }
+
+    boolVal() {
+        throw new LanguageError(`${this}: not a Bool`);
+    }
+}
+
+module.exports = { Val };
+%%%
+
+IntVal
+%%%
+const { Val } = require('./Val');
+
+class IntVal extends Val {
+
+    constructor(val) {
+        super();
+        this.val = parseInt(val, 10);
+    }
+
+    intVal() {
+        return this;
+    }
+
+    toString() {
+        return String(this.val);
+    }
+}
+
+module.exports = { IntVal };
+%%%
+
+BoolVal
+%%%
+const { Val } = require('./Val');
+
+class BoolVal extends Val {
+
+    constructor(val) {
+        super();
+        this.val = val;
+    }
+
+    isTrue() {
+        return this.val;
+    }
+
+    boolVal() {
+        return this;
+    }
+
+    toString() {
+        return String(this.val);
+    }
+}
+
+module.exports = { BoolVal };
+%%%
+
+Ref
+%%%
+class Ref {
+
+    static valsToRefs(valList) {
+        const { ValRef } = require('./ValRef');
+        return valList.map(v => new ValRef(v));
+    }
+
+    deRef() {
+        throw new Error("not implemented");
+    }
+
+    setRef(v) {
+        throw new Error("not implemented");
+    }
+}
+
+module.exports = { Ref };
+%%%
+
+ValRef
+%%%
+const { Ref } = require('./Ref');
+
+class ValRef extends Ref {
+
+    constructor(val) {
+        super();
+        this.val = val;
+    }
+
+    deRef() {
+        return this.val;
+    }
+
+    setRef(v) {
+        this.val = v;
+        return v;
+    }
+
+    toString() {
+        return String(this.val);
+    }
+}
+
+module.exports = { ValRef };
+%%%
+
+ProcVal
+%%%
+const { Val } = require('./Val');
+const { Bindings } = require('./Bindings');
+const { LanguageError } = require('./runtime/base');
+
+class ProcVal extends Val {
+
+    constructor(formals, returnTypeExp, body, env) {
+        super();
+        this.formals = formals;
+        this.returnTypeExp = returnTypeExp;
+        this.body = body;
+        this.env = env;
+    }
+
+    apply(args, env) {
+        if (this.formals.symbolList.length !== args.length)
+            throw new LanguageError("formals/args number mismatch");
+        const bindings = new Bindings(this.formals.symbolList, args);
+        const nenv = this.env.extendEnvRef(bindings);
+        return this.body.eval(nenv);
+    }
+
+    toString() {
+        return `proc(${this.formals}):${this.returnTypeExp.toType()}`;
+    }
+}
+
+module.exports = { ProcVal };
+%%%
+
+Type
+%%%
+const { LanguageError } = require('./runtime/base');
+
+// The canonical types are factory methods rather than static fields.
+// A static class field is evaluated when the class body runs, which
+// would force Type to require its own subclasses at module scope and
+// leave the Type/IntType require cycle depending on load order.
+// Deferring the require into the method body is the same fix
+// Env.initEnv() uses. Java follows suit so the three targets read
+// alike, even though only Python and JavaScript need it.
+//
+// Returning a fresh instance per call is safe: the types are stateless
+// and checkEquals is structural, never identity.
+
+class Type {
+
+    static intType() {
+        const { IntType } = require('./IntType');
+        return new IntType();
+    }
+
+    static boolType() {
+        const { BoolType } = require('./BoolType');
+        return new BoolType();
+    }
+
+    static ii_i() {
+        const { ProcType } = require('./ProcType');
+        return new ProcType([Type.intType(), Type.intType()], Type.intType());
+    }
+
+    static i_i() {
+        const { ProcType } = require('./ProcType');
+        return new ProcType([Type.intType()], Type.intType());
+    }
+
+    static ii_b() {
+        const { ProcType } = require('./ProcType');
+        return new ProcType([Type.intType(), Type.intType()], Type.boolType());
+    }
+
+    static i_b() {
+        const { ProcType } = require('./ProcType');
+        return new ProcType([Type.intType()], Type.boolType());
+    }
+
+    static bb_b() {
+        const { ProcType } = require('./ProcType');
+        return new ProcType([Type.boolType(), Type.boolType()], Type.boolType());
+    }
+
+    static b_b() {
+        const { ProcType } = require('./ProcType');
+        return new ProcType([Type.boolType()], Type.boolType());
+    }
+
+    // this Type as a ProcType, or an error if it is not one
+    procType() {
+        throw new LanguageError(`${this}: attempt to apply a non-procedure`);
+    }
+
+    checkEquals(t) {
+        throw new Error("not implemented");
+    }
+
+    static checkEqualTypes(typeList1, typeList2) {
+        if (typeList1.length !== typeList2.length)
+            throw new LanguageError("argument number mismatch");
+        for (let i = 0; i < typeList1.length; i++)
+            typeList1[i].checkEquals(typeList2[i]);
+    }
+
+    checkIntType(t) {
+        Type.typeMismatch(this, t);
+    }
+
+    checkBoolType(t) {
+        Type.typeMismatch(this, t);
+    }
+
+    checkProcType(t) {
+        Type.typeMismatch(this, t);
+    }
+
+    static typeMismatch(t1, t2) {
+        throw new LanguageError(`type mismatch: ${t1} != ${t2}`);
+    }
+}
+
+module.exports = { Type };
+%%%
+
+IntType
+%%%
+const { Type } = require('./Type');
+
+class IntType extends Type {
+
+    checkEquals(t) {
+        t.checkIntType(this);
+    }
+
+    checkIntType(t) {
+        // this IntType equals any other IntType
+    }
+
+    toString() {
+        return "int";
+    }
+}
+
+module.exports = { IntType };
+%%%
+
+BoolType
+%%%
+const { Type } = require('./Type');
+
+class BoolType extends Type {
+
+    checkEquals(t) {
+        t.checkBoolType(this);
+    }
+
+    checkBoolType(t) {
+        // this BoolType equals any other BoolType
+    }
+
+    toString() {
+        return "bool";
+    }
+}
+
+module.exports = { BoolType };
+%%%
+
+ProcType
+%%%
+const { Type } = require('./Type');
+
+// the declared type of a procedure
+class ProcType extends Type {
+
+    constructor(paramTypeList, returnType) {
+        super();
+        this.paramTypeList = paramTypeList;
+        this.returnType = returnType;
+    }
+
+    procType() {
+        return this;
+    }
+
+    checkEquals(t) {
+        t.checkProcType(this);
+    }
+
+    checkProcType(t) {
+        this.returnType.checkEquals(t.returnType);
+        Type.checkEqualTypes(this.paramTypeList, t.paramTypeList);
+    }
+
+    toString() {
+        const params = this.paramTypeList.map(t => String(t)).join(",");
+        return `[${params}=>${this.returnType}]`;
+    }
+}
+
+module.exports = { ProcType };
+%%%
+
+TypeEnv
+%%%
+const { LanguageError } = require('./runtime/base');
+
+class TypeEnv {
+
+    static initTypeEnv() {
+        const { TypeEnvNode } = require('./TypeEnvNode');
+        const { TypeEnvNull } = require('./TypeEnvNull');
+        const { TypeBindings } = require('./TypeBindings');
+        return new TypeEnvNode(new TypeBindings(), new TypeEnvNull());
+    }
+
+    applyTypeEnv(sym) {
+        throw new LanguageError("no type binding for " + sym);
+    }
+
+    add(b) {
+        throw new LanguageError("no type bindings to add to");
+    }
+
+    extendTypeEnv(bindings) {
+        const { TypeEnvNode } = require('./TypeEnvNode');
+        return new TypeEnvNode(bindings, this);
+    }
+}
+
+module.exports = { TypeEnv };
+%%%
+
+TypeEnvNode
+%%%
+const { TypeEnv } = require('./TypeEnv');
+
+class TypeEnvNode extends TypeEnv {
+
+    constructor(bindings, typeEnv) {
+        super();
+        this.bindings = bindings;
+        this.typeEnv = typeEnv;
+    }
+
+    applyTypeEnv(sym) {
+        for (const b of this.bindings.bindingList)
+            if (sym === b.id)
+                return b.type;
+        return this.typeEnv.applyTypeEnv(sym);
+    }
+
+    add(b) {
+        this.bindings.add(b);
+    }
+
+    toString() {
+        return `${this.bindings}\n${this.typeEnv}`;
+    }
+}
+
+module.exports = { TypeEnvNode };
+%%%
+
+TypeEnvNull
+%%%
+const { TypeEnv } = require('./TypeEnv');
+
+class TypeEnvNull extends TypeEnv {
+
+    toString() {
+        return "\n";
+    }
+}
+
+module.exports = { TypeEnvNull };
+%%%
+
+TypeBinding
+%%%
+class TypeBinding {
+
+    constructor(id, type) {
+        this.id = id;
+        this.type = type;
+    }
+
+    toString() {
+        return `[${this.id}->${this.type}]`;
+    }
+}
+
+module.exports = { TypeBinding };
+%%%
+
+TypeBindings
+%%%
+const { TypeBinding } = require('./TypeBinding');
+const { LanguageError } = require('./runtime/base');
+
+class TypeBindings {
+
+    constructor(idList = null, typeList = null) {
+        this.bindingList = [];
+        if (idList !== null) {
+            if (typeList === null || idList.length !== typeList.length)
+                throw new LanguageError("list sizes mismatch");
+            for (let i = 0; i < idList.length; i++)
+                this.bindingList.push(new TypeBinding(idList[i].lexeme,
+                                                      typeList[i]));
+        }
+    }
+
+    add(b) {
+        this.bindingList.push(b);
+    }
+
+    toString() {
+        let s = "";
+        for (const b of this.bindingList)
+            s += " " + b;
+        return s;
+    }
+}
+
+module.exports = { TypeBindings };
+%%%
+
+Program:import
+%%%
+const { Env } = require('./Env');
+const { TypeEnv } = require('./TypeEnv');
+%%%
+
+Program
+%%%
+static env = Env.initEnv();
+static tenv = TypeEnv.initTypeEnv();
+%%%
+
+Declare:import
+%%%
+const { TypeBinding } = require('./TypeBinding');
+%%%
+
+Declare
+%%%
+_run() {
+    const tenv = Program.tenv;
+    const sym = this.symbol.lexeme;
+    try {
+        tenv.applyTypeEnv(sym);
+    } catch (e) {
+        // JavaScript has no typed catch, so re-throw anything that is
+        // not a language error rather than swallowing it.
+        if (!(e instanceof LanguageError)) throw e;
+        // no type binding -- a new type declaration, which we add
+        // to the top-level type environment
+        const varType = this.typeExp.toType();
+        tenv.add(new TypeBinding(sym, varType));
+        return `${sym}:${varType}`;
+    }
+    throw new LanguageError(`${sym}: duplicate variable declaration`);
+}
+%%%
+
+Define:import
+%%%
+const { Binding } = require('./Binding');
+const { ValRef } = require('./ValRef');
+const { TypeBinding } = require('./TypeBinding');
+%%%
+
+Define
+%%%
+_run() {
+    const env = Program.env;
+    const tenv = Program.tenv;
+    const sym = this.symbol.lexeme;
+    let lhsVarType;
+    try {
+        lhsVarType = tenv.applyTypeEnv(sym);
+    } catch (e) {
+        if (!(e instanceof LanguageError)) throw e;
+        // no type binding -- a new variable definition
+        const rhsExpType = this.exp.evalType(tenv);
+        tenv.add(new TypeBinding(sym, rhsExpType));
+        const rhsExpVal = this.exp.eval(env);
+        env.add(new Binding(sym, new ValRef(rhsExpVal)));
+        return `${sym}:${rhsExpType}`;
+    }
+    // the variable has a declared type -- see if it still needs a value
+    try {
+        env.applyEnv(sym);
+    } catch (e) {
+        if (!(e instanceof LanguageError)) throw e;
+        const rhsExpType = this.exp.evalType(tenv);
+        // the declared and defined types must be the same
+        lhsVarType.checkEquals(rhsExpType);
+        const rhsExpVal = this.exp.eval(env);
+        env.add(new Binding(sym, new ValRef(rhsExpVal)));
+        return `${sym}:${rhsExpType}`;
+    }
+    // the variable has a value too -- can't redefine it
+    throw new LanguageError(`${sym}: duplicate variable definition`);
+}
+%%%
+
+Eval
+%%%
+_run() {
+    this.exp.evalType(Program.tenv);     // type check first
+    return String(this.exp.eval(Program.env));
+}
+%%%
+
+Exp:import
+%%%
+const { ValRef } = require('./ValRef');
+%%%
+
+Exp
+%%%
+evalRef(env) {
+    return new ValRef(this.eval(env));
+}
+
+evalType(tenv) {
+    throw new Error("not implemented");
+}
+%%%
+
+LitExp:import
+%%%
+const { IntVal } = require('./IntVal');
+const { Type } = require('./Type');
+%%%
+
+LitExp
+%%%
+eval(env) {
+    return new IntVal(this.lit.lexeme);
+}
+
+evalType(tenv) {
+    return Type.intType();
+}
+
+toString() {
+    return this.lit.lexeme;
+}
+%%%
+
+TrueExp:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+TrueExp
+%%%
+eval(env) {
+    return new BoolVal(true);
+}
+
+evalType(tenv) {
+    return Type.boolType();
+}
+
+toString() {
+    return "true";
+}
+%%%
+
+FalseExp:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+FalseExp
+%%%
+eval(env) {
+    return new BoolVal(false);
+}
+
+evalType(tenv) {
+    return Type.boolType();
+}
+
+toString() {
+    return "false";
+}
+%%%
+
+VarExp
+%%%
+eval(env) {
+    return env.applyEnv(this.symbol.lexeme);
+}
+
+evalRef(env) {
+    return env.applyEnvRef(this.symbol.lexeme);
+}
+
+evalType(tenv) {
+    return tenv.applyTypeEnv(this.symbol.lexeme);
+}
+
+toString() {
+    return this.symbol.lexeme;
+}
+%%%
+
+IfExp:import
+%%%
+const { Type } = require('./Type');
+%%%
+
+IfExp
+%%%
+eval(env) {
+    if (this.testExp.eval(env).isTrue())
+        return this.trueExp.eval(env);
+    else
+        return this.falseExp.eval(env);
+}
+
+evalType(tenv) {
+    const testType = this.testExp.evalType(tenv);
+    testType.checkBoolType(Type.boolType());
+    const trueExpType = this.trueExp.evalType(tenv);
+    const falseExpType = this.falseExp.evalType(tenv);
+    trueExpType.checkEquals(falseExpType);
+    return trueExpType;
+}
+
+toString() {
+    return `if ${this.testExp} then ${this.trueExp} else ${this.falseExp}`;
+}
+%%%
+
+PrimappExp:import
+%%%
+const { Type } = require('./Type');
+%%%
+
+PrimappExp
+%%%
+eval(env) {
+    const args = this.rands.evalRands(env);
+    return this.prim.apply(args);
+}
+
+evalType(tenv) {
+    const pt = this.prim.definedType();
+    const argTypeList = this.rands.evalTypeRands(tenv);
+    Type.checkEqualTypes(pt.paramTypeList, argTypeList);
+    return pt.returnType;
+}
+
+toString() {
+    return `${this.prim}(${this.rands})`;
+}
+%%%
+
+LetExp
+%%%
+eval(env) {
+    const nenv = this.letDecls.addBindings(env);
+    return this.exp.eval(nenv);
+}
+
+evalType(tenv) {
+    const ntenv = this.letDecls.addTypeBindings(tenv);
+    return this.exp.evalType(ntenv);
+}
+
+toString() {
+    return " ...LetExp... ";
+}
+%%%
+
+LetrecExp
+%%%
+eval(env) {
+    const nenv = this.letDecls.addLetrecBindings(env);
+    return this.exp.eval(nenv);
+}
+
+evalType(tenv) {
+    const ntenv = this.letDecls.addLetrecTypeBindings(tenv);
+    return this.exp.evalType(ntenv);
+}
+
+toString() {
+    return " ...LetrecExp... ";
+}
+%%%
+
+LetDecls:import
+%%%
+const { Env } = require('./Env');
+const { Binding } = require('./Binding');
+const { Bindings } = require('./Bindings');
+const { Ref } = require('./Ref');
+const { ValRef } = require('./ValRef');
+const { TypeBinding } = require('./TypeBinding');
+const { TypeBindings } = require('./TypeBindings');
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(this.symbolList, " in let/letrec LHS identifiers");
+%%%
+
+LetDecls
+%%%
+addBindings(env) {
+    const valList = this.expList.map(e => e.eval(env));
+    const refList = Ref.valsToRefs(valList);
+    const bindings = new Bindings(this.symbolList, refList);
+    return env.extendEnvRef(bindings);
+}
+
+addLetrecBindings(env) {
+    env = env.extendEnvRef(new Bindings());
+    for (let i = 0; i < this.symbolList.length; i++) {
+        const val = this.expList[i].eval(env);
+        env.add(new Binding(this.symbolList[i].lexeme, new ValRef(val)));
+    }
+    return env;
+}
+
+addTypeBindings(tenv) {
+    const typeList = this.expList.map(e => e.evalType(tenv));
+    return tenv.extendTypeEnv(new TypeBindings(this.symbolList, typeList));
+}
+
+addLetrecTypeBindings(tenv) {
+    tenv = tenv.extendTypeEnv(new TypeBindings());
+    for (let i = 0; i < this.symbolList.length; i++) {
+        const typ = this.expList[i].evalType(tenv);
+        tenv.add(new TypeBinding(this.symbolList[i].lexeme, typ));
+    }
+    return tenv;
+}
+
+toString() {
+    return " ...LetDecls... ";
+}
+%%%
+
+ProcExp
+%%%
+eval(env) {
+    return this.proc.makeClosure(env);
+}
+
+evalType(tenv) {
+    return this.proc.evalType(tenv);
+}
+
+toString() {
+    return " ...ProcExp... ";
+}
+%%%
+
+Proc:import
+%%%
+const { ProcVal } = require('./ProcVal');
+const { ProcType } = require('./ProcType');
+%%%
+
+Proc
+%%%
+makeClosure(env) {
+    return new ProcVal(this.formals, this.typeExp, this.exp, env);
+}
+
+evalType(tenv) {
+    // the declared return type of the proc
+    const declaredReturnType = this.typeExp.toType();
+    // bind the formal parameters to their declared types
+    const ntenv = tenv.extendTypeEnv(this.formals.declaredTypeBindings());
+    // type the body in that extended type environment
+    const expType = this.exp.evalType(ntenv);
+    // and check that the declared return type matches the body's
+    declaredReturnType.checkEquals(expType);
+    return new ProcType(this.formals.formalTypeList(), declaredReturnType);
+}
+%%%
+
+Formals:import
+%%%
+const { Env } = require('./Env');
+const { TypeBindings } = require('./TypeBindings');
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(this.symbolList, " in proc formals");
+%%%
+
+Formals
+%%%
+formalTypeList() {
+    return this.typeExpList.map(texp => texp.toType());
+}
+
+declaredTypeBindings() {
+    return new TypeBindings(this.symbolList, this.formalTypeList());
+}
+
+toString() {
+    return this.symbolList
+        .map((sym, i) => `${sym.lexeme}:${this.typeExpList[i].toType()}`)
+        .join(",");
+}
+%%%
+
+AppExp:import
+%%%
+const { Type } = require('./Type');
+%%%
+
+AppExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    const args = this.rands.evalRandsRef(env);
+    return v.apply(args, env);
+}
+
+evalType(tenv) {
+    const pt = this.exp.evalType(tenv).procType();
+    const argTypeList = this.rands.evalTypeRands(tenv);
+    Type.checkEqualTypes(pt.paramTypeList, argTypeList);
+    return pt.returnType;
+}
+
+toString() {
+    return " ...AppExp... ";
+}
+%%%
+
+SeqExp
+%%%
+eval(env) {
+    let v = this.exp.eval(env);
+    for (const e of this.seqExps.expList)
+        v = e.eval(env);
+    return v;
+}
+
+evalType(tenv) {
+    let t = this.exp.evalType(tenv);
+    for (const e of this.seqExps.expList)
+        t = e.evalType(tenv);
+    return t;
+}
+
+toString() {
+    return " ...SeqExp... ";
+}
+%%%
+
+SetExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    const ref = env.applyEnvRef(this.symbol.lexeme);
+    return ref.setRef(v);
+}
+
+evalType(tenv) {
+    const varType = tenv.applyTypeEnv(this.symbol.lexeme);
+    const expType = this.exp.evalType(tenv);
+    varType.checkEquals(expType);
+    return varType;
+}
+
+toString() {
+    return " ...SetExp... ";
+}
+%%%
+
+Rands
+%%%
+evalRands(env) {
+    return this.expList.map(e => e.eval(env));
+}
+
+evalRandsRef(env) {
+    return this.expList.map(e => e.evalRef(env));
+}
+
+evalTypeRands(tenv) {
+    return this.expList.map(e => e.evalType(tenv));
+}
+
+toString() {
+    return this.expList.map(e => String(e)).join(",");
+}
+%%%
+
+TypeExp
+%%%
+toType() {
+    throw new Error("not implemented");
+}
+%%%
+
+PrimTypeExp
+%%%
+toType() {
+    return this.primType.toType();
+}
+%%%
+
+ProcTypeExp:import
+%%%
+const { ProcType } = require('./ProcType');
+%%%
+
+ProcTypeExp
+%%%
+toType() {
+    return new ProcType(this.typeExps.toTypes(), this.typeExp.toType());
+}
+%%%
+
+TypeExps
+%%%
+toTypes() {
+    return this.typeExpList.map(te => te.toType());
+}
+%%%
+
+PrimType
+%%%
+toType() {
+    throw new Error("not implemented");
+}
+%%%
+
+BoolPrimType:import
+%%%
+const { Type } = require('./Type');
+%%%
+
+BoolPrimType
+%%%
+toType() {
+    return Type.boolType();
+}
+%%%
+
+IntPrimType:import
+%%%
+const { Type } = require('./Type');
+%%%
+
+IntPrimType
+%%%
+toType() {
+    return Type.intType();
+}
+%%%
+
+AddPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+const { Type } = require('./Type');
+%%%
+
+AddPrim
+%%%
+toString() {
+    return "+";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 + i1);
+}
+
+definedType() {
+    return Type.ii_i();
+}
+%%%
+
+SubPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+const { Type } = require('./Type');
+%%%
+
+SubPrim
+%%%
+toString() {
+    return "-";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 - i1);
+}
+
+definedType() {
+    return Type.ii_i();
+}
+%%%
+
+MulPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+const { Type } = require('./Type');
+%%%
+
+MulPrim
+%%%
+toString() {
+    return "*";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 * i1);
+}
+
+definedType() {
+    return Type.ii_i();
+}
+%%%
+
+DivPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+const { Type } = require('./Type');
+%%%
+
+DivPrim
+%%%
+toString() {
+    return "/";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    if (i1 === 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(Math.trunc(i0 / i1));
+}
+
+definedType() {
+    return Type.ii_i();
+}
+%%%
+
+Add1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+const { Type } = require('./Type');
+%%%
+
+Add1Prim
+%%%
+toString() {
+    return "add1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 + 1);
+}
+
+definedType() {
+    return Type.i_i();
+}
+%%%
+
+Sub1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+const { Type } = require('./Type');
+%%%
+
+Sub1Prim
+%%%
+toString() {
+    return "sub1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 - 1);
+}
+
+definedType() {
+    return Type.i_i();
+}
+%%%
+
+ZeropPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+ZeropPrim
+%%%
+toString() {
+    return "zero?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new BoolVal(i0 === 0);
+}
+
+definedType() {
+    return Type.i_b();
+}
+%%%
+
+LTPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+LTPrim
+%%%
+toString() {
+    return "<?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new BoolVal(i0 < i1);
+}
+
+definedType() {
+    return Type.ii_b();
+}
+%%%
+
+LEPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+LEPrim
+%%%
+toString() {
+    return "<=?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new BoolVal(i0 <= i1);
+}
+
+definedType() {
+    return Type.ii_b();
+}
+%%%
+
+GTPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+GTPrim
+%%%
+toString() {
+    return ">?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new BoolVal(i0 > i1);
+}
+
+definedType() {
+    return Type.ii_b();
+}
+%%%
+
+GEPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+GEPrim
+%%%
+toString() {
+    return ">=?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new BoolVal(i0 >= i1);
+}
+
+definedType() {
+    return Type.ii_b();
+}
+%%%
+
+EQPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+EQPrim
+%%%
+toString() {
+    return "=?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new BoolVal(i0 === i1);
+}
+
+definedType() {
+    return Type.ii_b();
+}
+%%%
+
+NEPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+NEPrim
+%%%
+toString() {
+    return "<>?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new BoolVal(i0 !== i1);
+}
+
+definedType() {
+    return Type.ii_b();
+}
+%%%
+
+AndPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+AndPrim
+%%%
+toString() {
+    return "and";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const b0 = args[0].boolVal().val;
+    const b1 = args[1].boolVal().val;
+    return new BoolVal(b0 && b1);
+}
+
+definedType() {
+    return Type.bb_b();
+}
+%%%
+
+OrPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+OrPrim
+%%%
+toString() {
+    return "or";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const b0 = args[0].boolVal().val;
+    const b1 = args[1].boolVal().val;
+    return new BoolVal(b0 || b1);
+}
+
+definedType() {
+    return Type.bb_b();
+}
+%%%
+
+NotPrim:import
+%%%
+const { BoolVal } = require('./BoolVal');
+const { Type } = require('./Type');
+%%%
+
+NotPrim
+%%%
+toString() {
+    return "not";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const b0 = args[0].boolVal().val;
+    return new BoolVal(!b0);
+}
+
+definedType() {
+    return Type.b_b();
+}
+%%%
