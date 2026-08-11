@@ -1,0 +1,5 @@
+define shape = class field name method init = proc() {set name = "s" ; self} method area = proc() 0 end
+define sq = class extends shape field side method init = proc(n) {set <this>side = n ; self} method area = proc() *(side,side) end
+define s = .<new sq>init(4)
+.<s>area()
+.<<s>super>area()

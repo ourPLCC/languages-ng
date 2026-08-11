@@ -1,0 +1,1584 @@
+%include ../grammar.plcc
+%
+Python
+
+%include ../../Env/envRef/python/env.plcc
+
+Program:import
+%%%
+from Env import Env
+%%%
+
+Program
+%%%
+env = Env.initEnv()
+# Output is buffered rather than printed. plcc-rep uses this program's
+# stdout as a private line-oriented JSON channel, so a partial line
+# written here merges with the result record and deadlocks the tool with
+# no diagnostic. See issue 36. Every output expression appends to `out`;
+# only _run() emits it, as part of its return value.
+out = []
+%%%
+
+Eval
+%%%
+def _run(self):
+    Program.out = []
+    v = self.exp.eval(Program.env)
+    return "".join(Program.out) + str(v)
+%%%
+
+Define:import
+%%%
+from Binding import Binding
+from ValRef import ValRef
+%%%
+
+Define
+%%%
+def _run(self):
+    Program.out = []
+    env = Program.env
+    s = self.symbol.lexeme
+    val = self.exp.eval(env)
+    ref = ValRef(val)
+    b = env.lookup(s)
+    if b is not None:
+        b.ref = ref
+    else:
+        env.add(Binding(s, ref))
+    return "".join(Program.out) + s
+%%%
+
+Val
+%%%
+from runtime.base import LanguageError
+
+
+class Val:
+
+    # A static factory rather than a class attribute: a class attribute is
+    # evaluated when the class body runs, which would make the Val/NilVal
+    # import cycle load-order dependent. Nothing compares Vals by identity,
+    # so a fresh NilVal each time is equivalent.
+    @staticmethod
+    def nil():
+        from NilVal import NilVal
+        return NilVal()
+
+    # Some Vals can be applied to a list of arguments (e.g. a ProcVal).
+    # Like the evaluation of an expression, the application of a Val takes
+    # place in the context of an environment, which arrives as the second
+    # parameter. An applied Val may use or ignore that environment as its
+    # own semantics require.
+    def apply(self, args, env):
+        raise LanguageError(f"{self}: not a procedure")
+
+    def env(self):
+        raise LanguageError(f"<{self}>: not an environment")
+
+    def isTrue(self):
+        # every Val is true except for an IntVal of zero,
+        # an empty list, or a NilVal.
+        return True
+
+    def intVal(self):
+        raise LanguageError(f"{self}: not an Int")
+
+    def classVal(self):
+        raise LanguageError(f"{self}: not a Class")
+
+    def objectVal(self):
+        raise LanguageError(f"{self}: not an Object")
+
+    def isObject(self):
+        return False
+
+    def isClass(self):
+        return False
+
+    def isNil(self):
+        return False
+
+    def makeObject(self, objRef):
+        raise LanguageError(f"new {self}: not a class")
+
+    def putc(self):
+        raise LanguageError(f"putc {self}: not a character")
+
+    def puts(self):
+        raise LanguageError(f"puts {self}: not a string")
+
+    def listNode(self):
+        raise LanguageError(f"{self}: not a nonempty List")
+
+    def listVal(self):
+        raise LanguageError(f"{self}: not a List")
+
+    def isList(self):
+        return False  # only ListVals are true
+%%%
+
+IntVal
+%%%
+from Val import Val
+
+
+class IntVal(Val):
+
+    def __init__(self, val):
+        self.val = int(val)
+
+    def intVal(self):
+        return self
+
+    def isTrue(self):
+        return self.val != 0
+
+    def putc(self):
+        return chr(self.val)
+
+    def __str__(self):
+        return str(self.val)
+%%%
+
+NilVal
+%%%
+from Val import Val
+
+
+class NilVal(Val):
+
+    def isTrue(self):
+        return False
+
+    def isNil(self):
+        return True
+
+    def __str__(self):
+        return "nil"
+%%%
+
+Ref
+%%%
+class Ref:
+
+    @staticmethod
+    def valsToRefs(valList):
+        from ValRef import ValRef
+        return [ValRef(v) for v in valList]
+
+    def deRef(self):
+        raise NotImplementedError
+
+    def setRef(self, v):
+        raise NotImplementedError
+%%%
+
+ValRef
+%%%
+from Ref import Ref
+
+
+class ValRef(Ref):
+
+    def __init__(self, val):
+        self.val = val
+
+    def deRef(self):
+        return self.val
+
+    def setRef(self, v):
+        self.val = v
+        return v
+
+    def __str__(self):
+        return str(self.val)
+%%%
+
+ProcVal
+%%%
+from Bindings import Bindings
+from Ref import Ref
+from Val import Val
+from runtime.base import LanguageError
+
+
+class ProcVal(Val):
+
+    def __init__(self, formals, body, env):
+        self.formals = formals
+        self.body = body
+        # Named procEnv, not env: Val declares an env() method (OBJ's
+        # environment reflection, e.g. <f>x reads a closure's environment),
+        # and an instance attribute named env would shadow it in Python.
+        self.procEnv = env
+
+    def apply(self, args, env):
+        if len(self.formals.symbolList) != len(args):
+            raise LanguageError("formals/args number mismatch")
+        refList = Ref.valsToRefs(args)
+        bindings = Bindings(self.formals.symbolList, refList)
+        nenv = self.procEnv.extendEnvRef(bindings)
+        return self.body.eval(nenv)
+
+    def env(self):
+        return self.procEnv
+
+    def __str__(self):
+        formals = ",".join(t.lexeme for t in self.formals.symbolList)
+        return f"proc({formals})"
+%%%
+
+ListVal
+%%%
+from Val import Val
+
+
+class ListVal(Val):
+
+    # A static factory rather than a class attribute, for the same reason
+    # as Val.nil(): the ListVal/ListNull import cycle would otherwise be
+    # load-order dependent.
+    @staticmethod
+    def empty():
+        from ListNull import ListNull
+        return ListNull()
+
+    def add(self, val):
+        from ListNode import ListNode
+        return ListNode(val, self)
+
+    def isList(self):
+        return True
+
+    def listVal(self):
+        return self
+
+    # shuttle this list onto dst
+    def shuttle(self, dst):
+        from ListNode import ListNode
+        src = self
+        while src.isTrue():
+            node = src.listNode()
+            dst = ListNode(node.val, dst)
+            src = node.rest
+        return dst
+
+    # reverse this list
+    def reverse(self):
+        return self.shuttle(ListVal.empty())
+
+    # append this list onto dst
+    def append(self, dst):
+        src = self.shuttle(ListVal.empty())
+        while src.isTrue():
+            node = src.listNode()
+            src = node.rest
+            node.rest = dst  # destructive ListNode operation
+            dst = node
+        return dst
+
+    def buildString(self, sb):
+        raise NotImplementedError
+
+    def puts(self):
+        sb = []
+        self.buildString(sb)
+        return "".join(sb)
+
+    # The separator-taking stringifier is named toStr rather than being an
+    # overload of __str__, which Python cannot overload. Java keeps
+    # toString(String sep).
+    def toStr(self, sep):
+        raise NotImplementedError
+%%%
+
+ListNode
+%%%
+from ListVal import ListVal
+from runtime.base import LanguageError
+
+
+class ListNode(ListVal):
+
+    def __init__(self, val, rest):
+        self.val = val
+        self.rest = rest  # the rest of the list
+        self.len = rest.len + 1
+
+    def listNode(self):
+        return self
+
+    def buildString(self, sb):
+        try:
+            c = chr(self.val.intVal().val)
+        except LanguageError:
+            raise LanguageError(f"puts ...{self}... : not a string")
+        sb.append(c)
+        self.rest.buildString(sb)
+
+    def __str__(self):
+        return "[" + self.toStr("") + "]"
+
+    def toStr(self, sep):
+        return sep + str(self.val) + self.rest.toStr(",")
+%%%
+
+ListNull
+%%%
+from ListVal import ListVal
+
+
+class ListNull(ListVal):
+
+    def __init__(self):
+        self.len = 0
+
+    def isTrue(self):
+        return False
+
+    def buildString(self, sb):
+        pass
+
+    def __str__(self):
+        return "[]"
+
+    def toStr(self, sep):
+        return ""
+%%%
+
+ClassVal
+%%%
+from Val import Val
+
+
+class ClassVal(Val):
+
+    def makeObject(self, objRef):
+        raise NotImplementedError
+
+    def classVal(self):
+        return self
+
+    def isClass(self):
+        return True
+%%%
+
+EnvClass
+%%%
+from Binding import Binding
+from Bindings import Bindings
+from ClassVal import ClassVal
+from ObjectVal import ObjectVal
+
+
+# A "parentless" class whose static environment is the environment passed
+# to its constructor.
+class EnvClass(ClassVal):
+
+    # The class extended by every other class. A static factory rather than
+    # a static field: Program is a generated class, so evaluating
+    # Program.env when this class body runs would be load-order dependent.
+    # It still returns the one Program.env object, so the singleton's real
+    # purpose survives.
+    @staticmethod
+    def envClass():
+        from Program import Program
+        return EnvClass(Program.env)
+
+    def __init__(self, env):
+        self.staticEnv = env  # the environment inherited by all subclasses
+
+    def env(self):
+        return self.staticEnv
+
+    # Observe that the environment of objects created with 'new ...'
+    # always extends the static environment of this class. The 'objRef'
+    # reference will eventually be set to the object being created.
+    def makeObject(self, objRef):
+        # start with the static environment of this class
+        env = self.staticEnv
+        # add the field binding 'self' to refer to the base object (deep)
+        fieldBindings = Bindings()
+        env = env.extendEnvRef(fieldBindings)  # this object's environment
+        fieldBindings.add(Binding("self", objRef))  # deep
+        return ObjectVal(env)
+
+    def __str__(self):
+        return "class"
+%%%
+
+StdClass
+%%%
+from Binding import Binding
+from Bindings import Bindings
+from ClassVal import ClassVal
+from ObjectVal import ObjectVal
+from ValRef import ValRef
+
+
+class StdClass(ClassVal):
+
+    def __init__(self, localEnv, superClass, statics, fields, methods):
+        # localEnv    the environment where this class is created
+        # superClass  an EnvClass (top-level) or a StdClass, from ClassExp
+        # statics     static variable definitions
+        # fields      field declarations
+        # methods     method definitions
+        self.superClass = superClass
+        self.fields = fields
+        self.methods = methods
+        # this class's static environment extends the superclass environment
+        staticEnv = superClass.env()
+        self.staticBindings = Bindings()  # all statics go here
+        staticEnv = staticEnv.extendEnvRef(self.staticBindings)
+        self.staticEnv = staticEnv
+        # initially create bindings for these static symbols ...
+        ref = ValRef(ObjectVal(localEnv))
+        staticEnv.add(Binding("!@", ref))  # not a var
+        staticEnv.add(Binding("myclass", ValRef(self)))
+        staticEnv.add(Binding("superclass", ValRef(superClass)))
+        # The static RHS expressions are evaluated in the modified
+        # staticEnv that includes the bindings for !@, myclass, superclass.
+        # New static bindings are added as they are created, as in
+        # top-level defines.
+        statics.addStaticBindings(staticEnv)
+
+    def env(self):
+        return self.staticEnv
+
+    def makeObject(self, objRef):
+        # create the parent object first (recursively)
+        parent = self.superClass.makeObject(objRef)
+
+        # this object's environment extends the parent object's environment
+        env = parent.objectEnv
+
+        # add this class's static bindings (including myclass, etc)
+        env = env.extendEnvRef(self.staticBindings)
+
+        # the fields come next
+        fieldBindings = Bindings()
+        env = env.extendEnvRef(fieldBindings)
+        # bind all of this object's instance fields to nil
+        self.fields.addFieldBindings(fieldBindings)
+
+        # bind all this object's methods as in letrec
+        env = self.methods.addMethodBindings(env)
+
+        # create the object
+        objectVal = ObjectVal(env)
+
+        # bind 'super' field to the parent object
+        fieldBindings.add(Binding("super", ValRef(parent)))
+        # bind 'self' field to the base object being created
+        # (to speed up lookups)
+        fieldBindings.add(Binding("self", objRef))  # deep
+        # bind 'this' field to this object environment
+        fieldBindings.add(Binding("this", ValRef(objectVal)))  # shallow
+        return objectVal
+
+    def __str__(self):
+        return "class"
+%%%
+
+ObjectVal
+%%%
+from Val import Val
+
+
+# An object that captures the environment in which this object is created.
+class ObjectVal(Val):
+
+    def __init__(self, env):
+        self.objectEnv = env  # this object's environment
+
+    def objectVal(self):
+        return self
+
+    def isObject(self):
+        return True
+
+    def env(self):
+        return self.objectEnv
+
+    def __str__(self):
+        return "object"
+%%%
+
+Reserved
+%%%
+from runtime.base import LanguageError
+
+
+class Reserved:
+    """Identifiers the object system binds implicitly.
+
+    Binding one of these in user code does not shadow harmlessly: Bindings
+    are appended and looked up first-match, and StdClass.makeObject binds
+    fields *before* super/self/this, so a user `field self` silently wins
+    every lookup and displaces the real self inside every method. The same
+    goes for a method named self and for a static named myclass. Each is a
+    silent wrong answer rather than an error, which is why this check
+    exists and why it is called explicitly at each site rather than hidden
+    inside Env.checkDuplicates.
+    """
+
+    ids = ["self", "myclass", "superclass", "this", "super"]
+
+    @staticmethod
+    def check(symbolList):
+        for sym in symbolList:
+            if sym.lexeme in Reserved.ids:
+                raise LanguageError("reserved ID: " + sym.lexeme)
+%%%
+
+ExitExp
+%%%
+def eval(self, env):
+    # Under old PLCC, rep *was* this process, so exit(0) was a clean quit.
+    # Under plcc-ng the interpreter is a subprocess, so this closes the
+    # protocol pipe: plcc-rep prints "interpreter exited unexpectedly" on
+    # stderr and exits 1. Language semantics are unchanged. A clean-exit
+    # record kind is requested upstream in issue 37.
+    import sys
+    sys.exit(0)
+%%%
+
+LitExp:import
+%%%
+from IntVal import IntVal
+%%%
+
+LitExp
+%%%
+def eval(self, env):
+    return IntVal(self.lit.lexeme)
+
+def __str__(self):
+    return self.lit.lexeme
+%%%
+
+ChrExp:import
+%%%
+from IntVal import IntVal
+%%%
+
+ChrExp
+%%%
+def eval(self, env):
+    # the lexeme is an apostrophe followed by the character itself
+    return IntVal(ord(self.chr.lexeme[1]))
+
+def __str__(self):
+    return self.chr.lexeme
+%%%
+
+StrngExp:import
+%%%
+from IntVal import IntVal
+from ListVal import ListVal
+%%%
+
+StrngExp
+%%%
+ESCAPES = {"a": 7, "b": 8, "t": 9, "n": 10, "f": 12, "r": 13}
+
+def eval(self, env):
+    s = self.strng.lexeme
+    # we know that s[0] and s[-1] are both '"'
+    end = len(s) - 1
+    codes = []
+    pos = 1
+    while pos < end:
+        c = s[pos]
+        pos += 1
+        if c == "\\":
+            # escape!
+            c = s[pos]
+            pos += 1
+            codes.append(StrngExp.ESCAPES.get(c, ord(c)))
+        else:
+            codes.append(ord(c))
+    # build the ListVal back to front so it comes out in source order
+    lst = ListVal.empty()
+    for code in reversed(codes):
+        lst = lst.add(IntVal(code))
+    return lst
+
+def __str__(self):
+    return self.strng.lexeme
+%%%
+
+VarExp
+%%%
+def eval(self, env):
+    return env.applyEnv(self.symbol.lexeme)
+
+def __str__(self):
+    return self.symbol.lexeme
+%%%
+
+IfExp
+%%%
+def eval(self, env):
+    if self.testExp.eval(env).isTrue():
+        return self.trueExp.eval(env)
+    else:
+        return self.falseExp.eval(env)
+
+def __str__(self):
+    return f"if {self.testExp} then {self.trueExp} else {self.falseExp}"
+%%%
+
+PrimappExp
+%%%
+def eval(self, env):
+    args = self.rands.evalRands(env)
+    return self.prim.apply(args)
+
+def __str__(self):
+    return f"{self.prim}({self.rands})"
+%%%
+
+LetExp
+%%%
+def eval(self, env):
+    nenv = self.letDecls.addBindings(env)
+    return self.exp.eval(nenv)
+
+def __str__(self):
+    return " ...LetExp... "
+%%%
+
+LetrecExp
+%%%
+def eval(self, env):
+    env = self.letDecls.addLetrecBindings(env)
+    return self.exp.eval(env)
+
+def __str__(self):
+    return " ...LetrecExp... "
+%%%
+
+ProcExp
+%%%
+def eval(self, env):
+    return self.proc.makeClosure(env)
+
+def __str__(self):
+    return " ...ProcExp... "
+%%%
+
+AppExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    args = self.rands.evalRands(env)
+    return v.apply(args, env)
+
+def __str__(self):
+    return " ...AppExp... "
+%%%
+
+SeqExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    for e in self.seqExps.expList:
+        v = e.eval(env)
+    return v
+
+def __str__(self):
+    return " ...SeqExp... "
+%%%
+
+SetExp
+%%%
+def eval(self, env):
+    nenv = self.loc.getEnv(env)
+    ref = nenv.applyEnvRef(self.symbol.lexeme)
+    v = self.exp.eval(env)
+    return ref.setRef(v)
+
+def __str__(self):
+    return " ...SetExp... "
+%%%
+
+Loc
+%%%
+def getEnv(self, env):
+    raise NotImplementedError
+%%%
+
+ObjLoc
+%%%
+def getEnv(self, env):
+    v = self.exp.eval(env)
+    return v.env()
+%%%
+
+SimpleLoc
+%%%
+def getEnv(self, env):
+    return env
+%%%
+
+ListExp:import
+%%%
+from ListNode import ListNode
+from ListVal import ListVal
+%%%
+
+ListExp
+%%%
+def eval(self, env):
+    valList = self.rands.evalRands(env)
+    listVal = ListVal.empty()
+    # process the elements in reverse order
+    for v in reversed(valList):
+        listVal = ListNode(v, listVal)
+    return listVal
+
+def __str__(self):
+    return " ...ListExp... "
+%%%
+
+ClassExp
+%%%
+def eval(self, env):
+    return self.classDecl.eval(env)
+
+def __str__(self):
+    return " ...ClassExp... "
+%%%
+
+ClassDecl:import
+%%%
+from StdClass import StdClass
+%%%
+
+ClassDecl
+%%%
+def eval(self, env):
+    superClass = self.ext.toClassVal(env)
+    body = self.classBody  # see the <ClassBody> note in grammar.plcc
+    return StdClass(env, superClass, body.statics, body.fields, body.methods)
+%%%
+
+Ext
+%%%
+def toClassVal(self, env):
+    raise NotImplementedError
+%%%
+
+Ext0:import
+%%%
+from EnvClass import EnvClass
+%%%
+
+Ext0
+%%%
+def toClassVal(self, env):
+    return EnvClass.envClass()
+%%%
+
+Ext1
+%%%
+def toClassVal(self, env):
+    v = self.exp.eval(env)
+    return v.classVal()
+%%%
+
+Statics:import
+%%%
+from Binding import Binding
+from Env import Env
+from Reserved import Reserved
+from ValRef import ValRef
+%%%
+
+Statics:init
+%%%
+Env.checkDuplicates(self.symbolList, " in static variables")
+Reserved.check(self.symbolList)
+%%%
+
+Statics
+%%%
+# Add new bindings to the static bindings -- behaves like top-level
+# defines.
+def addStaticBindings(self, env):
+    for sym, e in zip(self.symbolList, self.expList):
+        val = e.eval(env)
+        env.add(Binding(sym.lexeme, ValRef(val)))
+%%%
+
+Fields:import
+%%%
+from Binding import Binding
+from Env import Env
+from Reserved import Reserved
+from Val import Val
+from ValRef import ValRef
+%%%
+
+Fields:init
+%%%
+Env.checkDuplicates(self.symbolList, " in field variables")
+Reserved.check(self.symbolList)
+%%%
+
+Fields
+%%%
+def addFieldBindings(self, fieldBindings):
+    for t in self.symbolList:
+        fieldBindings.add(Binding(t.lexeme, ValRef(Val.nil())))
+%%%
+
+Methods:import
+%%%
+from Env import Env
+from LetDecls import LetDecls
+from ProcExp import ProcExp
+from Reserved import Reserved
+%%%
+
+Methods:init
+%%%
+Env.checkDuplicates(self.symbolList, " in method names")
+Reserved.check(self.symbolList)
+%%%
+
+Methods
+%%%
+def addMethodBindings(self, env):
+    if len(self.symbolList) == 0:
+        return env
+    expList = [ProcExp(p) for p in self.procList]
+    return LetDecls(self.symbolList, expList).addLetrecBindings(env)
+%%%
+
+NewExp:import
+%%%
+from Val import Val
+from ValRef import ValRef
+%%%
+
+NewExp
+%%%
+def eval(self, env):
+    # get the class from which this object will be created
+    val = self.exp.eval(env)
+    # create a reference to a dummy value (nil)
+    objRef = ValRef(Val.nil())
+    # let the class create the object
+    objectVal = val.makeObject(objRef)
+    # set the reference to the newly created object
+    return objRef.setRef(objectVal)
+
+def __str__(self):
+    return " ...NewExp... "
+%%%
+
+NilExp:import
+%%%
+from Val import Val
+%%%
+
+NilExp
+%%%
+def eval(self, env):
+    return Val.nil()
+
+def __str__(self):
+    return "nil"
+%%%
+
+EnvExp
+%%%
+def eval(self, env):
+    v = self.vExp.eval(env)
+    return self.eExp.eval(v.env())
+
+def __str__(self):
+    return " ...EnvExp... "
+%%%
+
+EenvExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)  # the environment object
+    return self.mangle.eval(v, env)
+
+def __str__(self):
+    return " ...EenvExp... "
+%%%
+
+Mangle
+%%%
+def eval(self, v, env):
+    # The message expression is evaluated in the *receiver's* environment,
+    # while its operands are evaluated in the *caller's* environment. The
+    # asymmetry is deliberate.
+    for e, rands in zip(self.expList, self.randsList):
+        p = e.eval(v.env())
+        args = rands.evalRands(env)
+        v = p.apply(args, env)
+    return v
+%%%
+
+BangAtExp
+%%%
+def eval(self, env):
+    return env.applyEnv("!@")
+
+def __str__(self):
+    return "!@"
+%%%
+
+AtExp:import
+%%%
+from ObjectVal import ObjectVal
+%%%
+
+AtExp
+%%%
+def eval(self, env):
+    return ObjectVal(env)
+
+def __str__(self):
+    return "@"
+%%%
+
+AtAtExp:import
+%%%
+from ObjectVal import ObjectVal
+from Program import Program
+%%%
+
+AtAtExp
+%%%
+def eval(self, env):
+    # buffered, never printed -- see the Program block
+    Program.out.append(str(env))
+    return ObjectVal(env)
+
+def __str__(self):
+    return "@@"
+%%%
+
+DisplayExp:import
+%%%
+from Program import Program
+from Val import Val
+%%%
+
+DisplayExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    Program.out.append(str(v))
+    return Val.nil()
+
+def __str__(self):
+    return " ...DisplayExp... "
+%%%
+
+Display1Exp:import
+%%%
+from Program import Program
+from Val import Val
+%%%
+
+Display1Exp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    Program.out.append(str(v) + " ")
+    return Val.nil()
+
+def __str__(self):
+    return " ...Display1Exp... "
+%%%
+
+NewlineExp:import
+%%%
+from Program import Program
+from Val import Val
+%%%
+
+NewlineExp
+%%%
+def eval(self, env):
+    Program.out.append("\n")
+    return Val.nil()
+
+def __str__(self):
+    return "newline"
+%%%
+
+PutcExp:import
+%%%
+from Program import Program
+from Val import Val
+%%%
+
+PutcExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    Program.out.append(v.putc())
+    return Val.nil()
+
+def __str__(self):
+    return " ...PutcExp... "
+%%%
+
+PutsExp:import
+%%%
+from Program import Program
+from Val import Val
+%%%
+
+PutsExp
+%%%
+def eval(self, env):
+    v = self.exp.eval(env)
+    Program.out.append(v.puts())
+    return Val.nil()
+
+def __str__(self):
+    return " ...PutsExp... "
+%%%
+
+ErrorExp:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+ErrorExp
+%%%
+def eval(self, env):
+    val = self.exp.eval(env)
+    raise LanguageError(str(val))
+
+def __str__(self):
+    return " ...ErrorExp... "
+%%%
+
+PerrorExp:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+PerrorExp
+%%%
+def eval(self, env):
+    # the lexeme carries its surrounding double quotes
+    s = self.strng.lexeme
+    raise LanguageError(s[1:-1])
+
+def __str__(self):
+    return " ...PerrorExp... "
+%%%
+
+Proc:import
+%%%
+from ProcVal import ProcVal
+%%%
+
+Proc
+%%%
+def makeClosure(self, env):
+    return ProcVal(self.formals, self.exp, env)
+%%%
+
+Formals:import
+%%%
+from Env import Env
+from Reserved import Reserved
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(self.symbolList, " in proc formals")
+Reserved.check(self.symbolList)
+%%%
+
+LetDecls:import
+%%%
+from Env import Env
+from Binding import Binding
+from Bindings import Bindings
+from Ref import Ref
+from Reserved import Reserved
+from ValRef import ValRef
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(self.symbolList, " in let/letrec LHS identifiers")
+Reserved.check(self.symbolList)
+%%%
+
+LetDecls
+%%%
+def addBindings(self, env):
+    valList = [e.eval(env) for e in self.expList]
+    refList = Ref.valsToRefs(valList)
+    bindings = Bindings(self.symbolList, refList)
+    return env.extendEnvRef(bindings)
+
+def addLetrecBindings(self, env):
+    env = env.extendEnvRef(Bindings())
+    for sym, e in zip(self.symbolList, self.expList):
+        val = e.eval(env)
+        env.add(Binding(sym.lexeme, ValRef(val)))
+    return env
+
+def __str__(self):
+    return " ...LetDecls... "
+%%%
+
+Rands
+%%%
+def evalRands(self, env):
+    return [e.eval(env) for e in self.expList]
+
+def __str__(self):
+    return ",".join(str(e) for e in self.expList)
+%%%
+
+AddPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+AddPrim
+%%%
+def __str__(self):
+    return "+"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 + i1)
+%%%
+
+SubPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+SubPrim
+%%%
+def __str__(self):
+    return "-"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 - i1)
+%%%
+
+MulPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+MulPrim
+%%%
+def __str__(self):
+    return "*"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(i0 * i1)
+%%%
+
+DivPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+DivPrim
+%%%
+def __str__(self):
+    return "/"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    if i1 == 0:
+        raise LanguageError("attempt to divide by zero")
+    return IntVal(int(i0 / i1))
+%%%
+
+Add1Prim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+Add1Prim
+%%%
+def __str__(self):
+    return "add1"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(i0 + 1)
+%%%
+
+Sub1Prim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+Sub1Prim
+%%%
+def __str__(self):
+    return "sub1"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(i0 - 1)
+%%%
+
+ZeropPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+ZeropPrim
+%%%
+def __str__(self):
+    return "zero?"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    i0 = args[0].intVal().val
+    return IntVal(1 if i0 == 0 else 0)
+%%%
+
+NilpPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+NilpPrim
+%%%
+def __str__(self):
+    return "nil?"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    return IntVal(1 if args[0].isNil() else 0)
+%%%
+
+LTPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+LTPrim
+%%%
+def __str__(self):
+    return "<?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(1 if i0 < i1 else 0)
+%%%
+
+LEPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+LEPrim
+%%%
+def __str__(self):
+    return "<=?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(1 if i0 <= i1 else 0)
+%%%
+
+GTPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+GTPrim
+%%%
+def __str__(self):
+    return ">?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(1 if i0 > i1 else 0)
+%%%
+
+GEPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+GEPrim
+%%%
+def __str__(self):
+    return ">=?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(1 if i0 >= i1 else 0)
+%%%
+
+NEPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+NEPrim
+%%%
+def __str__(self):
+    return "<>?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(1 if i0 != i1 else 0)
+%%%
+
+EQPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+EQPrim
+%%%
+def __str__(self):
+    return "=?"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("two arguments expected")
+    i0 = args[0].intVal().val
+    i1 = args[1].intVal().val
+    return IntVal(1 if i0 == i1 else 0)
+%%%
+
+ObjectpPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+ObjectpPrim
+%%%
+def __str__(self):
+    return "object?"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    return IntVal(1 if args[0].isObject() else 0)
+%%%
+
+ClasspPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+ClasspPrim
+%%%
+def __str__(self):
+    return "class?"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("one argument expected")
+    return IntVal(1 if args[0].isClass() else 0)
+%%%
+
+ListpPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+ListpPrim
+%%%
+def __str__(self):
+    return "list?"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("list?: one argument expected")
+    return IntVal(1 if args[0].isList() else 0)
+%%%
+
+LenPrim:import
+%%%
+from IntVal import IntVal
+from runtime.base import LanguageError
+%%%
+
+LenPrim
+%%%
+def __str__(self):
+    return "len"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("len: one argument expected")
+    lst = args[0].listVal()
+    return IntVal(lst.len)
+%%%
+
+FirstPrim:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+FirstPrim
+%%%
+def __str__(self):
+    return "first"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("first: one argument expected")
+    return args[0].listNode().val
+%%%
+
+RestPrim:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+RestPrim
+%%%
+def __str__(self):
+    return "rest"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("rest: one argument expected")
+    return args[0].listNode().rest
+%%%
+
+AddListPrim:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+AddListPrim
+%%%
+def __str__(self):
+    return "add"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("add: two arguments expected")
+    return args[1].listVal().add(args[0])
+%%%
+
+ShuttlePrim:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+ShuttlePrim
+%%%
+def __str__(self):
+    return "shuttle"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("shuttle: two arguments expected")
+    lst0 = args[0].listVal()
+    lst1 = args[1].listVal()
+    return lst0.shuttle(lst1)
+%%%
+
+ReversePrim:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+ReversePrim
+%%%
+def __str__(self):
+    return "reverse"
+
+def apply(self, args):
+    if len(args) != 1:
+        raise LanguageError("reverse: one argument expected")
+    return args[0].listVal().reverse()
+%%%
+
+AppendPrim:import
+%%%
+from runtime.base import LanguageError
+%%%
+
+AppendPrim
+%%%
+def __str__(self):
+    return "append"
+
+def apply(self, args):
+    if len(args) != 2:
+        raise LanguageError("append: two arguments expected")
+    lst0 = args[0].listVal()
+    lst1 = args[1].listVal()
+    return lst0.append(lst1)
+%%%

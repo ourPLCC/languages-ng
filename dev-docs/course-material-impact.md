@@ -686,3 +686,111 @@ headings are added in the order each language is migrated.
   zero, unbound identifier, duplicate ID, `not an Int`,
   `formals/args number mismatch`) — those belong to languages that
   already shipped.
+
+## OBJ
+
+- Identifier token is `SYMBOL`, not `VAR`, and the corresponding field
+  is `symbol` (or `symbolList` in a repeating rule), not `var` /
+  `varList` — the standing convention since V0. OBJ keeps its **own**
+  broader regex, `[A-Za-z\&\?\$][\w\?\&\$]*`, rather than the
+  `[A-Za-z][\w?]*` the V-languages use, so `$`, `&`, and `?` remain
+  legal identifier starts and the examples that rely on them
+  (`Prog/35env`, `PPP/cc`, and friends) still read as written.
+- `$run()` is now `_run()`, and it **returns** its output string rather
+  than printing it, in `Define` as well as `Eval` — the same `_run()`
+  contract every migrated language adopts.
+- `Program.initEnv` is now `Program.env`, matching the six shipped
+  predecessors.
+- `Val.nil` is now `Val.nil()`, `ListVal.empty` is now
+  `ListVal.empty()`, and `EnvClass.envClass` is now
+  `EnvClass.envClass()`. A class attribute is evaluated at
+  class-definition time, which makes the `Val`/`NilVal` and
+  `ListVal`/`ListNull` import cycles load-order dependent in Python and
+  JavaScript; a static method with the import inside its body defers
+  that far enough to break the cycle. Java adopts the same
+  method-call shape even though it has no import-order problem of its
+  own, so all three targets read alike. `EnvClass.envClass()` still
+  returns the one `Program.env` object, so the singleton's actual
+  purpose survives.
+- `Val.apply(valList)` is now `Val.apply(valList, env)`, matching SET
+  and its successors. The parameter is unread by every implementation
+  in OBJ; it is deliberately the seam for the dynamic-scoping exercise,
+  which needs the caller's environment at the point of application.
+  `Prim.apply(args)` is unchanged and stays env-less.
+- **Output is buffered.** `display`, `display#`, `newline`, `putc`,
+  `puts`, and `@@` no longer write to stdout; they append to
+  `Program.out`, which `_run()` joins and returns ahead of its own
+  result. Observable behaviour is unchanged — the interleaving is
+  identical to old PLCC's, and `display 7` still shows `7nil` — but the
+  mechanism is not, and anyone extending OBJ with a new output form has
+  to append to `Program.out` rather than print. The reason is
+  `plcc-rep`: it runs the generated program as a subprocess and uses
+  that program's stdout as a private line-oriented JSON channel, so a
+  partial line written by a semantic action merges with the result
+  record and deadlocks the tool with no diagnostic at all (issue
+  [#36](issues/036-plcc-rep-deadlocks-on-partial-stdout-line.md)). A
+  student who puts a stray `print` in a semantic action gets a hang, not
+  an error message — this is the single most useful thing to say out
+  loud before an OBJ assignment that adds an output form.
+- **`exit` now ends the session badly.** Old PLCC's `rep` *was* the
+  process, so `exit`'s `System.exit(0)` was a clean quit. Under plcc-ng
+  the interpreter is a subprocess, so the same call closes the protocol
+  pipe mid-conversation: `plcc-rep` prints
+  `interpreter exited unexpectedly` on stderr and exits 1. Language
+  semantics are unchanged — evaluation stops, nothing after `exit` runs,
+  and output already produced survives — but a deliberate quit now reads
+  as a crash. A clean-exit record kind is requested upstream in issue
+  [#37](issues/037-plcc-rep-lacks-output-and-clean-exit-records.md); no
+  example program or test uses `exit`.
+- **The reserved-ID check moved out of `Env`.** Rejecting `self`,
+  `myclass`, `superclass`, `this`, and `super` as user-bound
+  identifiers used to happen inside OBJ's private copy of
+  `Env.checkDuplicates`. The shared `envRef` that seven languages now
+  include has no such check, so it lives in a free-standing `Reserved`
+  class and each of the five sites — `Formals`, `LetDecls`, `Statics`,
+  `Fields`, `Methods` — calls **both**:
+
+  ```python
+  Env.checkDuplicates(self.symbolList, " in field variables")
+  Reserved.check(self.symbolList)
+  ```
+
+  Two calls rather than one wrapper, on purpose. The check is an
+  OBJ-specific extension of a shared file, and burying it inside a
+  function six other languages also call made the divergence invisible —
+  it read as if `envRef` had always rejected `self`. The error message
+  is unchanged (`reserved ID: self`). It is worth keeping because none of
+  the three failure modes it prevents is loud: `Bindings.add` appends
+  and `Bindings.lookup` returns the first match, and
+  `StdClass.makeObject` binds fields *before* `super`/`self`/`this`, so
+  a user `field self` silently displaces the real `self` inside every
+  method rather than erroring.
+- **The class grammar gained a `<ClassBody>` nonterminal.** Where the
+  old grammar had
+
+  ```
+  <ClassDecl> ::= CLASS <Ext> <Statics> <Fields> <Methods> END
+  ```
+
+  it now reads
+
+  ```
+  <ClassDecl> ::= CLASS <Ext> <ClassBody>
+  <ClassBody> ::= <Statics> <Fields> <Methods> END
+  ```
+
+  **No OBJ program changes** — the accepted token sequences are
+  identical — but a syntax diagram, a hand-drawn parse tree, or a
+  walkthrough that names the children of `ClassDecl` does. This is a
+  workaround, not a design improvement: plcc-ng 2.0.1 truncates the
+  FOLLOW set of a nonterminal followed by a nullable one, so `<Ext>`'s
+  empty alternative was predicted on `STATIC` alone and any class
+  starting with `field` or `method` failed to parse (issue
+  [#38](issues/038-plcc-ng-follow-set-omits-nullable-tail.md)). It
+  should be reverted when that is fixed upstream.
+- The single 8-line `class` test case is now a seven-case suite —
+  `class/`, `objects/`, `inheritance/`, `lists/`, `strings-chars/`,
+  `env-ops/`, and `errors/`. The `class/` input and expected output are
+  unchanged, so anything that cited it still holds. `strings-chars/` is
+  the one that pins the buffering above: if someone reverts an output
+  expression to printing, that test hangs rather than failing.

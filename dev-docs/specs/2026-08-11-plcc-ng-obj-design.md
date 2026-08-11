@@ -68,6 +68,47 @@ Define
 
 `SimpleLoc (empty)` appears the same way in a `set y = …` tree.
 
+**Amended (2026-08-11, during Task 2): the first sentence above is wrong,
+and the measurement that produced it could not have caught the problem.**
+`<Ext:Ext0> ::=` is accepted, but the parse table plcc-ng 2.0.1 builds for
+`Ext` has entries for `EXTENDS` and `STATIC` only. `class field x end`,
+`class method m = proc() 1 end`, and `class end` all fail with
+`unexpected 'FIELD', no production for 'Ext'`.
+
+The cause is a plcc-ng FOLLOW-set defect, filed as issue
+[#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md):
+`build_follow_sets.py` adds FIRST of the *single* next symbol and then
+skips to the "entire remainder nullable" case, never walking forward
+through nullable symbols in between. `<Statics>` is nullable, so
+`FOLLOW(Ext)` came out `{STATIC}` rather than
+`{STATIC, FIELD, METHOD, END}` — and the predict set of an empty
+alternative *is* FOLLOW. `plcc-ll1` reports `is_ll1: true` with no
+conflicts the whole time, so nothing warned.
+
+The example measured above, `class static x = 3 static f = proc(t) t end`,
+is the one class shape that cannot expose this: `STATIC` is exactly the
+single token the truncated FOLLOW set retained. The lesson generalises
+past this bug — when validating an empty alternative, the case worth
+measuring is the one where the *following* nullable nonterminal is
+actually empty.
+
+`src/OBJ/grammar.plcc` works around it by splitting the class body out:
+
+```
+<ClassDecl>      ::= CLASS <Ext> <ClassBody>
+<ClassBody>      ::= <Statics> <Fields> <Methods> END
+```
+
+`build_first_sets` *does* walk the nullable prefix correctly, so
+`FIRST(ClassBody) = {STATIC, FIELD, METHOD, END}` and `<Ext>` now sits
+next to a correctly computed set. The accepted language is unchanged; the
+tree gains one node and `ClassDecl.eval` reaches through
+`self.classBody`. Revert it when #38 lands, on the issue
+[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) precedent.
+
+`<Loc:SimpleLoc>` is unaffected: `FOLLOW(Loc) = {SYMBOL}` is correct,
+because the symbol following `<Loc>` in `<Exp:SetExp>` is not nullable.
+
 ### 2. `<Mangle> **=` generates the parallel lists its `eval` needs
 
 `<Mangle> **= RANGLE <Exp> LPAREN <Rands> RPAREN` is a repeating rule with two

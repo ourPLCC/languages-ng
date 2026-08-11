@@ -392,6 +392,53 @@ token SYMBOL '[A-Za-z\&\?\$][\w\?\&\$]*'
 <Prim:AppendPrim>  ::= APPENDOP
 ```
 
+**Amended (2026-08-11, during Task 2):** the `<ClassDecl>` line above does
+not work, and the "validated" label on this grammar was earned by a test
+that could not have caught it. The shipped `src/OBJ/grammar.plcc` replaces
+
+```
+<ClassDecl>      ::= CLASS <Ext> <Statics> <Fields> <Methods> END
+```
+
+with
+
+```
+<ClassDecl>      ::= CLASS <Ext> <ClassBody>
+<ClassBody>      ::= <Statics> <Fields> <Methods> END
+```
+
+Cause: plcc-ng 2.0.1 computes FOLLOW from the FIRST set of the *single*
+next symbol rather than walking forward through nullable ones
+(`build_follow_sets.py`,
+`_updateWithSingleOccuranceOfNonterminalInProduction`). `<Statics>` is
+nullable, so `FOLLOW(Ext)` came out as `{STATIC}` instead of
+`{STATIC, FIELD, METHOD, END}`, and the predict set of an empty
+alternative *is* FOLLOW. Measured: `class static x = 3 end` parses,
+`class field x end` fails with
+`unexpected 'FIELD', no production for 'Ext'`, as do
+`class method m = proc() 1 end` and `class end`.
+
+`plcc-ll1` reports `is_ll1: true` with no conflicts throughout, which is
+why this survived design: the design's Step 3 check used
+`define c = class static x = 3 static f = proc(t) t end` — the one class
+shape whose next token happens to be the single element of the truncated
+FOLLOW set. Any class without a `static` would have caught it. Both of the
+`objects/` and `inheritance/` test cases in Step 14 begin with `field`,
+so the suite caught it immediately.
+
+The wrapper puts a non-nullable nonterminal next to `<Ext>`, and
+`build_first_sets` *does* walk the nullable prefix correctly, so
+`FIRST(ClassBody) = {STATIC, FIELD, METHOD, END}`. The accepted language
+is unchanged; the only visible effect is one extra tree node. Filed
+upstream as issue
+[#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md) with a
+suggested patch; revert the wrapper when it lands, as issue
+[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) was reverted.
+
+Consequence for Tasks 3 and 4: `ClassDecl.eval` reads
+`self.classBody.statics` / `.fields` / `.methods` rather than
+`self.statics` / `self.fields` / `self.methods`. Nothing else changes.
+
 - [ ] **Step 3: Verify the grammar parses and scans correctly**
 
 ```bash
@@ -493,6 +540,28 @@ def _run(self):
 Note `Define` buffers too — a `define`'s right-hand side can produce output. Its redefinition behaviour (rebind in place if already bound) is SET's and is unchanged.
 
 Replace `PP` in the comment with the issue number from Task 1.
+
+**Amended (2026-08-11, during Task 2):** the header above places both
+`%include`s before the `%`. That does not work — `env.plcc` contains
+semantic blocks, so it has to be included *after* the `%` and the target
+line, which is what all seven shipped languages do and what Step 1's own
+`head -3` of `src/SET/python/spec.plcc` shows. The shipped shape is:
+
+```
+%include ../grammar.plcc
+%
+Python
+
+%include ../../Env/envRef/python/env.plcc
+```
+
+Measured: the plan's form makes `plcc-spec` die with an unhandled
+`AttributeError: 'Block' object has no attribute 'string'` from
+`parse_syntactic_spec.py:147` rather than a diagnostic — worth knowing,
+since the traceback names neither the include nor the line. The
+`Program`/`Eval`/`Define` blocks themselves are correct as written and
+shipped unchanged. The same correction applies to Task 3's and Task 4's
+headers.
 
 - [ ] **Step 5: Port the SET-inherited core**
 
@@ -750,6 +819,14 @@ TYPE1 measured that a `LanguageError` raised during *evaluation* prints to stdou
 Expected: `reserved ID: self` on stdout, then `1` from the second line, `EXIT=0`.
 
 If instead it reports a `Specification error` and exits 1, `_render_record` is treating the raise as a spec failure rather than a language error, and **`errors/` cannot include the three reserved-ID lines** — split them out and drop them from the suite, record the finding in an `**Amended:**` block here and in the design doc, and add it to plcc-ng issue `PP` as a second symptom of the same protocol area. Do not try to force it green.
+
+**Measured (2026-08-11, Task 2):** the good outcome. A `LanguageError`
+raised from an `:init` block behaves exactly like an evaluation-time one —
+`reserved ID: self` on **stdout**, then `1` from the second line,
+`EXIT=0`, evaluation continues. Confirmed with `2>/dev/null` that the
+message is on stdout and not stderr. TYPE1's finding therefore extends
+from evaluation time to tree-construction time, and `errors/` keeps all
+six lines. No harness change, no split case, nothing to add to issue #36.
 
 - [ ] **Step 14: Write the seven test cases**
 

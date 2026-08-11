@@ -1,0 +1,7 @@
+'a
+"hi"
+puts "hi"
+putc 'a
+display 7
+newline
+display# 7

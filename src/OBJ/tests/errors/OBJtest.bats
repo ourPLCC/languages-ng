@@ -3,10 +3,10 @@
 load '../../../../bin/relocate.bash'
 load '../../../../bin/bats-tmpdir.bash'
 
-@test "OBJ class (python)" {
+@test "OBJ errors (python)" {
   relocate
   cd python
-  RESULT="$(plcc-rep < ../tests/class/OBJ.input)"
-  expected_output=$(< "../tests/class/OBJ.expected")
+  RESULT="$(plcc-rep < ../tests/errors/OBJ.input)"
+  expected_output=$(< "../tests/errors/OBJ.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
