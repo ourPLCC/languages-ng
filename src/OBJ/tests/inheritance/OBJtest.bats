@@ -10,3 +10,11 @@ load '../../../../bin/bats-tmpdir.bash'
   expected_output=$(< "../tests/inheritance/OBJ.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "OBJ inheritance (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/inheritance/OBJ.input)"
+  expected_output=$(< "../tests/inheritance/OBJ.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}

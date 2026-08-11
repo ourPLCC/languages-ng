@@ -1,0 +1,1721 @@
+%include ../grammar.plcc
+%
+Java
+
+%include ../../Env/envRef/java/env.plcc
+
+Program
+%%%
+public static Env env = Env.initEnv();
+
+// Output is buffered rather than printed. plcc-rep uses this program's
+// stdout as a private line-oriented JSON channel, so a partial line
+// written here merges with the result record and deadlocks the tool with
+// no diagnostic. See issue 36. Every output expression appends to `out`;
+// only _run() emits it, as part of its return value.
+public static List<String> out = new ArrayList<String>();
+%%%
+
+Program:import
+%%%
+import java.util.ArrayList;
+import java.util.List;
+%%%
+
+Eval:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Eval
+%%%
+public String _run() {
+    Program.out = new ArrayList<String>();
+    Val v = exp.eval(Program.env);
+    StringBuilder sb = new StringBuilder();
+    for (String s : Program.out)
+        sb.append(s);
+    sb.append(v);
+    return sb.toString();
+}
+%%%
+
+Define:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Define
+%%%
+public String _run() {
+    Program.out = new ArrayList<String>();
+    Env env = Program.env;
+    String s = symbol.lexeme;
+    Val val = exp.eval(env);
+    Ref ref = new ValRef(val);
+    Binding b = env.lookup(s);
+    if (b != null)
+        b.ref = ref;
+    else
+        env.add(new Binding(s, ref));
+    StringBuilder sb = new StringBuilder();
+    for (String out : Program.out)
+        sb.append(out);
+    sb.append(s);
+    return sb.toString();
+}
+%%%
+
+Val
+%%%
+import java.util.List;
+import runtime.LanguageError;
+
+public abstract class Val {
+
+    // A static factory rather than a static field: Java could use a
+    // static final field here, but the OBJ port keeps nil() as a method
+    // in every target for symmetry with Python/JavaScript, where a class
+    // attribute would create an import-cycle/load-order problem. Nothing
+    // compares Vals by identity, so a fresh NilVal each time is
+    // equivalent.
+    public static Val nil() {
+        return new NilVal();
+    }
+
+    public static Val [] toArray(List<Val> valList) {
+        int n = valList.size();
+        return valList.toArray(new Val[n]);
+    }
+
+    // Some Vals can be applied to a list of arguments (e.g. a ProcVal).
+    // Like the evaluation of an expression, the application of a Val
+    // takes place in the context of an environment, which arrives as the
+    // second parameter. An applied Val may use or ignore that
+    // environment as its own semantics require.
+    public Val apply(List<Val> args, Env env) {
+        throw new LanguageError(this + ": not a procedure");
+    }
+
+    public Env env() {
+        throw new LanguageError("<" + this + ">: not an environment");
+    }
+
+    public boolean isTrue() {
+        // every Val is true except for an IntVal of zero,
+        // an empty list, or a NilVal.
+        return true;
+    }
+
+    public IntVal intVal() {
+        throw new LanguageError(this + ": not an Int");
+    }
+
+    public ClassVal classVal() {
+        throw new LanguageError(this + ": not a Class");
+    }
+
+    public ObjectVal objectVal() {
+        throw new LanguageError(this + ": not an Object");
+    }
+
+    public boolean isObject() {
+        return false;
+    }
+
+    public boolean isClass() {
+        return false;
+    }
+
+    public boolean isNil() {
+        return false;
+    }
+
+    public ObjectVal makeObject(Ref objRef) {
+        throw new LanguageError("new " + this + ": not a class");
+    }
+
+    public String putc() {
+        throw new LanguageError("putc " + this + ": not a character");
+    }
+
+    public String puts() {
+        throw new LanguageError("puts " + this + ": not a string");
+    }
+
+    public ListNode listNode() {
+        throw new LanguageError(this + ": not a nonempty List");
+    }
+
+    public ListVal listVal() {
+        throw new LanguageError(this + ": not a List");
+    }
+
+    public boolean isList() {
+        return false; // only ListVals are true
+    }
+}
+%%%
+
+IntVal
+%%%
+public class IntVal extends Val {
+
+    public int val;
+
+    public IntVal(String s) {
+        val = Integer.parseInt(s);
+    }
+
+    public IntVal(int v) {
+        val = v;
+    }
+
+    public IntVal intVal() {
+        return this;
+    }
+
+    public boolean isTrue() {
+        return val != 0;
+    }
+
+    public String putc() {
+        return Character.toString((char) val);
+    }
+
+    public String toString() {
+        return "" + val;
+    }
+}
+%%%
+
+NilVal
+%%%
+public class NilVal extends Val {
+
+    public boolean isTrue() {
+        return false;
+    }
+
+    public boolean isNil() {
+        return true;
+    }
+
+    public String toString() {
+        return "nil";
+    }
+}
+%%%
+
+Ref
+%%%
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class Ref {
+
+    public static List<Ref> valsToRefs(List<Val> valList) {
+        List<Ref> refList = new ArrayList<Ref>(valList.size());
+        for (Val v : valList)
+            refList.add(new ValRef(v));
+        return refList;
+    }
+
+    public abstract Val deRef();
+
+    public abstract Val setRef(Val v);
+}
+%%%
+
+ValRef
+%%%
+public class ValRef extends Ref {
+
+    public Val val;
+
+    public ValRef(Val val) {
+        this.val = val;
+    }
+
+    public Val deRef() {
+        return val;
+    }
+
+    public Val setRef(Val v) {
+        val = v;
+        return v;
+    }
+
+    public String toString() {
+        return val.toString();
+    }
+}
+%%%
+
+ProcVal
+%%%
+import java.util.List;
+import runtime.LanguageError;
+import runtime.Token;
+
+public class ProcVal extends Val {
+
+    public Formals formals;
+    public Exp body;
+    // Named env, not procEnv: unlike Python and JavaScript, a Java
+    // instance field and an instance method (Val.env()) may share a
+    // name without collision, so no rename is needed here. See the
+    // OBJ Java task report for the cross-target comparison.
+    public Env env;
+
+    public ProcVal(Formals formals, Exp body, Env env) {
+        this.formals = formals;
+        this.body = body;
+        this.env = env;
+    }
+
+    public Val apply(List<Val> args, Env e) {
+        if (formals.symbolList.size() != args.size())
+            throw new LanguageError("formals/args number mismatch");
+        List<Ref> refList = Ref.valsToRefs(args);
+        Bindings bindings = new Bindings(formals.symbolList, refList);
+        Env nenv = env.extendEnvRef(bindings);
+        return body.eval(nenv);
+    }
+
+    public Env env() {
+        return env;
+    }
+
+    public String toString() {
+        String ret = "proc(";
+        String sep = "";
+        for (Token t : formals.symbolList) {
+            ret += sep + t.lexeme;
+            sep = ",";
+        }
+        ret += ")";
+        return ret;
+    }
+}
+%%%
+
+ListVal
+%%%
+public abstract class ListVal extends Val {
+
+    // A static factory rather than a static field, for the same reason
+    // as Val.nil(): kept as a method in every target for symmetry.
+    public static ListVal empty() {
+        return new ListNull();
+    }
+
+    public int len;
+
+    public ListVal add(Val val) {
+        return new ListNode(val, this);
+    }
+
+    public boolean isList() {
+        return true;
+    }
+
+    public ListVal listVal() {
+        return this;
+    }
+
+    // shuttle this list onto dst
+    public ListVal shuttle(ListVal dst) {
+        ListVal src = this;
+        while (src.isTrue()) {
+            ListNode node = src.listNode();
+            dst = new ListNode(node.val, dst);
+            src = node.rest;
+        }
+        return dst;
+    }
+
+    // reverse this list
+    public ListVal reverse() {
+        return this.shuttle(ListVal.empty());
+    }
+
+    // append this list onto dst
+    public ListVal append(ListVal dst) {
+        ListVal src = this.shuttle(ListVal.empty());
+        while (src.isTrue()) {
+            ListNode node = src.listNode();
+            src = node.rest;
+            node.rest = dst; // destructive ListNode operation
+            dst = node;
+        }
+        return dst;
+    }
+
+    public abstract void buildString(StringBuilder sb);
+
+    public String puts() {
+        StringBuilder sb = new StringBuilder(len);
+        buildString(sb);
+        return sb.toString();
+    }
+
+    // The separator-taking stringifier is a genuine overload of
+    // toString here; Python and JavaScript name it toStr(sep) because
+    // neither language can overload __str__/toString.
+    public abstract String toString(String sep);
+}
+%%%
+
+ListNode
+%%%
+import runtime.LanguageError;
+
+public class ListNode extends ListVal {
+
+    public Val val;
+    public ListVal rest; // the rest of the list
+
+    public ListNode(Val val, ListVal rest) {
+        this.val = val;
+        this.rest = rest;
+        this.len = rest.len + 1;
+    }
+
+    public ListNode listNode() {
+        return this;
+    }
+
+    public void buildString(StringBuilder sb) {
+        char c;
+        try {
+            c = (char) val.intVal().val;
+        } catch (LanguageError e) {
+            throw new LanguageError("puts ..." + this + "... : not a string");
+        }
+        sb.append(c);
+        rest.buildString(sb);
+    }
+
+    public String toString() {
+        return "[" + this.toString("") + "]";
+    }
+
+    public String toString(String sep) {
+        return sep + val + rest.toString(",");
+    }
+}
+%%%
+
+ListNull
+%%%
+public class ListNull extends ListVal {
+
+    public ListNull() {
+        this.len = 0;
+    }
+
+    public boolean isTrue() {
+        return false;
+    }
+
+    public void buildString(StringBuilder sb) {
+    }
+
+    public String toString() {
+        return "[]";
+    }
+
+    public String toString(String sep) {
+        return "";
+    }
+}
+%%%
+
+ClassVal
+%%%
+public abstract class ClassVal extends Val {
+
+    public abstract ObjectVal makeObject(Ref objRef);
+
+    public ClassVal classVal() {
+        return this;
+    }
+
+    public boolean isClass() {
+        return true;
+    }
+}
+%%%
+
+# A "parentless" class whose static environment is the environment
+# passed to its constructor.
+EnvClass
+%%%
+public class EnvClass extends ClassVal {
+
+    // A static factory rather than a static field: Program is a
+    // generated class, so evaluating Program.env when this class body
+    // loads would be load-order dependent. It still returns bindings
+    // rooted at the one Program.env object, so the singleton's real
+    // purpose survives.
+    public static EnvClass envClass() {
+        return new EnvClass(Program.env);
+    }
+
+    public Env staticEnv;
+
+    public EnvClass(Env env) {
+        staticEnv = env; // the environment inherited by all subclasses
+    }
+
+    public Env env() {
+        return staticEnv;
+    }
+
+    // Observe that the environment of objects created with 'new ...'
+    // always extends the static environment of this class. The
+    // 'objRef' reference will eventually be set to the object being
+    // created.
+    public ObjectVal makeObject(Ref objRef) {
+        // start with the static environment of this class
+        Env env = staticEnv;
+        // add the field binding 'self' to refer to the base object (deep)
+        Bindings fieldBindings = new Bindings();
+        env = env.extendEnvRef(fieldBindings); // this object's environment
+        fieldBindings.add(new Binding("self", objRef)); // deep
+        return new ObjectVal(env);
+    }
+
+    public String toString() {
+        return "class";
+    }
+}
+%%%
+
+StdClass
+%%%
+public class StdClass extends ClassVal {
+
+    public ClassVal superClass;  // an EnvClass (top-level) or a StdClass
+    public Fields fields;
+    public Methods methods;
+    public Env staticEnv; // the static environment of this class
+    public Bindings staticBindings; // the static bindings of this class
+
+    public StdClass(
+            Env localEnv,        // the environment where this class is created
+            ClassVal superClass, // evaluated by ClassExp
+            Statics statics,     // static variable definitions
+            Fields fields,       // field declarations
+            Methods methods) {   // method definitions
+        this.superClass = superClass;
+        this.fields = fields;
+        this.methods = methods;
+        // this class's static environment extends the superclass environment
+        staticEnv = superClass.env();
+        staticBindings = new Bindings(); // all statics go here
+        staticEnv = staticEnv.extendEnvRef(staticBindings);
+        // initially create bindings for these static symbols ...
+        Ref ref = new ValRef(new ObjectVal(localEnv));
+        staticEnv.add(new Binding("!@", ref)); // not a var
+        staticEnv.add(new Binding("myclass", new ValRef(this)));
+        staticEnv.add(new Binding("superclass", new ValRef(superClass)));
+        // The static RHS expressions are evaluated in the modified
+        // staticEnv that includes the bindings for !@, myclass,
+        // superclass. New static bindings are added as they are
+        // created, as in top-level defines.
+        statics.addStaticBindings(staticEnv);
+    }
+
+    public Env env() {
+        return staticEnv;
+    }
+
+    public ObjectVal makeObject(Ref objRef) {
+        // create the parent object first (recursively)
+        ObjectVal parent = superClass.makeObject(objRef);
+
+        // this object's environment extends the parent object's environment
+        Env env = parent.objectEnv;
+
+        // add this class's static bindings (including those for myclass, etc)
+        env = env.extendEnvRef(staticBindings);
+
+        // the fields come next
+        Bindings fieldBindings = new Bindings();
+        env = env.extendEnvRef(fieldBindings);
+        // bind all of this object's instance fields to nil
+        fields.addFieldBindings(fieldBindings);
+
+        // bind all this object's methods as in letrec
+        env = methods.addMethodBindings(env);
+
+        // create the object
+        ObjectVal objectVal = new ObjectVal(env);
+
+        // bind 'super' field to the parent object
+        fieldBindings.add(new Binding("super", new ValRef(parent))); // parent object
+        // bind 'self' field to the base object being created
+        // (to speed up lookups)
+        fieldBindings.add(new Binding("self", objRef)); // deep
+        // bind 'this' field to this object environment
+        fieldBindings.add(new Binding("this", new ValRef(objectVal))); // shallow
+        return objectVal;
+    }
+
+    public String toString() {
+        return "class";
+    }
+}
+%%%
+
+# An object that captures the environment in which this object is created.
+ObjectVal
+%%%
+public class ObjectVal extends Val {
+
+    public Env objectEnv;     // this object's environment
+
+    public ObjectVal(Env env) {
+        this.objectEnv = env;
+    }
+
+    public ObjectVal objectVal() {
+        return this;
+    }
+
+    public boolean isObject() {
+        return true;
+    }
+
+    public Env env() {
+        return objectEnv;
+    }
+
+    public String toString() {
+        return "object";
+    }
+}
+%%%
+
+# Identifiers the object system binds implicitly.
+#
+# Binding one of these in user code does not shadow harmlessly: Bindings
+# are appended and looked up first-match, and StdClass.makeObject binds
+# fields *before* super/self/this, so a user `field self` silently wins
+# every lookup and displaces the real self inside every method. The same
+# goes for a method named self and for a static named myclass. Each is a
+# silent wrong answer rather than an error, which is why this check
+# exists and why it is called explicitly at each site rather than hidden
+# inside Env.checkDuplicates.
+Reserved
+%%%
+import java.util.Arrays;
+import java.util.List;
+import runtime.LanguageError;
+import runtime.Token;
+
+public class Reserved {
+
+    public static List<String> ids =
+        Arrays.asList("self", "myclass", "superclass", "this", "super");
+
+    public static void check(List<Token> symbolList) {
+        for (Token sym : symbolList)
+            if (ids.contains(sym.lexeme))
+                throw new LanguageError("reserved ID: " + sym.lexeme);
+    }
+}
+%%%
+
+Exp
+%%%
+public abstract Val eval(Env env);
+%%%
+
+ExitExp
+%%%
+public Val eval(Env env) {
+    // Under old PLCC, rep *was* this process, so exit(0) was a clean
+    // quit. Under plcc-ng the interpreter is a subprocess, so this
+    // closes the protocol pipe: plcc-rep prints "interpreter exited
+    // unexpectedly" on stderr and exits 1. Language semantics are
+    // unchanged. A clean-exit record kind is requested upstream in
+    // issue 37.
+    System.exit(0);
+    return Val.nil();
+}
+%%%
+
+LitExp
+%%%
+public Val eval(Env env) {
+    return new IntVal(lit.lexeme);
+}
+
+public String toString() {
+    return lit.lexeme;
+}
+%%%
+
+ChrExp
+%%%
+public Val eval(Env env) {
+    // the lexeme is an apostrophe followed by the character itself
+    return new IntVal(chr.lexeme.charAt(1));
+}
+
+public String toString() {
+    return chr.lexeme;
+}
+%%%
+
+StrngExp:import
+%%%
+import java.util.LinkedList;
+%%%
+
+StrngExp
+%%%
+public Val eval(Env env) {
+    String s = strng.lexeme;
+    int len = s.length() - 1;
+    LinkedList<Character> chars = new LinkedList<Character>();
+    // We know that s.charAt(0) is '"' and that s.charAt(len) is '"'
+    int pos = 1;
+    while (pos < len) {
+        char c = s.charAt(pos++);
+        if (c == '\\') {
+            // escape!
+            c = s.charAt(pos++);
+            switch (c) {
+            case 'a' : c = 7; break;
+            case 'b' : c = 8; break;
+            case 't' : c = 9; break;
+            case 'n' : c = 10; break;
+            case 'f' : c = 12; break;
+            case 'r' : c = 13; break;
+            default  : break;
+            }
+        }
+        chars.add(0, c); // add to beginning of list
+    }
+    // chars is in reverse order -- now build a ListVal in proper order
+    ListVal lst = ListVal.empty();
+    for (Character c : chars)
+        lst = lst.add(new IntVal(c));
+    return lst;
+}
+
+public String toString() {
+    return strng.lexeme;
+}
+%%%
+
+VarExp
+%%%
+public Val eval(Env env) {
+    return env.applyEnv(symbol.lexeme);
+}
+
+public String toString() {
+    return symbol.lexeme;
+}
+%%%
+
+IfExp
+%%%
+public Val eval(Env env) {
+    Val testVal = testExp.eval(env);
+    if (testVal.isTrue())
+        return trueExp.eval(env);
+    else
+        return falseExp.eval(env);
+}
+
+public String toString() {
+    return "if " + testExp + " then " + trueExp + " else " + falseExp;
+}
+%%%
+
+PrimappExp
+%%%
+public Val eval(Env env) {
+    List<Val> valList = rands.evalRands(env);
+    Val [] va = Val.toArray(valList);
+    return prim.apply(va);
+}
+
+public String toString() {
+    return prim + "(" + rands + ")";
+}
+%%%
+
+LetExp
+%%%
+public Val eval(Env env) {
+    Env nenv = letDecls.addBindings(env);
+    return exp.eval(nenv);
+}
+
+public String toString() {
+    return " ...LetExp... ";
+}
+%%%
+
+LetrecExp
+%%%
+public Val eval(Env env) {
+    env = letDecls.addLetrecBindings(env);
+    return exp.eval(env);
+}
+
+public String toString() {
+    return " ...LetrecExp... ";
+}
+%%%
+
+ProcExp
+%%%
+public Val eval(Env env) {
+    return proc.makeClosure(env);
+}
+
+public String toString() {
+    return " ...ProcExp... ";
+}
+%%%
+
+AppExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    List<Val> args = rands.evalRands(env);
+    return v.apply(args, env);
+}
+
+public String toString() {
+    return " ...AppExp... ";
+}
+%%%
+
+SeqExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    for (Exp e : seqExps.expList)
+        v = e.eval(env);
+    return v;
+}
+
+public String toString() {
+    return " ...SeqExp... ";
+}
+%%%
+
+SetExp
+%%%
+public Val eval(Env env) {
+    Env nenv = loc.getEnv(env);
+    Ref ref = nenv.applyEnvRef(symbol.lexeme);
+    Val v = exp.eval(env);
+    return ref.setRef(v);
+}
+
+public String toString() {
+    return " ...SetExp... ";
+}
+%%%
+
+Loc
+%%%
+public abstract Env getEnv(Env env);
+%%%
+
+ObjLoc
+%%%
+public Env getEnv(Env env) {
+    Val v = exp.eval(env);
+    return v.env();
+}
+%%%
+
+SimpleLoc
+%%%
+public Env getEnv(Env env) {
+    return env;
+}
+%%%
+
+ListExp
+%%%
+public Val eval(Env env) {
+    List<Val> valList = rands.evalRands(env);
+    ListVal listVal = ListVal.empty();
+    int n = valList.size();
+    // process the elements in reverse order
+    while (n > 0)
+        listVal = new ListNode(valList.get(--n), listVal);
+    return listVal;
+}
+
+public String toString() {
+    return " ...ListExp... ";
+}
+%%%
+
+ClassExp
+%%%
+public Val eval(Env env) {
+    return classDecl.eval(env);
+}
+
+public String toString() {
+    return " ...ClassExp... ";
+}
+%%%
+
+ClassDecl
+%%%
+public Val eval(Env env) {
+    ClassVal superClass = ext.toClassVal(env);
+    ClassBody body = classBody; // see the <ClassBody> note in grammar.plcc
+    return new StdClass(env, superClass, body.statics, body.fields, body.methods);
+}
+%%%
+
+Ext
+%%%
+public abstract ClassVal toClassVal(Env env);
+%%%
+
+Ext0
+%%%
+public ClassVal toClassVal(Env env) {
+    return EnvClass.envClass();
+}
+%%%
+
+Ext1
+%%%
+public ClassVal toClassVal(Env env) {
+    Val v = exp.eval(env);
+    return v.classVal();
+}
+%%%
+
+Statics:init
+%%%
+Env.checkDuplicates(symbolList, " in static variables");
+Reserved.check(symbolList);
+%%%
+
+Statics
+%%%
+// Add new bindings to the static bindings -- behaves like top-level
+// defines.
+public void addStaticBindings(Env env) {
+    for (int i = 0; i < symbolList.size(); i++) {
+        String s = symbolList.get(i).lexeme;
+        Val val = expList.get(i).eval(env);
+        env.add(new Binding(s, new ValRef(val)));
+    }
+}
+%%%
+
+Fields:init
+%%%
+Env.checkDuplicates(symbolList, " in field variables");
+Reserved.check(symbolList);
+%%%
+
+Fields
+%%%
+public void addFieldBindings(Bindings fieldBindings) {
+    for (Token t : symbolList)
+        fieldBindings.add(new Binding(t.lexeme, new ValRef(Val.nil())));
+}
+%%%
+
+Methods:import
+%%%
+import java.util.ArrayList;
+import java.util.HashMap;
+%%%
+
+Methods:init
+%%%
+Env.checkDuplicates(symbolList, " in method names");
+Reserved.check(symbolList);
+%%%
+
+Methods
+%%%
+// Java's generated grammar-derived classes expose only a
+// Map<String,Object>-based constructor (Python's positional constructor
+// has no Java counterpart), so ProcExp and LetDecls are built here by
+// hand from field maps rather than by positional construction.
+public Env addMethodBindings(Env env) {
+    if (symbolList.size() == 0)
+        return env;
+    List<Exp> expList = new ArrayList<Exp>();
+    for (Proc p : procList) {
+        Map<String, Object> procExpFields = new HashMap<String, Object>();
+        procExpFields.put("proc", p);
+        expList.add(new ProcExp(procExpFields));
+    }
+    Map<String, Object> letDeclsFields = new HashMap<String, Object>();
+    letDeclsFields.put("symbolList", symbolList);
+    letDeclsFields.put("expList", expList);
+    return new LetDecls(letDeclsFields).addLetrecBindings(env);
+}
+%%%
+
+NewExp
+%%%
+public Val eval(Env env) {
+    // get the class from which this object will be created
+    Val val = exp.eval(env);
+    // create a reference to a dummy value (nil)
+    Ref objRef = new ValRef(Val.nil());
+    // let the class create the object
+    ObjectVal objectVal = val.makeObject(objRef);
+    // set the reference to the newly created object
+    return objRef.setRef(objectVal);
+}
+
+public String toString() {
+    return " ...NewExp... ";
+}
+%%%
+
+NilExp
+%%%
+public Val eval(Env env) {
+    return Val.nil();
+}
+
+public String toString() {
+    return "nil";
+}
+%%%
+
+EnvExp
+%%%
+public Val eval(Env env) {
+    Val v = vExp.eval(env);
+    return eExp.eval(v.env());
+}
+
+public String toString() {
+    return " ...EnvExp... ";
+}
+%%%
+
+EenvExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env); // the environment object
+    return mangle.eval(v, env);
+}
+
+public String toString() {
+    return " ...EenvExp... ";
+}
+%%%
+
+Mangle
+%%%
+public Val eval(Val v, Env env) {
+    // The message expression is evaluated in the *receiver's*
+    // environment, while its operands are evaluated in the *caller's*
+    // environment. The asymmetry is deliberate.
+    for (int i = 0; i < expList.size(); i++) {
+        Val p = expList.get(i).eval(v.env());
+        List<Val> args = randsList.get(i).evalRands(env);
+        v = p.apply(args, env);
+    }
+    return v;
+}
+%%%
+
+BangAtExp
+%%%
+public Val eval(Env env) {
+    return env.applyEnv("!@");
+}
+
+public String toString() {
+    return "!@";
+}
+%%%
+
+AtExp
+%%%
+public Val eval(Env env) {
+    return new ObjectVal(env);
+}
+
+public String toString() {
+    return "@";
+}
+%%%
+
+AtAtExp
+%%%
+public Val eval(Env env) {
+    // Buffered, never printed -- see the Program block. The trailing
+    // "\n" reproduces System.out.println in src/OBJ/code:379-382: Env's
+    // own string already ends in a newline (EnvNull), so println emitted
+    // a blank line after the dump. Dropping it would silently reflow the
+    // output of every example that uses @@ (Prog/pobj, Prog/fig56).
+    Program.out.add(env.toString() + "\n");
+    return new ObjectVal(env);
+}
+
+public String toString() {
+    return "@@";
+}
+%%%
+
+DisplayExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    Program.out.add(v.toString());
+    return Val.nil();
+}
+
+public String toString() {
+    return " ...DisplayExp... ";
+}
+%%%
+
+Display1Exp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    Program.out.add(v.toString() + " ");
+    return Val.nil();
+}
+
+public String toString() {
+    return " ...Display1Exp... ";
+}
+%%%
+
+NewlineExp
+%%%
+public Val eval(Env env) {
+    Program.out.add("\n");
+    return Val.nil();
+}
+
+public String toString() {
+    return "newline";
+}
+%%%
+
+PutcExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    Program.out.add(v.putc());
+    return Val.nil();
+}
+
+public String toString() {
+    return " ...PutcExp... ";
+}
+%%%
+
+PutsExp
+%%%
+public Val eval(Env env) {
+    Val v = exp.eval(env);
+    Program.out.add(v.puts());
+    return Val.nil();
+}
+
+public String toString() {
+    return " ...PutsExp... ";
+}
+%%%
+
+ErrorExp:import
+%%%
+import runtime.LanguageError;
+%%%
+
+ErrorExp
+%%%
+public Val eval(Env env) {
+    Val val = exp.eval(env);
+    throw new LanguageError(val.toString());
+}
+
+public String toString() {
+    return " ...ErrorExp... ";
+}
+%%%
+
+PerrorExp:import
+%%%
+import runtime.LanguageError;
+%%%
+
+PerrorExp
+%%%
+public Val eval(Env env) {
+    // the lexeme carries its surrounding double quotes
+    String s = strng.lexeme;
+    throw new LanguageError(s.substring(1, s.length() - 1));
+}
+
+public String toString() {
+    return " ...PerrorExp... ";
+}
+%%%
+
+Proc
+%%%
+public Val makeClosure(Env env) {
+    return new ProcVal(formals, exp, env);
+}
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(symbolList, " in proc formals");
+Reserved.check(symbolList);
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(symbolList, " in let/letrec LHS identifiers");
+Reserved.check(symbolList);
+%%%
+
+LetDecls
+%%%
+public Env addBindings(Env env) {
+    List<Val> valList = new ArrayList<Val>(expList.size());
+    for (Exp e : expList)
+        valList.add(e.eval(env));
+    List<Ref> refList = Ref.valsToRefs(valList);
+    Bindings bindings = new Bindings(symbolList, refList);
+    return env.extendEnvRef(bindings);
+}
+
+public Env addLetrecBindings(Env env) {
+    env = env.extendEnvRef(new Bindings());
+    for (int i = 0; i < symbolList.size(); i++) {
+        String s = symbolList.get(i).lexeme;
+        Val val = expList.get(i).eval(env);
+        env.add(new Binding(s, new ValRef(val)));
+    }
+    return env;
+}
+
+public String toString() {
+    return " ...LetDecls... ";
+}
+%%%
+
+LetDecls:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Rands
+%%%
+public List<Val> evalRands(Env env) {
+    List<Val> valList = new ArrayList<Val>(expList.size());
+    for (Exp e : expList)
+        valList.add(e.eval(env));
+    return valList;
+}
+
+public String toString() {
+    String s = "";
+    String sep = "";
+    for (Exp e : expList) {
+        s += sep + e;
+        sep = ",";
+    }
+    return s;
+}
+%%%
+
+Rands:import
+%%%
+import java.util.ArrayList;
+%%%
+
+Prim
+%%%
+public abstract Val apply(Val [] va);
+%%%
+
+AddPrim
+%%%
+public String toString() {
+    return "+";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 + i1);
+}
+%%%
+
+AddPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+SubPrim
+%%%
+public String toString() {
+    return "-";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 - i1);
+}
+%%%
+
+SubPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+MulPrim
+%%%
+public String toString() {
+    return "*";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 * i1);
+}
+%%%
+
+MulPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+DivPrim
+%%%
+public String toString() {
+    return "/";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    if (i1 == 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(i0 / i1);
+}
+%%%
+
+DivPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+Add1Prim
+%%%
+public String toString() {
+    return "add1";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 + 1);
+}
+%%%
+
+Add1Prim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+Sub1Prim
+%%%
+public String toString() {
+    return "sub1";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 - 1);
+}
+%%%
+
+Sub1Prim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+ZeropPrim
+%%%
+public String toString() {
+    return "zero?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    int i0 = va[0].intVal().val;
+    return new IntVal(i0 == 0 ? 1 : 0);
+}
+%%%
+
+ZeropPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+NilpPrim
+%%%
+public String toString() {
+    return "nil?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    return new IntVal(va[0].isNil() ? 1 : 0);
+}
+%%%
+
+NilpPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+LTPrim
+%%%
+public String toString() {
+    return "<?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 < i1 ? 1 : 0);
+}
+%%%
+
+LTPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+LEPrim
+%%%
+public String toString() {
+    return "<=?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 <= i1 ? 1 : 0);
+}
+%%%
+
+LEPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+GTPrim
+%%%
+public String toString() {
+    return ">?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 > i1 ? 1 : 0);
+}
+%%%
+
+GTPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+GEPrim
+%%%
+public String toString() {
+    return ">=?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 >= i1 ? 1 : 0);
+}
+%%%
+
+GEPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+NEPrim
+%%%
+public String toString() {
+    return "<>?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 != i1 ? 1 : 0);
+}
+%%%
+
+NEPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+EQPrim
+%%%
+public String toString() {
+    return "=?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("two arguments expected");
+    int i0 = va[0].intVal().val;
+    int i1 = va[1].intVal().val;
+    return new IntVal(i0 == i1 ? 1 : 0);
+}
+%%%
+
+EQPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+ObjectpPrim
+%%%
+public String toString() {
+    return "object?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    return new IntVal(va[0].isObject() ? 1 : 0);
+}
+%%%
+
+ObjectpPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+ClasspPrim
+%%%
+public String toString() {
+    return "class?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("one argument expected");
+    return new IntVal(va[0].isClass() ? 1 : 0);
+}
+%%%
+
+ClasspPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+ListpPrim
+%%%
+public String toString() {
+    return "list?";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("list?: one argument expected");
+    return new IntVal(va[0].isList() ? 1 : 0);
+}
+%%%
+
+ListpPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+LenPrim
+%%%
+public String toString() {
+    return "len";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("len: one argument expected");
+    ListVal lst = va[0].listVal();
+    return new IntVal(lst.len);
+}
+%%%
+
+LenPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+FirstPrim
+%%%
+public String toString() {
+    return "first";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("first: one argument expected");
+    return va[0].listNode().val;
+}
+%%%
+
+FirstPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+RestPrim
+%%%
+public String toString() {
+    return "rest";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("rest: one argument expected");
+    return va[0].listNode().rest;
+}
+%%%
+
+RestPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+AddListPrim
+%%%
+public String toString() {
+    return "add";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("add: two arguments expected");
+    return va[1].listVal().add(va[0]);
+}
+%%%
+
+AddListPrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+ShuttlePrim
+%%%
+public String toString() {
+    return "shuttle";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("shuttle: two arguments expected");
+    ListVal lst0 = va[0].listVal();
+    ListVal lst1 = va[1].listVal();
+    return lst0.shuttle(lst1);
+}
+%%%
+
+ShuttlePrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+ReversePrim
+%%%
+public String toString() {
+    return "reverse";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 1)
+        throw new LanguageError("reverse: one argument expected");
+    return va[0].listVal().reverse();
+}
+%%%
+
+ReversePrim:import
+%%%
+import runtime.LanguageError;
+%%%
+
+AppendPrim
+%%%
+public String toString() {
+    return "append";
+}
+
+public Val apply(Val [] va) {
+    if (va.length != 2)
+        throw new LanguageError("append: two arguments expected");
+    ListVal lst0 = va[0].listVal();
+    ListVal lst1 = va[1].listVal();
+    return lst0.append(lst1);
+}
+%%%
+
+AppendPrim:import
+%%%
+import runtime.LanguageError;
+%%%

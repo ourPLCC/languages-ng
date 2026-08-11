@@ -10,3 +10,11 @@ load '../../../../bin/bats-tmpdir.bash'
   expected_output=$(< "../tests/strings-chars/OBJ.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "OBJ strings-chars (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/strings-chars/OBJ.input)"
+  expected_output=$(< "../tests/strings-chars/OBJ.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
