@@ -154,7 +154,7 @@ Note the number it prints. Everywhere below, `NN` means that number.
 
 Write its `## Description` section. Cover: OBJ is `SET + lists, characters, strings, classes, and objects`, the last language in the keep list and the last old-PLCC user in the repository; the port adds fourteen free-standing classes per target, reuses `envRef` unchanged for the sixth consecutive time, moves the reserved-ID check into a `Reserved` class, and buffers all output through `Program.out` because `plcc-rep`'s stdout is a protocol channel. Link the design doc.
 
-Leave `**Target:**` as this repo.
+Leave the `target` frontmatter at its default, `this repo`.
 
 - [ ] **Step 3: Create the plcc-ng deadlock issue**
 
@@ -162,7 +162,9 @@ Leave `**Target:**` as this repo.
 bin/issues/new.bash plcc-rep-deadlocks-on-partial-stdout-line chore
 ```
 
-Note the number as `PP`. Set `**Target:** ourPLCC/plcc-ng`.
+Note the number as `PP`. Set the target to `ourPLCC/plcc-ng`.
+
+**Amended (2026-08-11, during execution):** this plan originally said to set a prose field `**Target:** ourPLCC/plcc-ng`. That is wrong — `target` is a **YAML frontmatter key** in the issue template (`target: ourPLCC/plcc-ng`, defaulting to `target: this repo`), introduced by the [issue-status-frontmatter design](../specs/2026-07-31-issue-status-frontmatter-design.md). The prose spelling was inherited from the overarching migration design, which predates that change. The same correction applies to Step 4 and to the Bookkeeping section.
 
 Body: a semantic action that writes a partial line (no trailing newline) to stdout deadlocks `plcc-rep` with no diagnostic. Mechanism: `plcc/cmd/rep.py::_read_response` treats the interpreter's stdout as line-oriented JSON; a non-JSON line is printed and skipped, but a partial line merges with the following result record, so the merged line is unparseable *and* the result is destroyed, after which `readline()` blocks forever. Measured in Python and JavaScript, via stdin and via a SOURCE file: exit 124 under `timeout`, no output, no error. A newline-terminated write survives, but only via the unparseable-line fallback, which is an accident rather than a supported channel. Note the impact: a student who puts a `print` in a semantic action gets a hang with no message.
 
@@ -172,7 +174,7 @@ Body: a semantic action that writes a partial line (no trailing newline) to stdo
 bin/issues/new.bash plcc-rep-lacks-output-and-clean-exit-records chore
 ```
 
-Note the number as `QQ`. Set `**Target:** ourPLCC/plcc-ng`.
+Note the number as `QQ`. Set the target frontmatter to `ourPLCC/plcc-ng` (see the amendment in Step 3).
 
 Body: semantic actions have no supported way to emit user-visible output, nor to end the session cleanly. Both are missing record kinds. `_render_record` already dispatches on `record['kind']` (`result` / `error` / `specification_error`, else a hard error), so the fix shape is a new kind handled there plus a hook in each target runtime for `_run` to emit it. Give the two concrete cases: OBJ buffers all output into `Program.out` as a workaround for the first, and OBJ's `exit` currently ends `plcc-rep` with `interpreter exited unexpectedly` on stderr and status 1 for want of the second. Cross-link `PP`.
 
