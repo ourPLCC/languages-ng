@@ -58,5 +58,14 @@ Found while porting V6. See
 [dev-docs/specs/2026-08-03-plcc-ng-v6-design.md](../specs/2026-08-03-plcc-ng-v6-design.md).
 
 Per issue-conventions.md, upstream-targeted issues stay in this repo and
-are reported upstream manually, with explicit go-ahead. Nothing has been
-filed externally.
+are reported upstream manually, with explicit go-ahead.
+
+**Filed upstream 2026-08-11** as `ourPLCC/plcc-ng` issue #185
+(`dev-docs/issues/185-rep-parses-each-source-independently.md`), typed
+`docs`. Upstream's reading: per-source parsing is the design its issue #008
+settled on and `SourceRunner` applies it to `plcc-scan`, `plcc-parse`, and
+`plcc-rep` alike, so the fix there is a migration-guide entry rather than a
+behavior change — with the question of whether `plcc-rep` specifically
+should join its sources left open on top of that. This issue stays open
+until that lands and V6's two-file `Prog/p1` + `Prog/p2` example either
+works or is documented as needing `cat`.
