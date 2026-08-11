@@ -18,3 +18,11 @@ load '../../../../bin/bats-tmpdir.bash'
   expected_output=$(< "../tests/lists/OBJ.expected")
   [[ "$RESULT" == "$expected_output" ]]
 }
+
+@test "OBJ lists (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/lists/OBJ.input)"
+  expected_output=$(< "../tests/lists/OBJ.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
