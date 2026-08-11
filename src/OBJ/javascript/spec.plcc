@@ -1,0 +1,1777 @@
+%include ../grammar.plcc
+%
+javascript
+
+%include ../../Env/envRef/javascript/env.plcc
+
+Val
+%%%
+const { LanguageError } = require('./runtime/base');
+
+class Val {
+
+    // A static factory rather than a class field: evaluating it when the
+    // class body loads would make the Val/NilVal import cycle load-order
+    // dependent. Nothing compares Vals by identity, so a fresh NilVal each
+    // time is equivalent.
+    static nil() {
+        const { NilVal } = require('./NilVal');
+        return new NilVal();
+    }
+
+    // Some Vals can be applied to a list of arguments (e.g. a ProcVal).
+    // Like the evaluation of an expression, the application of a Val takes
+    // place in the context of an environment, which arrives as the second
+    // parameter. An applied Val may use or ignore that environment as its
+    // own semantics require.
+    apply(args, env) {
+        throw new LanguageError(`${this}: not a procedure`);
+    }
+
+    env() {
+        throw new LanguageError(`<${this}>: not an environment`);
+    }
+
+    isTrue() {
+        // every Val is true except for an IntVal of zero,
+        // an empty list, or a NilVal.
+        return true;
+    }
+
+    intVal() {
+        throw new LanguageError(`${this}: not an Int`);
+    }
+
+    classVal() {
+        throw new LanguageError(`${this}: not a Class`);
+    }
+
+    objectVal() {
+        throw new LanguageError(`${this}: not an Object`);
+    }
+
+    isObject() {
+        return false;
+    }
+
+    isClass() {
+        return false;
+    }
+
+    isNil() {
+        return false;
+    }
+
+    makeObject(objRef) {
+        throw new LanguageError(`new ${this}: not a class`);
+    }
+
+    putc() {
+        throw new LanguageError(`putc ${this}: not a character`);
+    }
+
+    puts() {
+        throw new LanguageError(`puts ${this}: not a string`);
+    }
+
+    listNode() {
+        throw new LanguageError(`${this}: not a nonempty List`);
+    }
+
+    listVal() {
+        throw new LanguageError(`${this}: not a List`);
+    }
+
+    isList() {
+        return false; // only ListVals are true
+    }
+}
+
+module.exports = { Val };
+%%%
+
+IntVal
+%%%
+const { Val } = require('./Val');
+
+class IntVal extends Val {
+
+    constructor(val) {
+        super();
+        this.val = typeof val === "string" ? parseInt(val, 10) : val;
+    }
+
+    intVal() {
+        return this;
+    }
+
+    isTrue() {
+        return this.val !== 0;
+    }
+
+    putc() {
+        return String.fromCharCode(this.val);
+    }
+
+    toString() {
+        return String(this.val);
+    }
+}
+
+module.exports = { IntVal };
+%%%
+
+NilVal
+%%%
+const { Val } = require('./Val');
+
+class NilVal extends Val {
+
+    isTrue() {
+        return false;
+    }
+
+    isNil() {
+        return true;
+    }
+
+    toString() {
+        return "nil";
+    }
+}
+
+module.exports = { NilVal };
+%%%
+
+Ref
+%%%
+class Ref {
+
+    static valsToRefs(valList) {
+        const { ValRef } = require('./ValRef');
+        return valList.map(v => new ValRef(v));
+    }
+
+    deRef() {
+        throw new Error("not implemented");
+    }
+
+    setRef(v) {
+        throw new Error("not implemented");
+    }
+}
+
+module.exports = { Ref };
+%%%
+
+ValRef
+%%%
+const { Ref } = require('./Ref');
+
+class ValRef extends Ref {
+
+    constructor(val) {
+        super();
+        this.val = val;
+    }
+
+    deRef() {
+        return this.val;
+    }
+
+    setRef(v) {
+        this.val = v;
+        return v;
+    }
+
+    toString() {
+        return `${this.val}`;
+    }
+}
+
+module.exports = { ValRef };
+%%%
+
+ProcVal
+%%%
+const { Val } = require('./Val');
+const { Bindings } = require('./Bindings');
+const { Ref } = require('./Ref');
+const { LanguageError } = require('./runtime/base');
+
+class ProcVal extends Val {
+
+    constructor(formals, body, env) {
+        super();
+        this.formals = formals;
+        this.body = body;
+        // Named procEnv, not env: Val declares an env() method (OBJ's
+        // environment reflection, e.g. <f>x reads a closure's environment),
+        // and an instance field named env would shadow it -- the same
+        // collision Python has (see ProcVal in src/OBJ/python/spec.plcc).
+        // Java keeps the field named env because it distinguishes fields
+        // from methods and has no such collision.
+        this.procEnv = env;
+    }
+
+    apply(args, env) {
+        if (this.formals.symbolList.length !== args.length)
+            throw new LanguageError("formals/args number mismatch");
+        const refList = Ref.valsToRefs(args);
+        const bindings = new Bindings(this.formals.symbolList, refList);
+        const nenv = this.procEnv.extendEnvRef(bindings);
+        return this.body.eval(nenv);
+    }
+
+    env() {
+        return this.procEnv;
+    }
+
+    toString() {
+        const formals = this.formals.symbolList.map(t => t.lexeme).join(",");
+        return `proc(${formals})`;
+    }
+}
+
+module.exports = { ProcVal };
+%%%
+
+ListVal
+%%%
+const { Val } = require('./Val');
+
+class ListVal extends Val {
+
+    // A static factory rather than a class field, for the same reason as
+    // Val.nil(): the ListVal/ListNull import cycle would otherwise be
+    // load-order dependent.
+    static empty() {
+        const { ListNull } = require('./ListNull');
+        return new ListNull();
+    }
+
+    add(val) {
+        const { ListNode } = require('./ListNode');
+        return new ListNode(val, this);
+    }
+
+    isList() {
+        return true;
+    }
+
+    listVal() {
+        return this;
+    }
+
+    // shuttle this list onto dst
+    shuttle(dst) {
+        const { ListNode } = require('./ListNode');
+        let src = this;
+        while (src.isTrue()) {
+            const node = src.listNode();
+            dst = new ListNode(node.val, dst);
+            src = node.rest;
+        }
+        return dst;
+    }
+
+    // reverse this list
+    reverse() {
+        return this.shuttle(ListVal.empty());
+    }
+
+    // append this list onto dst
+    append(dst) {
+        let src = this.shuttle(ListVal.empty());
+        while (src.isTrue()) {
+            const node = src.listNode();
+            src = node.rest;
+            node.rest = dst; // destructive ListNode operation
+            dst = node;
+        }
+        return dst;
+    }
+
+    buildString(sb) {
+        throw new Error("not implemented");
+    }
+
+    puts() {
+        const sb = [];
+        this.buildString(sb);
+        return sb.join("");
+    }
+
+    // The separator-taking stringifier is named toStr rather than being an
+    // overload of toString, which JavaScript cannot overload. Java keeps
+    // toString(sep) as a genuine overload; Python names it toStr(sep) too.
+    toStr(sep) {
+        throw new Error("not implemented");
+    }
+}
+
+module.exports = { ListVal };
+%%%
+
+ListNode
+%%%
+const { ListVal } = require('./ListVal');
+const { LanguageError } = require('./runtime/base');
+
+class ListNode extends ListVal {
+
+    constructor(val, rest) {
+        super();
+        this.val = val;
+        this.rest = rest; // the rest of the list
+        this.len = rest.len + 1;
+    }
+
+    listNode() {
+        return this;
+    }
+
+    buildString(sb) {
+        let c;
+        try {
+            c = String.fromCharCode(this.val.intVal().val);
+        } catch (e) {
+            // JavaScript has no typed catch, so re-throw anything that is
+            // not the LanguageError this is meant to translate.
+            if (!(e instanceof LanguageError)) throw e;
+            throw new LanguageError(`puts ...${this}... : not a string`);
+        }
+        sb.push(c);
+        this.rest.buildString(sb);
+    }
+
+    toString() {
+        return "[" + this.toStr("") + "]";
+    }
+
+    toStr(sep) {
+        return sep + this.val + this.rest.toStr(",");
+    }
+}
+
+module.exports = { ListNode };
+%%%
+
+ListNull
+%%%
+const { ListVal } = require('./ListVal');
+
+class ListNull extends ListVal {
+
+    constructor() {
+        super();
+        this.len = 0;
+    }
+
+    isTrue() {
+        return false;
+    }
+
+    buildString(sb) {
+    }
+
+    toString() {
+        return "[]";
+    }
+
+    toStr(sep) {
+        return "";
+    }
+}
+
+module.exports = { ListNull };
+%%%
+
+ClassVal
+%%%
+const { Val } = require('./Val');
+
+class ClassVal extends Val {
+
+    makeObject(objRef) {
+        throw new Error("not implemented");
+    }
+
+    classVal() {
+        return this;
+    }
+
+    isClass() {
+        return true;
+    }
+}
+
+module.exports = { ClassVal };
+%%%
+
+EnvClass
+%%%
+const { Binding } = require('./Binding');
+const { Bindings } = require('./Bindings');
+const { ClassVal } = require('./ClassVal');
+const { ObjectVal } = require('./ObjectVal');
+
+// A "parentless" class whose static environment is the environment passed
+// to its constructor.
+class EnvClass extends ClassVal {
+
+    // A static factory rather than a static field: Program is a generated
+    // class, so evaluating Program.env when this class body loads would be
+    // load-order dependent. It still returns bindings rooted at the one
+    // Program.env object, so the singleton's real purpose survives.
+    static envClass() {
+        const { Program } = require('./Program');
+        return new EnvClass(Program.env);
+    }
+
+    constructor(env) {
+        super();
+        this.staticEnv = env; // the environment inherited by all subclasses
+    }
+
+    env() {
+        return this.staticEnv;
+    }
+
+    // Observe that the environment of objects created with 'new ...'
+    // always extends the static environment of this class. The 'objRef'
+    // reference will eventually be set to the object being created.
+    makeObject(objRef) {
+        // start with the static environment of this class
+        let env = this.staticEnv;
+        // add the field binding 'self' to refer to the base object (deep)
+        const fieldBindings = new Bindings();
+        env = env.extendEnvRef(fieldBindings); // this object's environment
+        fieldBindings.add(new Binding("self", objRef)); // deep
+        return new ObjectVal(env);
+    }
+
+    toString() {
+        return "class";
+    }
+}
+
+module.exports = { EnvClass };
+%%%
+
+StdClass
+%%%
+const { Binding } = require('./Binding');
+const { Bindings } = require('./Bindings');
+const { ClassVal } = require('./ClassVal');
+const { ObjectVal } = require('./ObjectVal');
+const { ValRef } = require('./ValRef');
+
+class StdClass extends ClassVal {
+
+    constructor(localEnv, superClass, statics, fields, methods) {
+        // localEnv    the environment where this class is created
+        // superClass  an EnvClass (top-level) or a StdClass, from ClassExp
+        // statics     static variable definitions
+        // fields      field declarations
+        // methods     method definitions
+        super();
+        this.superClass = superClass;
+        this.fields = fields;
+        this.methods = methods;
+        // this class's static environment extends the superclass environment
+        let staticEnv = superClass.env();
+        this.staticBindings = new Bindings(); // all statics go here
+        staticEnv = staticEnv.extendEnvRef(this.staticBindings);
+        this.staticEnv = staticEnv;
+        // initially create bindings for these static symbols ... (order
+        // matters: !@/myclass/superclass must be bound before
+        // statics.addStaticBindings runs, since static RHS expressions may
+        // reference them)
+        const ref = new ValRef(new ObjectVal(localEnv));
+        staticEnv.add(new Binding("!@", ref)); // not a var
+        staticEnv.add(new Binding("myclass", new ValRef(this)));
+        staticEnv.add(new Binding("superclass", new ValRef(superClass)));
+        // The static RHS expressions are evaluated in the modified
+        // staticEnv that includes the bindings for !@, myclass, superclass.
+        // New static bindings are added as they are created, as in
+        // top-level defines.
+        statics.addStaticBindings(staticEnv);
+    }
+
+    env() {
+        return this.staticEnv;
+    }
+
+    makeObject(objRef) {
+        // create the parent object first (recursively)
+        const parent = this.superClass.makeObject(objRef);
+
+        // this object's environment extends the parent object's environment
+        let env = parent.objectEnv;
+
+        // add this class's static bindings (including myclass, etc)
+        env = env.extendEnvRef(this.staticBindings);
+
+        // the fields come next
+        const fieldBindings = new Bindings();
+        env = env.extendEnvRef(fieldBindings);
+        // bind all of this object's instance fields to nil
+        this.fields.addFieldBindings(fieldBindings);
+
+        // bind all this object's methods as in letrec
+        env = this.methods.addMethodBindings(env);
+
+        // create the object
+        const objectVal = new ObjectVal(env);
+
+        // bind 'super' field to the parent object (order matters: fields
+        // must be bound before super/self/this)
+        fieldBindings.add(new Binding("super", new ValRef(parent)));
+        // bind 'self' field to the base object being created
+        // (to speed up lookups)
+        fieldBindings.add(new Binding("self", objRef)); // deep
+        // bind 'this' field to this object environment
+        fieldBindings.add(new Binding("this", new ValRef(objectVal))); // shallow
+        return objectVal;
+    }
+
+    toString() {
+        return "class";
+    }
+}
+
+module.exports = { StdClass };
+%%%
+
+ObjectVal
+%%%
+const { Val } = require('./Val');
+
+// An object that captures the environment in which this object is created.
+class ObjectVal extends Val {
+
+    constructor(env) {
+        super();
+        this.objectEnv = env; // this object's environment
+    }
+
+    objectVal() {
+        return this;
+    }
+
+    isObject() {
+        return true;
+    }
+
+    env() {
+        return this.objectEnv;
+    }
+
+    toString() {
+        return "object";
+    }
+}
+
+module.exports = { ObjectVal };
+%%%
+
+Reserved
+%%%
+const { LanguageError } = require('./runtime/base');
+
+// Identifiers the object system binds implicitly.
+//
+// Binding one of these in user code does not shadow harmlessly: Bindings
+// are appended and looked up first-match, and StdClass.makeObject binds
+// fields *before* super/self/this, so a user `field self` silently wins
+// every lookup and displaces the real self inside every method. The same
+// goes for a method named self and for a static named myclass. Each is a
+// silent wrong answer rather than an error, which is why this check
+// exists and why it is called explicitly at each site rather than hidden
+// inside Env.checkDuplicates.
+class Reserved {
+
+    static ids = ["self", "myclass", "superclass", "this", "super"];
+
+    static check(symbolList) {
+        for (const sym of symbolList)
+            if (Reserved.ids.includes(sym.lexeme))
+                throw new LanguageError("reserved ID: " + sym.lexeme);
+    }
+}
+
+module.exports = { Reserved };
+%%%
+
+Program:import
+%%%
+const { Env } = require('./Env');
+%%%
+
+Program
+%%%
+static env = Env.initEnv();
+// Output is buffered rather than printed. plcc-rep uses this program's
+// stdout as a private line-oriented JSON channel, so a partial line
+// written here merges with the result record and deadlocks the tool with
+// no diagnostic. See issue 36. Every output expression appends to `out`;
+// only _run() emits it, as part of its return value.
+static out = [];
+%%%
+
+Eval
+%%%
+_run() {
+    Program.out = [];
+    const v = this.exp.eval(Program.env);
+    return Program.out.join("") + String(v);
+}
+%%%
+
+Define:import
+%%%
+const { Binding } = require('./Binding');
+const { ValRef } = require('./ValRef');
+%%%
+
+Define
+%%%
+_run() {
+    Program.out = [];
+    const env = Program.env;
+    const s = this.symbol.lexeme;
+    const val = this.exp.eval(env);
+    const ref = new ValRef(val);
+    const b = env.lookup(s);
+    if (b !== null)
+        b.ref = ref;
+    else
+        env.add(new Binding(s, ref));
+    return Program.out.join("") + s;
+}
+%%%
+
+ExitExp
+%%%
+eval(env) {
+    // Under old PLCC, rep *was* this process, so exit(0) was a clean quit.
+    // Under plcc-ng the interpreter is a subprocess, so this closes the
+    // protocol pipe: plcc-rep prints "interpreter exited unexpectedly" on
+    // stderr and exits 1. Language semantics are unchanged. A clean-exit
+    // record kind is requested upstream in issue 37.
+    process.exit(0);
+}
+%%%
+
+LitExp:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+LitExp
+%%%
+eval(env) {
+    return new IntVal(this.lit.lexeme);
+}
+
+toString() {
+    return this.lit.lexeme;
+}
+%%%
+
+ChrExp:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+ChrExp
+%%%
+eval(env) {
+    // the lexeme is an apostrophe followed by the character itself
+    return new IntVal(this.chr.lexeme.charCodeAt(1));
+}
+
+toString() {
+    return this.chr.lexeme;
+}
+%%%
+
+StrngExp:import
+%%%
+const { IntVal } = require('./IntVal');
+const { ListVal } = require('./ListVal');
+%%%
+
+StrngExp
+%%%
+eval(env) {
+    const ESCAPES = { a: 7, b: 8, t: 9, n: 10, f: 12, r: 13 };
+    const s = this.strng.lexeme;
+    // we know that s[0] and s[s.length - 1] are both '"'
+    const end = s.length - 1;
+    const codes = [];
+    let pos = 1;
+    while (pos < end) {
+        let c = s[pos];
+        pos += 1;
+        if (c === "\\") {
+            // escape!
+            c = s[pos];
+            pos += 1;
+            codes.push(c in ESCAPES ? ESCAPES[c] : c.charCodeAt(0));
+        } else {
+            codes.push(c.charCodeAt(0));
+        }
+    }
+    // build the ListVal back to front so it comes out in source order
+    let lst = ListVal.empty();
+    for (let i = codes.length - 1; i >= 0; i--)
+        lst = lst.add(new IntVal(codes[i]));
+    return lst;
+}
+
+toString() {
+    return this.strng.lexeme;
+}
+%%%
+
+VarExp
+%%%
+eval(env) {
+    return env.applyEnv(this.symbol.lexeme);
+}
+
+toString() {
+    return this.symbol.lexeme;
+}
+%%%
+
+IfExp
+%%%
+eval(env) {
+    if (this.testExp.eval(env).isTrue())
+        return this.trueExp.eval(env);
+    else
+        return this.falseExp.eval(env);
+}
+
+toString() {
+    return `if ${this.testExp} then ${this.trueExp} else ${this.falseExp}`;
+}
+%%%
+
+PrimappExp
+%%%
+eval(env) {
+    const args = this.rands.evalRands(env);
+    return this.prim.apply(args);
+}
+
+toString() {
+    return `${this.prim}(${this.rands})`;
+}
+%%%
+
+LetExp
+%%%
+eval(env) {
+    const nenv = this.letDecls.addBindings(env);
+    return this.exp.eval(nenv);
+}
+
+toString() {
+    return " ...LetExp... ";
+}
+%%%
+
+LetrecExp
+%%%
+eval(env) {
+    env = this.letDecls.addLetrecBindings(env);
+    return this.exp.eval(env);
+}
+
+toString() {
+    return " ...LetrecExp... ";
+}
+%%%
+
+ProcExp
+%%%
+eval(env) {
+    return this.proc.makeClosure(env);
+}
+
+toString() {
+    return " ...ProcExp... ";
+}
+%%%
+
+AppExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    const args = this.rands.evalRands(env);
+    return v.apply(args, env);
+}
+
+toString() {
+    return " ...AppExp... ";
+}
+%%%
+
+SeqExp
+%%%
+eval(env) {
+    let v = this.exp.eval(env);
+    for (const e of this.seqExps.expList)
+        v = e.eval(env);
+    return v;
+}
+
+toString() {
+    return " ...SeqExp... ";
+}
+%%%
+
+SetExp
+%%%
+eval(env) {
+    const nenv = this.loc.getEnv(env);
+    const ref = nenv.applyEnvRef(this.symbol.lexeme);
+    const v = this.exp.eval(env);
+    return ref.setRef(v);
+}
+
+toString() {
+    return " ...SetExp... ";
+}
+%%%
+
+Loc
+%%%
+getEnv(env) {
+    throw new Error("not implemented");
+}
+%%%
+
+ObjLoc
+%%%
+getEnv(env) {
+    const v = this.exp.eval(env);
+    return v.env();
+}
+%%%
+
+SimpleLoc
+%%%
+getEnv(env) {
+    return env;
+}
+%%%
+
+ListExp:import
+%%%
+const { ListNode } = require('./ListNode');
+const { ListVal } = require('./ListVal');
+%%%
+
+ListExp
+%%%
+eval(env) {
+    const valList = this.rands.evalRands(env);
+    let listVal = ListVal.empty();
+    // process the elements in reverse order
+    for (let i = valList.length - 1; i >= 0; i--)
+        listVal = new ListNode(valList[i], listVal);
+    return listVal;
+}
+
+toString() {
+    return " ...ListExp... ";
+}
+%%%
+
+ClassExp
+%%%
+eval(env) {
+    return this.classDecl.eval(env);
+}
+
+toString() {
+    return " ...ClassExp... ";
+}
+%%%
+
+ClassDecl:import
+%%%
+const { StdClass } = require('./StdClass');
+%%%
+
+ClassDecl
+%%%
+eval(env) {
+    const superClass = this.ext.toClassVal(env);
+    const body = this.classBody; // see the <ClassBody> note in grammar.plcc
+    return new StdClass(env, superClass, body.statics, body.fields, body.methods);
+}
+%%%
+
+Ext
+%%%
+toClassVal(env) {
+    throw new Error("not implemented");
+}
+%%%
+
+Ext0:import
+%%%
+const { EnvClass } = require('./EnvClass');
+%%%
+
+Ext0
+%%%
+toClassVal(env) {
+    return EnvClass.envClass();
+}
+%%%
+
+Ext1
+%%%
+toClassVal(env) {
+    const v = this.exp.eval(env);
+    return v.classVal();
+}
+%%%
+
+Statics:import
+%%%
+const { Binding } = require('./Binding');
+const { Env } = require('./Env');
+const { Reserved } = require('./Reserved');
+const { ValRef } = require('./ValRef');
+%%%
+
+Statics:init
+%%%
+Env.checkDuplicates(this.symbolList, " in static variables");
+Reserved.check(this.symbolList);
+%%%
+
+Statics
+%%%
+// Add new bindings to the static bindings -- behaves like top-level
+// defines.
+addStaticBindings(env) {
+    for (let i = 0; i < this.symbolList.length; i++) {
+        const val = this.expList[i].eval(env);
+        env.add(new Binding(this.symbolList[i].lexeme, new ValRef(val)));
+    }
+}
+%%%
+
+Fields:import
+%%%
+const { Binding } = require('./Binding');
+const { Env } = require('./Env');
+const { Reserved } = require('./Reserved');
+const { Val } = require('./Val');
+const { ValRef } = require('./ValRef');
+%%%
+
+Fields:init
+%%%
+Env.checkDuplicates(this.symbolList, " in field variables");
+Reserved.check(this.symbolList);
+%%%
+
+Fields
+%%%
+addFieldBindings(fieldBindings) {
+    for (const t of this.symbolList)
+        fieldBindings.add(new Binding(t.lexeme, new ValRef(Val.nil())));
+}
+%%%
+
+Methods:import
+%%%
+const { Env } = require('./Env');
+const { LetDecls } = require('./LetDecls');
+const { ProcExp } = require('./ProcExp');
+const { Reserved } = require('./Reserved');
+%%%
+
+Methods:init
+%%%
+Env.checkDuplicates(this.symbolList, " in method names");
+Reserved.check(this.symbolList);
+%%%
+
+Methods
+%%%
+addMethodBindings(env) {
+    if (this.symbolList.length === 0)
+        return env;
+    const expList = this.procList.map(p => new ProcExp(p));
+    return new LetDecls(this.symbolList, expList).addLetrecBindings(env);
+}
+%%%
+
+NewExp:import
+%%%
+const { Val } = require('./Val');
+const { ValRef } = require('./ValRef');
+%%%
+
+NewExp
+%%%
+eval(env) {
+    // get the class from which this object will be created
+    const val = this.exp.eval(env);
+    // create a reference to a dummy value (nil)
+    const objRef = new ValRef(Val.nil());
+    // let the class create the object
+    const objectVal = val.makeObject(objRef);
+    // set the reference to the newly created object
+    return objRef.setRef(objectVal);
+}
+
+toString() {
+    return " ...NewExp... ";
+}
+%%%
+
+NilExp:import
+%%%
+const { Val } = require('./Val');
+%%%
+
+NilExp
+%%%
+eval(env) {
+    return Val.nil();
+}
+
+toString() {
+    return "nil";
+}
+%%%
+
+EnvExp
+%%%
+eval(env) {
+    const v = this.vExp.eval(env);
+    return this.eExp.eval(v.env());
+}
+
+toString() {
+    return " ...EnvExp... ";
+}
+%%%
+
+EenvExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env); // the environment object
+    return this.mangle.eval(v, env);
+}
+
+toString() {
+    return " ...EenvExp... ";
+}
+%%%
+
+Mangle
+%%%
+eval(v, env) {
+    // The message expression is evaluated in the *receiver's* environment,
+    // while its operands are evaluated in the *caller's* environment. The
+    // asymmetry is deliberate.
+    for (let i = 0; i < this.expList.length; i++) {
+        const p = this.expList[i].eval(v.env());
+        const args = this.randsList[i].evalRands(env);
+        v = p.apply(args, env);
+    }
+    return v;
+}
+%%%
+
+BangAtExp
+%%%
+eval(env) {
+    return env.applyEnv("!@");
+}
+
+toString() {
+    return "!@";
+}
+%%%
+
+AtExp:import
+%%%
+const { ObjectVal } = require('./ObjectVal');
+%%%
+
+AtExp
+%%%
+eval(env) {
+    return new ObjectVal(env);
+}
+
+toString() {
+    return "@";
+}
+%%%
+
+AtAtExp:import
+%%%
+const { ObjectVal } = require('./ObjectVal');
+const { Program } = require('./Program');
+%%%
+
+AtAtExp
+%%%
+eval(env) {
+    // Buffered, never printed -- see the Program block. The trailing "\n"
+    // reproduces System.out.println in src/OBJ/code:379-382: Env's own
+    // string already ends in a newline (EnvNull), so println emitted a
+    // blank line after the dump. Dropping it would silently reflow the
+    // output of every example that uses @@ (Prog/pobj, Prog/fig56). Do not
+    // use console.log here: plcc-rep reserves stdout for its private JSON
+    // protocol channel (issue 36), and a partial line would deadlock it
+    // with no diagnostic -- output must stay buffered in Program.out like
+    // every other output expression.
+    Program.out.push(String(env) + "\n");
+    return new ObjectVal(env);
+}
+
+toString() {
+    return "@@";
+}
+%%%
+
+DisplayExp:import
+%%%
+const { Program } = require('./Program');
+const { Val } = require('./Val');
+%%%
+
+DisplayExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    Program.out.push(String(v));
+    return Val.nil();
+}
+
+toString() {
+    return " ...DisplayExp... ";
+}
+%%%
+
+Display1Exp:import
+%%%
+const { Program } = require('./Program');
+const { Val } = require('./Val');
+%%%
+
+Display1Exp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    Program.out.push(String(v) + " ");
+    return Val.nil();
+}
+
+toString() {
+    return " ...Display1Exp... ";
+}
+%%%
+
+NewlineExp:import
+%%%
+const { Program } = require('./Program');
+const { Val } = require('./Val');
+%%%
+
+NewlineExp
+%%%
+eval(env) {
+    Program.out.push("\n");
+    return Val.nil();
+}
+
+toString() {
+    return "newline";
+}
+%%%
+
+PutcExp:import
+%%%
+const { Program } = require('./Program');
+const { Val } = require('./Val');
+%%%
+
+PutcExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    Program.out.push(v.putc());
+    return Val.nil();
+}
+
+toString() {
+    return " ...PutcExp... ";
+}
+%%%
+
+PutsExp:import
+%%%
+const { Program } = require('./Program');
+const { Val } = require('./Val');
+%%%
+
+PutsExp
+%%%
+eval(env) {
+    const v = this.exp.eval(env);
+    Program.out.push(v.puts());
+    return Val.nil();
+}
+
+toString() {
+    return " ...PutsExp... ";
+}
+%%%
+
+ErrorExp
+%%%
+eval(env) {
+    const val = this.exp.eval(env);
+    throw new LanguageError(String(val));
+}
+
+toString() {
+    return " ...ErrorExp... ";
+}
+%%%
+
+PerrorExp
+%%%
+eval(env) {
+    // the lexeme carries its surrounding double quotes
+    const s = this.strng.lexeme;
+    throw new LanguageError(s.slice(1, -1));
+}
+
+toString() {
+    return " ...PerrorExp... ";
+}
+%%%
+
+Proc:import
+%%%
+const { ProcVal } = require('./ProcVal');
+%%%
+
+Proc
+%%%
+makeClosure(env) {
+    return new ProcVal(this.formals, this.exp, env);
+}
+%%%
+
+Formals:import
+%%%
+const { Env } = require('./Env');
+const { Reserved } = require('./Reserved');
+%%%
+
+Formals:init
+%%%
+Env.checkDuplicates(this.symbolList, " in proc formals");
+Reserved.check(this.symbolList);
+%%%
+
+LetDecls:import
+%%%
+const { Env } = require('./Env');
+const { Binding } = require('./Binding');
+const { Bindings } = require('./Bindings');
+const { Ref } = require('./Ref');
+const { Reserved } = require('./Reserved');
+const { ValRef } = require('./ValRef');
+%%%
+
+LetDecls:init
+%%%
+Env.checkDuplicates(this.symbolList, " in let/letrec LHS identifiers");
+Reserved.check(this.symbolList);
+%%%
+
+LetDecls
+%%%
+addBindings(env) {
+    const valList = this.expList.map(e => e.eval(env));
+    const refList = Ref.valsToRefs(valList);
+    const bindings = new Bindings(this.symbolList, refList);
+    return env.extendEnvRef(bindings);
+}
+
+addLetrecBindings(env) {
+    env = env.extendEnvRef(new Bindings());
+    for (let i = 0; i < this.symbolList.length; i++) {
+        const val = this.expList[i].eval(env);
+        env.add(new Binding(this.symbolList[i].lexeme, new ValRef(val)));
+    }
+    return env;
+}
+
+toString() {
+    return " ...LetDecls... ";
+}
+%%%
+
+Rands
+%%%
+evalRands(env) {
+    return this.expList.map(e => e.eval(env));
+}
+
+toString() {
+    return this.expList.map(e => String(e)).join(",");
+}
+%%%
+
+AddPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+AddPrim
+%%%
+toString() {
+    return "+";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 + i1);
+}
+%%%
+
+SubPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+SubPrim
+%%%
+toString() {
+    return "-";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 - i1);
+}
+%%%
+
+MulPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+MulPrim
+%%%
+toString() {
+    return "*";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 * i1);
+}
+%%%
+
+DivPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+DivPrim
+%%%
+toString() {
+    return "/";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    if (i1 === 0)
+        throw new LanguageError("attempt to divide by zero");
+    return new IntVal(Math.trunc(i0 / i1));
+}
+%%%
+
+Add1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+Add1Prim
+%%%
+toString() {
+    return "add1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 + 1);
+}
+%%%
+
+Sub1Prim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+Sub1Prim
+%%%
+toString() {
+    return "sub1";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 - 1);
+}
+%%%
+
+ZeropPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+ZeropPrim
+%%%
+toString() {
+    return "zero?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    const i0 = args[0].intVal().val;
+    return new IntVal(i0 === 0 ? 1 : 0);
+}
+%%%
+
+NilpPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+NilpPrim
+%%%
+toString() {
+    return "nil?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    return new IntVal(args[0].isNil() ? 1 : 0);
+}
+%%%
+
+LTPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+LTPrim
+%%%
+toString() {
+    return "<?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 < i1 ? 1 : 0);
+}
+%%%
+
+LEPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+LEPrim
+%%%
+toString() {
+    return "<=?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 <= i1 ? 1 : 0);
+}
+%%%
+
+GTPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+GTPrim
+%%%
+toString() {
+    return ">?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 > i1 ? 1 : 0);
+}
+%%%
+
+GEPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+GEPrim
+%%%
+toString() {
+    return ">=?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 >= i1 ? 1 : 0);
+}
+%%%
+
+NEPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+NEPrim
+%%%
+toString() {
+    return "<>?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 !== i1 ? 1 : 0);
+}
+%%%
+
+EQPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+EQPrim
+%%%
+toString() {
+    return "=?";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("two arguments expected");
+    const i0 = args[0].intVal().val;
+    const i1 = args[1].intVal().val;
+    return new IntVal(i0 === i1 ? 1 : 0);
+}
+%%%
+
+ObjectpPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+ObjectpPrim
+%%%
+toString() {
+    return "object?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    return new IntVal(args[0].isObject() ? 1 : 0);
+}
+%%%
+
+ClasspPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+ClasspPrim
+%%%
+toString() {
+    return "class?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("one argument expected");
+    return new IntVal(args[0].isClass() ? 1 : 0);
+}
+%%%
+
+ListpPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+ListpPrim
+%%%
+toString() {
+    return "list?";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("list?: one argument expected");
+    return new IntVal(args[0].isList() ? 1 : 0);
+}
+%%%
+
+LenPrim:import
+%%%
+const { IntVal } = require('./IntVal');
+%%%
+
+LenPrim
+%%%
+toString() {
+    return "len";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("len: one argument expected");
+    const lst = args[0].listVal();
+    return new IntVal(lst.len);
+}
+%%%
+
+FirstPrim
+%%%
+toString() {
+    return "first";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("first: one argument expected");
+    return args[0].listNode().val;
+}
+%%%
+
+RestPrim
+%%%
+toString() {
+    return "rest";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("rest: one argument expected");
+    return args[0].listNode().rest;
+}
+%%%
+
+AddListPrim
+%%%
+toString() {
+    return "add";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("add: two arguments expected");
+    return args[1].listVal().add(args[0]);
+}
+%%%
+
+ShuttlePrim
+%%%
+toString() {
+    return "shuttle";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("shuttle: two arguments expected");
+    const lst0 = args[0].listVal();
+    const lst1 = args[1].listVal();
+    return lst0.shuttle(lst1);
+}
+%%%
+
+ReversePrim
+%%%
+toString() {
+    return "reverse";
+}
+
+apply(args) {
+    if (args.length !== 1)
+        throw new LanguageError("reverse: one argument expected");
+    return args[0].listVal().reverse();
+}
+%%%
+
+AppendPrim
+%%%
+toString() {
+    return "append";
+}
+
+apply(args) {
+    if (args.length !== 2)
+        throw new LanguageError("append: two arguments expected");
+    const lst0 = args[0].listVal();
+    const lst1 = args[1].listVal();
+    return lst0.append(lst1);
+}
+%%%
