@@ -65,6 +65,36 @@ close:
    stderr message, wrong exit status, for want of a `session-end` (or
    similar) record kind the subprocess could emit before exiting.
 
+### Second symptom: the workaround swallows output when evaluation raises
+
+Measured during the OBJ port (2026-08-11), Python target:
+
+```
+$ printf '{display 1 ; error "boom"}\n' | plcc-rep
+[98,111,111,109]
+```
+
+The `1` is gone. Old PLCC's `System.out.print` had already written it to
+stdout by the time the exception was thrown; the buffer that stands in for
+stdout is discarded along with the statement. A `define` whose right-hand
+side raises loses its output the same way.
+
+This is not a defect in the workaround — it is what the workaround costs.
+Buffering is only necessary because there is no supported channel, and the
+one alternative that would preserve the output, writing to stdout as it is
+produced, is exactly what deadlocks the tool (issue
+[#036](036-plcc-rep-deadlocks-on-partial-stdout-line.md)). An output
+record kind removes the trade-off: each `display` would emit its record
+the moment it runs, so an error later in the same statement could not
+retroactively swallow it, and nothing would have to be held until `_run`
+returns.
+
+It is worth recording as a distinct symptom because it changes observable
+language behaviour, where the deadlock only changes failure mode. It is
+logged for instructors in
+[dev-docs/course-material-impact.md](../course-material-impact.md) under
+`## OBJ`.
+
 ## Notes
 
 Cross-links issue [#036](036-plcc-rep-deadlocks-on-partial-stdout-line.md),

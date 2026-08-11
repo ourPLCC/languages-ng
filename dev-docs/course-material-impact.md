@@ -720,10 +720,20 @@ headings are added in the order each language is migrated.
 - **Output is buffered.** `display`, `display#`, `newline`, `putc`,
   `puts`, and `@@` no longer write to stdout; they append to
   `Program.out`, which `_run()` joins and returns ahead of its own
-  result. Observable behaviour is unchanged — the interleaving is
-  identical to old PLCC's, and `display 7` still shows `7nil` — but the
-  mechanism is not, and anyone extending OBJ with a new output form has
-  to append to `Program.out` rather than print. The reason is
+  result. Within a statement that completes normally the interleaving is
+  identical to old PLCC's — `display 7` still shows `7nil` — but the
+  behaviour is **not** unchanged in one case: **output buffered by a
+  statement that then raises is lost.** `{display 1 ; error "boom"}`
+  prints only `[98,111,111,109]`, where old PLCC had already written the
+  `1` to stdout before the exception; the same goes for a `define` whose
+  right-hand side raises. Nothing after the error is affected — the next
+  statement starts from an empty buffer — and this is unavoidable while
+  the only alternative is writing to stdout, which deadlocks the tool
+  (below). A supported output record kind would fix it; that is recorded
+  as a second symptom on issue
+  [#37](issues/037-plcc-rep-lacks-output-and-clean-exit-records.md).
+  Anyone extending OBJ with a new output form has to append to
+  `Program.out` rather than print. The reason is
   `plcc-rep`: it runs the generated program as a subprocess and uses
   that program's stdout as a private line-oriented JSON channel, so a
   partial line written by a semantic action merges with the result
