@@ -769,12 +769,27 @@ headings are added in the order each language is migrated.
   OBJ-specific extension of a shared file, and burying it inside a
   function six other languages also call made the divergence invisible —
   it read as if `envRef` had always rejected `self`. The error message
-  is unchanged (`reserved ID: self`). It is worth keeping because none of
-  the three failure modes it prevents is loud: `Bindings.add` appends
-  and `Bindings.lookup` returns the first match, and
+  is unchanged for a single offender (`reserved ID: self`); with two
+  reserved names in the same list, `Reserved.check` reports the one it
+  scans to first — `proc(this,self)` now reports `this`, where old PLCC's
+  fixed `reservedIDS` order reported `self`. All three targets agree with
+  each other, so this is an old-PLCC parity difference only. It is worth
+  keeping because none of the three failure modes it prevents is loud:
+  `Bindings.add` appends and `Bindings.lookup` returns the first match, and
   `StdClass.makeObject` binds fields *before* `super`/`self`/`this`, so
   a user `field self` silently displaces the real `self` inside every
   method rather than erroring.
+- **`ProcVal`'s closure-environment field is `procEnv` in Python and
+  JavaScript, but stays `env` in Java.** Every prior language names it
+  `env` in all three targets. Reason: `Val` declares an `env()` method
+  (OBJ's environment reflection, e.g. `<f>x` reads a closure's
+  environment), and in Python/JavaScript an instance attribute of the
+  same name shadows it; Java lets a field and a method share a name.
+  Sites: `python:215`, `javascript:214`, `java:270`.
+- **`ListVal`'s separator-taking stringifier is `toStr(sep)` in Python
+  and JavaScript, `toString(String sep)` in Java.** Reason: Python's
+  `__str__` and JavaScript's `toString` cannot be overloaded; Java's
+  can. Sites: `python:293`, `javascript:308`, `java:366`.
 - The single 8-line `class` test case is now a seven-case suite —
   `class/`, `objects/`, `inheritance/`, `lists/`, `strings-chars/`,
   `env-ops/`, and `errors/`. The `class/` input and expected output are
