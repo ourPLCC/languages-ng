@@ -81,5 +81,14 @@ sketches the missing-record-kind fix that would let a semantic action emit
 output through a supported channel instead of raw stdout.
 
 Per issue-conventions.md, upstream-targeted issues stay in this repo and
-are reported upstream manually, with explicit go-ahead. Nothing has been
-filed externally.
+are reported upstream manually, with explicit go-ahead.
+
+**Filed upstream 2026-08-11** as `ourPLCC/plcc-ng` issue #186
+(`dev-docs/issues/186-rep-deadlocks-on-partial-stdout-line.md`), typed
+`fix`. The mechanism above was re-verified against plcc-ng's current
+`src/plcc/cmd/rep.py` rather than the installed CLI, and holds. Upstream
+splits the work: `_read_response` must stop treating an unbounded
+`readline()` as acceptable regardless, since user code can always write to
+stdout directly, while the wider fix is upstream #187's output record kind.
+This issue stays open while OBJ's `Program.out` buffering workaround lives
+in `src/`.

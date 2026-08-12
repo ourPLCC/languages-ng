@@ -114,5 +114,14 @@ and zero tests. The pattern issue
 reverted with a course-material-impact note.
 
 Per issue-conventions.md, upstream-targeted issues stay in this repo and
-are reported upstream manually, with explicit go-ahead. Nothing has been
-filed externally.
+are reported upstream manually, with explicit go-ahead.
+
+**Filed upstream 2026-08-11** as `ourPLCC/plcc-ng` issue #187
+(`dev-docs/issues/187-rep-lacks-output-and-clean-exit-records.md`), typed
+`feat` — both record kinds in one issue, with the
+output-swallowed-on-error symptom carried over as a distinct section.
+Upstream notes these are protocol changes touching every target runtime
+(Python, Java, JavaScript, Haskell) plus `_render_record`, and that
+`_wait_for_ready`'s existing `ready` record is the precedent for a
+non-`result` kind on the same channel. This issue stays open while OBJ's
+buffering workaround and `exit`'s status-code divergence live in `src/`.

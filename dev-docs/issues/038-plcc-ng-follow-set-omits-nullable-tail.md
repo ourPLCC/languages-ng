@@ -117,5 +117,15 @@ workaround can be reverted, as issue
 [#006](006-multi-capture-alt-name-case-mismatch.md) was.
 
 Per issue-conventions.md, upstream-targeted issues stay in this repo and
-are reported upstream manually, with explicit go-ahead. Nothing has been
-filed externally.
+are reported upstream manually, with explicit go-ahead.
+
+**Filed upstream 2026-08-11** as `ourPLCC/plcc-ng` issue #188
+(`dev-docs/issues/188-follow-set-omits-nullable-tail.md`), typed `fix`. The
+quoted `else` branch was re-verified against plcc-ng's current
+`build_follow_sets.py` and is unchanged, so the suggested forward-walk fix
+still applies as written. The upstream issue also distinguishes this from
+its already-fixed #170, which was the first-registered-production
+nullability check in the same function — `_canDeriveEmpty` now consults the
+FIRST sets, and this forward-walk defect survived that fix. This issue
+stays open while `src/OBJ/grammar.plcc`'s `<ClassBody>` workaround lives in
+the grammar.
