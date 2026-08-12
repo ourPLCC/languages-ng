@@ -1,28 +1,36 @@
 ---
 name: Test Languages
 
+# Runs inside the same image .devcontainer/devcontainer.json pins, so a
+# local pass predicts a CI pass. bin/tests/image-pin.bats fails if these
+# two files ever name different images.
+#
+# The push trigger is a backstop, not the gate: release.yaml runs on
+# push to main, so an unverified commit reaching main would cut a
+# release from untested code. The gate is the required status check on
+# pull requests -- see CONTRIBUTING.md.
+
 on:
   pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
+  test:
     name: Test Languages
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.2@sha256:ebab585854e2c2dd5133db9616b398f6ede19702b514a5f4ace14757ae63dc9a
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       -
-        name: Build test image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: .github/workflows/test-langauges.dockerfile
-          tags: test-image:latest
-          push: false
+        name: Install bats
+        run: |
+          bin/install/bats.bash
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
       -
-        name: Test Languages
-        uses: addnab/docker-run-action@v3
-        with:
-          image: test-image:latest
-          run: /bin/bash -c "source ~/.bashrc && /languages/bin/test.bash"
+        name: Test languages
+        run: bin/test.bash
