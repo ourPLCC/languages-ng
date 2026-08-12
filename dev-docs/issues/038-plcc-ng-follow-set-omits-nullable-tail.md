@@ -2,7 +2,7 @@
 type: chore
 target: ourPLCC/plcc-ng
 opened: 2026-08-11
-closed:
+closed: 2026-08-12
 ---
 
 # 038 - FOLLOW set omits the nullable tail, breaking empty alternatives
