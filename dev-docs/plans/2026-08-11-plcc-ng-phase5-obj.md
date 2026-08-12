@@ -1259,6 +1259,204 @@ Refs #NN"
 
 ---
 
+### Task 4.5: Revert the `<ClassBody>` workaround now that plcc-ng 2.0.2 ships the fix
+
+**Amended (2026-08-12, inserted between Tasks 4 and 5):** this task did not
+exist when the plan was written. Task 2's amendment worked around a
+plcc-ng 2.0.1 FOLLOW-set defect (issue
+[#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md), filed
+upstream as `ourPLCC/plcc-ng` #188) by splitting `<ClassBody>` out of
+`<ClassDecl>`. The devcontainer now pins plcc-ng 2.0.2, which contains the
+fix. Issue #38 itself says to revert the workaround when this happens, on
+the precedent of issue #6. This must land **before** Task 5, not after —
+Task 5's 56-example verification should exercise the grammar shape that
+actually ships, not the workaround, so nothing there needs re-verifying
+once this task is done.
+
+**Files:**
+- Modify: `src/OBJ/grammar.plcc`, `src/OBJ/{python,java,javascript}/spec.plcc`, `dev-docs/course-material-impact.md`, `dev-docs/issues/038-plcc-ng-follow-set-omits-nullable-tail.md` (via `bin/issues/close.bash`), `dev-docs/roadmap.md` (via `bin/issues/close.bash`)
+
+**Interfaces:**
+- Consumes: the three `spec.plcc`s from Tasks 2–4, unchanged in every respect except the `ClassDecl.eval` field access named below.
+- Produces: a grammar and three targets with no `<ClassBody>` nonterminal, matching what the plan's Task 2 Step 2 originally specified before the amendment. Task 5 depends on this being done first.
+
+- [ ] **Step 1: Confirm the fix is actually present before touching anything**
+
+Per this project's own convention on verifying tool-behavior claims rather than asserting them: reproduce the defect's absence in a scratch directory before editing source.
+
+```bash
+plcc-version
+mkdir -p /tmp/objgram-recheck && cd /tmp/objgram-recheck
+cat > spec.plcc <<'EOF'
+skip WHITESPACE '\s+'
+token STATIC 'static'
+token FIELD 'field'
+token METHOD 'method'
+token END 'end'
+token SYMBOL '[A-Za-z]+'
+%
+<ClassDecl>      ::= <Ext> <Statics> <Fields> <Methods> END
+<Ext:Ext1>       ::= STATIC SYMBOL
+<Ext:Ext0>       ::=
+<Statics>        **= STATIC SYMBOL
+<Fields>         **= FIELD SYMBOL
+<Methods>        **= METHOD SYMBOL
+EOF
+printf 'field x end\n' > t.txt
+plcc-parse t.txt
+```
+
+Expected: `plcc-version` prints `plcc-ng 2.0.2`, and `plcc-parse` accepts
+`field x end` without an `unexpected 'FIELD', no production for 'Ext'`
+error. If it still fails, stop — the devcontainer pin did not take, or
+2.0.2 does not actually contain the fix — and report back rather than
+proceeding.
+
+- [ ] **Step 2: Revert `src/OBJ/grammar.plcc`**
+
+Replace
+
+```
+<ClassDecl>      ::= CLASS <Ext> <ClassBody>
+<ClassBody>      ::= <Statics> <Fields> <Methods> END
+```
+
+and the explanatory comment above it (the one starting "The class body is
+a separate nonterminal…") with the single line the plan originally
+specified in Task 2 Step 2:
+
+```
+<ClassDecl>      ::= CLASS <Ext> <Statics> <Fields> <Methods> END
+```
+
+- [ ] **Step 3: Update `ClassDecl.eval` in all three targets**
+
+Task 2's amendment said `ClassDecl.eval` reads
+`self.classBody.statics` / `.fields` / `.methods`. With `<ClassBody>`
+gone, `<Statics>`, `<Fields>`, and `<Methods>` are direct children of
+`<ClassDecl>` again, so the fields are `self.statics` / `self.fields` /
+`self.methods` (and the `this.`-qualified / unqualified equivalents in
+JavaScript and Java). In each of `src/OBJ/python/spec.plcc`,
+`src/OBJ/java/spec.plcc`, `src/OBJ/javascript/spec.plcc`, in the
+`ClassDecl` block:
+
+Python — replace
+
+```python
+def eval(self, env):
+    superClass = self.ext.toClassVal(env)
+    body = self.classBody  # see the <ClassBody> note in grammar.plcc
+    return StdClass(env, superClass, body.statics, body.fields, body.methods)
+```
+
+with
+
+```python
+def eval(self, env):
+    superClass = self.ext.toClassVal(env)
+    return StdClass(env, superClass, self.statics, self.fields, self.methods)
+```
+
+Java — replace
+
+```java
+public Val eval(Env env) {
+    ClassVal superClass = ext.toClassVal(env);
+    ClassBody body = classBody; // see the <ClassBody> note in grammar.plcc
+    return new StdClass(env, superClass, body.statics, body.fields, body.methods);
+}
+```
+
+with
+
+```java
+public Val eval(Env env) {
+    ClassVal superClass = ext.toClassVal(env);
+    return new StdClass(env, superClass, statics, fields, methods);
+}
+```
+
+JavaScript — replace
+
+```javascript
+eval(env) {
+    const superClass = this.ext.toClassVal(env);
+    const body = this.classBody; // see the <ClassBody> note in grammar.plcc
+    return new StdClass(env, superClass, body.statics, body.fields, body.methods);
+}
+```
+
+with
+
+```javascript
+eval(env) {
+    const superClass = this.ext.toClassVal(env);
+    return new StdClass(env, superClass, this.statics, this.fields, this.methods);
+}
+```
+
+No other block in any target references `classBody` or `ClassBody` — confirm with `grep -rn "classBody\|ClassBody" src/OBJ/{python,java,javascript}/spec.plcc src/OBJ/grammar.plcc`, expecting no output.
+
+- [ ] **Step 4: Cross-check all three targets, then run the full suite**
+
+```bash
+cd /workspaces/languages-ng/.claude/worktrees/obj-migration/src/OBJ
+for c in class lists strings-chars objects inheritance env-ops errors; do
+  printf '=== %s ===\n' "$c"
+  a="$(cd python     && plcc-rep < "../tests/$c/OBJ.input")"
+  b="$(cd java       && plcc-rep < "../tests/$c/OBJ.input")"
+  d="$(cd javascript && plcc-rep < "../tests/$c/OBJ.input")"
+  [[ "$a" == "$b" && "$b" == "$d" ]] && printf 'all three identical\n' || printf 'DIVERGENCE\n'
+done
+```
+
+Expected: `all three identical` for all seven — the revert must be behavior-preserving.
+
+Then run the full suite per Global Constraints, writing to `/tmp/obj-task4.5.txt`.
+
+Expected: **`EXIT=0`, 186 tests, 186 passing, 0 failing** — unchanged from Task 4, since this step changes internal tree shape only.
+
+- [ ] **Step 5: Update `dev-docs/course-material-impact.md`**
+
+Under `## OBJ`, remove the bullet titled "The class grammar gained a
+`<ClassBody>` nonterminal." in full (the paragraph beginning "Where the
+old grammar had" through "should be reverted when that is fixed
+upstream."). With the workaround reverted, the shipped grammar's
+`ClassDecl` production matches old PLCC's exactly — there is no longer a
+delta for course material to track, which is why the bullet is deleted
+rather than edited to describe the reversion.
+
+- [ ] **Step 6: Close issue #38**
+
+```bash
+bin/issues/close.bash 38
+bin/issues/check.bash
+```
+
+Note in the issue's closing commit (or let `close.bash` handle the
+mechanical part and add a short note in the commit body) that plcc-ng
+2.0.2 contains the fix and the `<ClassBody>` workaround in
+`src/OBJ/grammar.plcc` has been reverted. Leave the upstream plcc-ng issue
+#188 alone — this repo's #38 tracks the workaround living in *this* repo,
+not the upstream fix itself.
+
+- [ ] **Step 7: Commit**
+
+```bash
+cd /workspaces/languages-ng/.claude/worktrees/obj-migration
+git add src/OBJ/grammar.plcc src/OBJ/python/spec.plcc src/OBJ/java/spec.plcc \
+        src/OBJ/javascript/spec.plcc dev-docs/course-material-impact.md
+git commit -m "refactor(OBJ): revert the <ClassBody> FOLLOW-set workaround
+
+plcc-ng 2.0.2 fixes issue #38 upstream (ourPLCC/plcc-ng#188).
+
+Refs #35"
+git add dev-docs/issues dev-docs/roadmap.md
+git commit -m "docs(issues): close issue 38 (plcc-ng FOLLOW-set workaround reverted)"
+```
+
+---
+
 ### Task 5: Verify all 56 example programs
 
 The design commits to running every example under all three targets and asserting byte-identity. This is the strongest fidelity evidence available, because old PLCC is not installed here and there is no pre-migration oracle to diff against.
