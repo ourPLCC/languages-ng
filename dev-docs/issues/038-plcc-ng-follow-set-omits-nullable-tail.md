@@ -129,3 +129,15 @@ nullability check in the same function — `_canDeriveEmpty` now consults the
 FIRST sets, and this forward-walk defect survived that fix. This issue
 stays open while `src/OBJ/grammar.plcc`'s `<ClassBody>` workaround lives in
 the grammar.
+
+**Closed 2026-08-12.** plcc-ng 2.0.2 ships the upstream fix, the
+devcontainer pin was bumped to it, and the `<ClassBody>` workaround was
+reverted from `src/OBJ/grammar.plcc` — the grammar is back to
+`<ClassDecl> ::= CLASS <Ext> <Statics> <Fields> <Methods> END` and all
+three targets' `ClassDecl.eval` read `statics` / `fields` / `methods`
+directly. Verified before reverting by reproducing the fix in a scratch
+grammar, and after by the seven-case three-target cross-check plus the
+full suite. The design of record
+([2026-08-11-plcc-ng-obj-design.md](../specs/2026-08-11-plcc-ng-obj-design.md))
+retains the worked example of how the truncated FOLLOW set presented,
+marked resolved.

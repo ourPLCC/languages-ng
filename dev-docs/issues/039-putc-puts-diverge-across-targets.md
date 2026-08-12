@@ -71,3 +71,20 @@ agree — better teaching behavior than silently truncating.
 
 This is the plcc-ng port's own behavior, not inherited from old PLCC.
 Whichever way it is resolved, all three targets must move together.
+
+**Independently confirmed by GitHub Copilot** on the migration PR
+(2026-08-12), which flagged both Python sites separately: `IntVal.putc`
+calling `chr(self.val)` directly, and `ListNode.buildString` catching only
+`LanguageError` from `intVal()` so that a valid `IntVal` holding an
+out-of-range code still escapes as a crash.
+
+**Careful with the obvious fix.** Copilot's suggestion — wrap the Python
+`chr()` calls and re-raise `LanguageError` — is correct but is only half
+the issue, and doing just that half makes the *other* half worse. It
+resolves the session-fatal crash while leaving Java and JavaScript
+silently truncating to 16 bits, so `putc 66000` would then raise an error
+in Python and quietly print U+01D0 in the other two. That is a sharper
+divergence than exists today, and one no test would catch. Fix both sites
+in Python **and** the corresponding Java/JavaScript sites in the same
+change, then add a case to `tests/strings-chars/` covering a negative code
+and one above 0xFFFF — those two inputs are what would have caught this.

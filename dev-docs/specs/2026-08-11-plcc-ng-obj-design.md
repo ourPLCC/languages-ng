@@ -92,7 +92,7 @@ past this bug — when validating an empty alternative, the case worth
 measuring is the one where the *following* nullable nonterminal is
 actually empty.
 
-`src/OBJ/grammar.plcc` works around it by splitting the class body out:
+`src/OBJ/grammar.plcc` worked around it by splitting the class body out:
 
 ```
 <ClassDecl>      ::= CLASS <Ext> <ClassBody>
@@ -100,11 +100,27 @@ actually empty.
 ```
 
 `build_first_sets` *does* walk the nullable prefix correctly, so
-`FIRST(ClassBody) = {STATIC, FIELD, METHOD, END}` and `<Ext>` now sits
-next to a correctly computed set. The accepted language is unchanged; the
-tree gains one node and `ClassDecl.eval` reaches through
-`self.classBody`. Revert it when #38 lands, on the issue
-[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) precedent.
+`FIRST(ClassBody) = {STATIC, FIELD, METHOD, END}` and `<Ext>` sat next to
+a correctly computed set. The accepted language was unchanged; the tree
+gained one node and `ClassDecl.eval` reached through `self.classBody`.
+
+**Resolved 2026-08-12 — the workaround is no longer in the grammar.**
+plcc-ng 2.0.2 contains the upstream fix (`ourPLCC/plcc-ng` issue #188),
+so the split was reverted on the issue
+[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) precedent and
+issue [#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md) was
+closed. The shipped grammar is back to the single production this document
+originally specified:
+
+```
+<ClassDecl>      ::= CLASS <Ext> <Statics> <Fields> <Methods> END
+```
+
+and all three targets' `ClassDecl.eval` read `statics` / `fields` /
+`methods` directly. The workaround is described above in the past tense
+because the *reasoning* remains the useful part — it is the worked example
+of how a truncated FOLLOW set presents, and how to structure around one if
+a similar defect appears in a future plcc-ng release.
 
 `<Loc:SimpleLoc>` is unaffected: `FOLLOW(Loc) = {SYMBOL}` is correct,
 because the symbol following `<Loc>` in `<Exp:SetExp>` is not nullable.
