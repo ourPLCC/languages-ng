@@ -779,6 +779,20 @@ grep -rn "plccmk" bin
 
 Expected: no output.
 
+**Corrected during execution (2026-08-12).** This expectation contradicts
+Step 2 of this same task. Step 2's replacement text deliberately contains
+the word `plccmk`, in the past-tense clause "the second reason this
+function used to give -- that OBJ and TYPE1 ran plccmk, which builds in
+place -- no longer applies". So the grep correctly returns one line,
+`bin/relocate.bash:46`, and can never return none while Step 2 is
+followed.
+
+Step 2 governs. The right expectation is: exactly one match, in that
+past-tense clause, and no line asserting `plccmk` is in current use. The
+implementer followed Step 2 and reported the mismatch rather than
+deleting the clause to satisfy the grep — the correct call, and the
+behavior CLAUDE.md asks for when a plan contradicts itself.
+
 - [ ] **Step 4: Run the affected tests**
 
 ```bash
