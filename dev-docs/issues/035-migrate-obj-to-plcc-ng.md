@@ -2,7 +2,7 @@
 type: feat
 target: this repo
 opened: 2026-08-11
-closed:
+closed: 2026-08-12
 ---
 
 # 035 - migrate OBJ to plcc-ng

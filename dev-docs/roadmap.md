@@ -18,11 +18,6 @@
 - **[#22](issues/022-plcc-rep-parses-each-source-independently.md) — plcc-rep parses each SOURCE argument independently**
   A program split across two files no longer parses, where old PLCC's `rep` joined its file arguments into one stream; V6's `Prog/p1`/`Prog/p2` course example depends on the old behavior and now needs `cat p1 p2 | plcc-rep`. Targeted at ourPLCC/plcc-ng, not reported externally yet.
 
-### Feat
-
-- **[#35](issues/035-migrate-obj-to-plcc-ng.md) — migrate OBJ to plcc-ng**
-  Port OBJ (`SET + lists, characters, strings, classes, and objects`) to plcc-ng — the last language in the keep list and the last old-PLCC user in the repository. Fourteen free-standing classes per target, `envRef` reused unchanged for a sixth consecutive language, the reserved-ID check moved into a free-standing `Reserved` class, and output buffered through `Program.out` since `plcc-rep`'s stdout is a protocol channel.
-
 ### Test
 
 - **[#27](issues/027-use-spec-flag-instead-of-copying-tree.md) — use `plcc-rep -s` instead of copying `src/` into each test tmpdir**
