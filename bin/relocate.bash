@@ -35,16 +35,16 @@ function relocate_copy_tree () {
 }
 
 # BATS_TEST_DIRNAME is .../src/<LANG>/tests/<case>. Copy the whole src/
-# tree (not just <LANG>/) for two reasons: migrated specs %include a
-# sibling top-level directory -- e.g. V1's spec.plcc reaching into
-# ../../Env/envRN/<target>/env.plcc -- and the not-yet-migrated languages
-# (OBJ, TYPE1) run plccmk, which builds in place and
-# has no way to be pointed at a spec elsewhere.
+# tree (not just <LANG>/) because specs %include a sibling top-level
+# directory -- e.g. V1's spec.plcc reaching into
+# ../../Env/envRN/<target>/env.plcc.
 #
-# The %include half of that is now avoidable: plcc-rep -s <abs spec path>
-# resolves %include from the spec's real location while writing build
-# output to the cwd, so migrated tests need no copy at all. See the
-# follow-up issue filed alongside issue #25.
+# That is now avoidable: plcc-rep -s <abs spec path> resolves %include
+# from the spec's real location while writing build output to the cwd,
+# so the tests need no copy at all. Every language has migrated to
+# plcc-ng, so the second reason this function used to give -- that OBJ
+# and TYPE1 ran plccmk, which builds in place -- no longer applies, and
+# nothing now requires the copy. See issue #27.
 #
 # Then cd into <LANG>, landing in the same place callers already expect
 # (unchanged for languages with no cross-directory %include).
