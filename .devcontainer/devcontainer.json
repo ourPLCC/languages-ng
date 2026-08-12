@@ -13,5 +13,5 @@
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/devcontainers-extra/features/shellcheck:1": {}
   },
-  "postCreateCommand": "BATS_VERSION=v1.11.0 && git clone https://github.com/bats-core/bats-core.git /tmp/bats-core && cd /tmp/bats-core && git checkout $BATS_VERSION && sudo ./install.sh /usr/local && cd - && rm -rf /tmp/bats-core"
+  "postCreateCommand": "bin/install/bats.bash"
 }
