@@ -83,3 +83,19 @@ passing test's tmpdir and holds peak at the cost of a single test regardless
 of suite size. That also covers OBJ, TYPE0 and TYPE1, which can never
 convert. So this issue is a speed and cleanliness win, not the disk fix it
 was once thought to be.
+
+**The "3 test files / 3 tests (OBJ, TYPE0, TYPE1) cannot [convert]" count
+above is now zero** — OBJ migrated to plcc-ng in issue #35, following
+TYPE0 and TYPE1. `relocate` need not coexist with `plcc-rep -s` any
+longer: `relocate` and `relocate_copy_tree` are deletable outright rather
+than convertible, since nothing left needs them. `plccmk` still appears
+in `bin/relocate.bash` and `bin/clean.bash`, which is the remaining
+surface.
+
+Also stale as of issue #35: `bin/relocate.bash:41`'s comment — "the
+not-yet-migrated languages (OBJ, TYPE1) run plccmk, which builds in place
+and has no way to be pointed at a spec elsewhere" — is now factually
+false, since both have migrated. Issue #35's completion note cites this
+same file as "the remaining surface" without flagging that the comment
+itself is stale; worth fixing both together when this issue is picked
+up.
