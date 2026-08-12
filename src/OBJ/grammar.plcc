@@ -108,16 +108,7 @@ token SYMBOL '[A-Za-z\&\?\$][\w\?\&\$]*'
 <Exp:EenvExp>    ::= LLANGLE <Exp> <Mangle> RRANGLE
 <Exp:ErrorExp>   ::= ERROR <Exp>
 <Exp:PerrorExp>  ::= PERROR <STRNG>
-# The class body is a separate nonterminal, where old PLCC inlined
-# <Statics> <Fields> <Methods> END directly into <ClassDecl>. The split is
-# forced by a plcc-ng FOLLOW-set defect (issue 38): FOLLOW of a nonterminal
-# with an empty alternative is computed from the FIRST set of the single
-# next symbol only, so <Ext>'s empty alternative was predicted on STATIC
-# alone and `class field x ... end` failed to parse. Wrapping the tail in a
-# non-nullable <ClassBody> puts a correctly-computed FIRST set next to
-# <Ext>. The accepted language is unchanged.
-<ClassDecl>      ::= CLASS <Ext> <ClassBody>
-<ClassBody>      ::= <Statics> <Fields> <Methods> END
+<ClassDecl>      ::= CLASS <Ext> <Statics> <Fields> <Methods> END
 <Mangle>         **= RANGLE <Exp> LPAREN <Rands> RPAREN
 <Ext:Ext1>       ::= EXTENDS <Exp>
 <Ext:Ext0>       ::=

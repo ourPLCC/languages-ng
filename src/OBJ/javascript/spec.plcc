@@ -913,8 +913,7 @@ ClassDecl
 %%%
 eval(env) {
     const superClass = this.ext.toClassVal(env);
-    const body = this.classBody; // see the <ClassBody> note in grammar.plcc
-    return new StdClass(env, superClass, body.statics, body.fields, body.methods);
+    return new StdClass(env, superClass, this.statics, this.fields, this.methods);
 }
 %%%
 

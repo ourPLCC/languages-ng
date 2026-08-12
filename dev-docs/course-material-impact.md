@@ -775,29 +775,6 @@ headings are added in the order each language is migrated.
   `StdClass.makeObject` binds fields *before* `super`/`self`/`this`, so
   a user `field self` silently displaces the real `self` inside every
   method rather than erroring.
-- **The class grammar gained a `<ClassBody>` nonterminal.** Where the
-  old grammar had
-
-  ```
-  <ClassDecl> ::= CLASS <Ext> <Statics> <Fields> <Methods> END
-  ```
-
-  it now reads
-
-  ```
-  <ClassDecl> ::= CLASS <Ext> <ClassBody>
-  <ClassBody> ::= <Statics> <Fields> <Methods> END
-  ```
-
-  **No OBJ program changes** — the accepted token sequences are
-  identical — but a syntax diagram, a hand-drawn parse tree, or a
-  walkthrough that names the children of `ClassDecl` does. This is a
-  workaround, not a design improvement: plcc-ng 2.0.1 truncates the
-  FOLLOW set of a nonterminal followed by a nullable one, so `<Ext>`'s
-  empty alternative was predicted on `STATIC` alone and any class
-  starting with `field` or `method` failed to parse (issue
-  [#38](issues/038-plcc-ng-follow-set-omits-nullable-tail.md)). It
-  should be reverted when that is fixed upstream.
 - The single 8-line `class` test case is now a seven-case suite —
   `class/`, `objects/`, `inheritance/`, `lists/`, `strings-chars/`,
   `env-ops/`, and `errors/`. The `class/` input and expected output are

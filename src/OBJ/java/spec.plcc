@@ -880,8 +880,7 @@ ClassDecl
 %%%
 public Val eval(Env env) {
     ClassVal superClass = ext.toClassVal(env);
-    ClassBody body = classBody; // see the <ClassBody> note in grammar.plcc
-    return new StdClass(env, superClass, body.statics, body.fields, body.methods);
+    return new StdClass(env, superClass, statics, fields, methods);
 }
 %%%
 
