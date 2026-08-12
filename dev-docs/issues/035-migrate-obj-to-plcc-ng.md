@@ -72,3 +72,38 @@ ceiling), [#22](022-plcc-rep-parses-each-source-independently.md)
 (plcc-rep parses each SOURCE argument independently), and
 [#27](027-use-spec-flag-instead-of-copying-tree.md) (use `-s` instead of
 copying the tree) — all repo-wide and inherited.
+
+## On completion — what this unblocks
+
+OBJ was the last language in the keep list. With it migrated and
+`src/OBJ/{grammar,code,prim,envRef,val,ref,class,list,listVal,listPrim,FILES}`
+deleted, **the repository contains no old-PLCC sources and no test
+invokes `plccmk` or `rep`.** Two issues were explicitly waiting on that
+state:
+
+- **[#12](012-ci-cannot-run-plcc-ng-migrated-languages.md) (CI cannot run
+  plcc-ng-migrated languages)** says "Pick this up when the last language
+  migrates, and rewrite the fix direction then." Its second deferral
+  reason has now expired: a fix no longer has to install plcc-ng and
+  Node.js *alongside* old-PLCC, because old-PLCC is needed nowhere. The
+  direction #12 already names — base the CI image on the digest-pinned
+  devcontainer image and add bats, rather than extending the
+  hand-assembled stack in `.github/workflows/test-langauges.dockerfile` —
+  is now the whole fix. Note that #12's first deferral reason ("the
+  failing job does not run", because no PR is ever opened) is also stale:
+  `main` now carries a merge commit from PR #8, so the `on: pull_request`
+  job does fire. Both premises need rewriting when #12 is picked up.
+
+- **[#27](027-use-spec-flag-instead-of-copying-tree.md) (use `-s` instead
+  of copying the tree)** scopes "3 test files / 3 tests (OBJ, TYPE0,
+  TYPE1) **cannot** [convert] ... `relocate` and `relocate_copy_tree` must
+  stay until those three migrate, at which point both can be deleted
+  outright." That count is now **zero** — TYPE0 and TYPE1 migrated
+  earlier, OBJ here. So `relocate` need not coexist with `plcc-rep -s`;
+  it can be retired entirely, and `bin/relocate.bash` plus its callers in
+  every `.bats` file are deletable rather than convertible. `plccmk` still
+  appears in `bin/relocate.bash` and `bin/clean.bash`, which is the
+  remaining surface.
+
+Neither is actioned here — both are separate issues with their own
+scope, and this one is closed on the migration itself.
