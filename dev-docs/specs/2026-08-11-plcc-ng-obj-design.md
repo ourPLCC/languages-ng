@@ -530,6 +530,47 @@ accident.
 second exercises inheritance, `super`, field shadowing, and both message-send
 forms.
 
+### Results (measured 2026-08-12)
+
+The throwaway script (`/tmp/obj-examples.sh`, per Task 5 of the implementation
+plan) ran every file in `Prog/`, `Examples/`, `PPP/`, and `BST/` through
+`plcc-rep` under all three targets and compared stdout byte-for-byte.
+
+**Correction to the count above:** the per-directory tally in this section
+(`43 + 7 + 7 + 2`) is **59**, not 56 — `find Prog Examples PPP BST -maxdepth 1
+-type f | wc -l` confirms 59 regular files. The "56" figure predates this
+measurement and was never re-added; the individual directory counts it sits
+next to were already correct.
+
+**58 of 59 ran byte-identical across Python, Java, and JavaScript. Zero
+diverged. One exited nonzero on one target:**
+
+| file | python | java | js | cause |
+|---|---|---|---|---|
+| `Prog/oe` | exit 1, `RecursionError: maximum recursion depth exceeded` | exit 0, `1` | exit 0, `1` | known issue [#19](../issues/019-python-recursion-ceiling.md) (Python recursion ceiling) |
+
+`Prog/oe` defines mutually-recursive statics `odd?`/`even?` and calls
+`.<c>even?(1000)` — about 1,000 language-level calls, comfortably inside
+issue #19's measured Java/JavaScript ceiling (~2,800) but well past its
+measured Python ceiling (~330). Java and JavaScript both return `1`,
+matching the mathematical answer (`even?(1000)` is true), so the two targets
+that complete agree with each other; Python is not wrong, it just runs out
+of interpreter stack first, exactly as #19 describes. This is not a porting
+defect — it is not fixed, and `Prog/oe` is left unmodified per the brief.
+
+No other file needed input the harness does not supply and none is a bare
+fragment that failed to run — `BST/123`, `Prog/List(1)`, and `Prog/String(1)`
+(flagged in the brief as possibly editor backups or non-standalone fragments)
+all ran to completion and produced byte-identical output on all three
+targets, so they are counted as `ok` rather than as exceptions.
+
+Cross-target identity across 58 of 59 programs, with the sole exception fully
+attributed to an already-tracked, already-understood inherited issue, is the
+fidelity evidence this phase set out to gather: three independent
+implementations, transliterated separately from `src/SET/`'s shipped port,
+agree on every example except where CPython's own stack depth is the limiting
+factor rather than anything in the port.
+
 ## Bookkeeping (in the same commits as the work)
 
 - File the OBJ issue with `bin/issues/new.bash migrate-obj-to-plcc-ng feat` and
