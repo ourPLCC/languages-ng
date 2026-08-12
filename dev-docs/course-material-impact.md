@@ -789,7 +789,7 @@ headings are added in the order each language is migrated.
 - **`ListVal`'s separator-taking stringifier is `toStr(sep)` in Python
   and JavaScript, `toString(String sep)` in Java.** Reason: Python's
   `__str__` and JavaScript's `toString` cannot be overloaded; Java's
-  can. Sites: `python:293`, `javascript:308`, `java:366`.
+  can. Sites: `python:293`, `javascript:308`, `java:367`.
 - The single 8-line `class` test case is now a seven-case suite —
   `class/`, `objects/`, `inheritance/`, `lists/`, `strings-chars/`,
   `env-ops/`, and `errors/`. The `class/` input and expected output are
