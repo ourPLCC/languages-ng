@@ -3,12 +3,26 @@
 load '../../../../bin/relocate.bash'
 load '../../../../bin/bats-tmpdir.bash'
 
-@test "OBJ class" {
+@test "OBJ class (python)" {
   relocate
-  plccmk -c grammar > /dev/null
-  RESULT="$(rep -n < ./tests/class/OBJ.input)"
-
-  expected_output=$(< "./tests/class/OBJ.expected")
+  cd python
+  RESULT="$(plcc-rep < ../tests/class/OBJ.input)"
+  expected_output=$(< "../tests/class/OBJ.expected")
   [[ "$RESULT" == "$expected_output" ]]
+}
 
+@test "OBJ class (java)" {
+  relocate
+  cd java
+  RESULT="$(plcc-rep < ../tests/class/OBJ.input)"
+  expected_output=$(< "../tests/class/OBJ.expected")
+  [[ "$RESULT" == "$expected_output" ]]
+}
+
+@test "OBJ class (javascript)" {
+  relocate
+  cd javascript
+  RESULT="$(plcc-rep < ../tests/class/OBJ.input)"
+  expected_output=$(< "../tests/class/OBJ.expected")
+  [[ "$RESULT" == "$expected_output" ]]
 }

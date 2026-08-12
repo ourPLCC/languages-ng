@@ -8,6 +8,10 @@
   CI's test image only installs old-PLCC with no Node.js, so plcc-ng-migrated languages (V0-V3) fail in CI with `command not found` while passing locally — the opposite of local dev. Deferred until every language has migrated: the job is `on: pull_request` and no PRs are opened yet, and the fix collapses to basing CI on the devcontainer image once old-PLCC is needed nowhere.
 - **[#20](issues/020-close-bash-roadmap-awk-edge-cases.md) — close.bash's roadmap awk has two dormant edge cases**
   The `END` block collapses blank-line runs across the whole roadmap rather than just the removed entry's span, and the bullet-removal skip state ends on a blank line, so a multi-paragraph Open Issues entry would leave an orphaned fragment. Both predate #18 and were inherited verbatim by its rewrite; neither fires against the roadmap's current shape, where every entry is a bullet plus one indented continuation line.
+- **[#43](issues/043-issues-new-bash-creates-issue-for-help-flag.md) — new.bash treats --help as a slug, creating a spurious issue**
+  `bin/issues/new.bash --help` prints no usage: its guard only catches the zero-argument case, so `--help` becomes the slug, creating `NNN---help.md` and silently incrementing `.next-id.txt`. A defect in the one mechanism the repo's "never assign issue numbers by hand" convention rests on.
+- **[#42](issues/042-test-bash-75-minute-run-and-lost-implementers.md) — test.bash's 75-minute run, and two implementers lost mid-task**
+  A `bin/test.bash` run reached a correct `EXIT=0, 186/186, ok 186` but took ~75 minutes against a normal ~2 minutes, with no root cause established; separately, two OBJ-migration implementer subagents were killed by infrastructure mid-task (an API spend limit, a stall watchdog) but both landed clean on verification. An observation, not a diagnosis — filed so the record survives the worktree being deleted, in case it recurs.
 
 ### Docs
 
@@ -18,6 +22,16 @@
 - **[#22](issues/022-plcc-rep-parses-each-source-independently.md) — plcc-rep parses each SOURCE argument independently**
   A program split across two files no longer parses, where old PLCC's `rep` joined its file arguments into one stream; V6's `Prog/p1`/`Prog/p2` course example depends on the old behavior and now needs `cat p1 p2 | plcc-rep`. Targeted at ourPLCC/plcc-ng, not reported externally yet.
 
+### Fix
+
+- **[#39](issues/039-putc-puts-diverge-across-targets.md) — putc/puts diverge across targets; Python fails session-fatally**
+  Java's `(char)` cast and JavaScript's `String.fromCharCode` silently truncate wide character codes to 16 bits where Python's `chr()` doesn't, so the same program prints different characters on different targets; separately, Python's `chr()` raises `ValueError` (not a catchable `LanguageError`) on a negative code, which escapes as a session-fatal "Specification error" and kills the rest of the REPL session. `putc`/`puts` are how students build character output, so off-by-one arithmetic is the ordinary route in.
+
+### Refactor
+
+- **[#41](issues/041-obj-java-redundant-import-blocks-and-block-order.md) — OBJ Java spec carries 26 redundant :import blocks; head-of-file block order diverges**
+  26 `:import` blocks across OBJ's Java prims contain only `import runtime.LanguageError;`, which plcc-ng auto-injects into grammar-derived classes — verified deletable in a scratch tree with identical output, 1,407 bytes lighter. Separately, OBJ's Python and Java specs open with `Program`/`Eval`/`Define` rather than the free-standing value classes that SET, TYPE1, REF, and OBJ's own JavaScript spec open with. Zero behavioral impact; matters for reading the six predecessor specs side by side.
+
 ### Test
 
 - **[#27](issues/027-use-spec-flag-instead-of-copying-tree.md) — use `plcc-rep -s` instead of copying `src/` into each test tmpdir**
@@ -26,3 +40,9 @@
   `relocate_copy_tree`'s existence filter can't tell "deleted with `rm`" from "exists but unreadable" (`chmod 000` on a tracked file's parent directory reproduces it), so an `EACCES` path is silently dropped from the copy instead of failing loudly — the same silent-corruption class as issue #25, reintroduced one layer down. Dormant: nothing in this repo `chmod`s a spec directory today.
 - **[#33](issues/033-test-bash-completeness-guard-bypassed-by-kill.md) — test.bash's completeness guard is bypassed when test.bash itself is killed**
   Issue #31's `check_run_complete` only runs if `bin/test.bash` reaches the line that calls it, so a SIGKILL of `test.bash` leaves a truncated stdout file with no banner, a plausible-but-wrong pass count, and a leaked report directory — the exact lie #31 set out to eliminate, one layer up. Observed during the TYPE0 migration: a run died at test 58 of 148 and counted cleanly as 57 ok / 1 not ok.
+- **[#36](issues/036-plcc-rep-deadlocks-on-partial-stdout-line.md) — plcc-rep deadlocks on a partial stdout line**
+  A semantic action that writes a partial line (no trailing newline) to stdout deadlocks `plcc-rep` with no diagnostic: the merged partial+result line is unparseable JSON, destroying the result record before `readline()` blocks forever. Measured in Python and JavaScript, via stdin and via a SOURCE file: exit 124, no output, no error.
+- **[#37](issues/037-plcc-rep-lacks-output-and-clean-exit-records.md) — plcc-rep lacks output and clean-exit records**
+  Semantic actions have no supported way to emit user-visible output or end the session cleanly — both are missing record kinds in `_render_record`'s dispatch. OBJ works around the first by buffering into `Program.out` and ships `exit`'s wrong stderr/status as a documented divergence for want of the second.
+- **[#40](issues/040-obj-test-coverage-gaps-and-example-sweep.md) — OBJ test coverage gaps, and the 59-example sweep is not in the harness**
+  OBJ's seven committed test cases never exercise `/`, `add1`, `sub1`, `zero?`, `exit`, the six comparison prims, `!@`, `@@`, `letrec`, `if`, or any prim arity/type error path — verified correct by hand, so a regression-detection gap rather than a known bug. Separately, the migration's strongest evidence of fidelity, a 59-example × 3-target byte-identity sweep, ran from a `/tmp` throwaway script and is not wired into `bin/test.bash`.

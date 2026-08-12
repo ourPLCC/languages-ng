@@ -1,0 +1,6 @@
+proc(self) 1
+let this = 1 in this
+class field super end
+let x = 1 in let x = 2 in x
+error "boom"
+perror "bang"

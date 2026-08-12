@@ -1,0 +1,148 @@
+# Language OBJ
+#   Language SET with lists, characters, strings, classes, and objects.
+#   Includes comparison primitives '<?', '<=?', '>?', '>=?', '<>?', and '=?'
+#   for IntVals.
+skip WHITESPACE '\s+'
+skip COMMENT '%.*'
+token LIT '\d+'
+token LPAREN '\('
+token RPAREN '\)'
+token COMMA ','
+token ADDOP '\+'
+token SUBOP '\-'
+token MULOP '\*'
+token DIVOP '/'
+token ADD1OP 'add1'
+token SUB1OP 'sub1'
+token ZEROP 'zero\?'
+token NILP 'nil\?'
+token LTP '<\?'
+token LEP '<=\?'
+token GTP '>\?'
+token GEP '>=\?'
+token NEP '<>\?'
+token EQP '=\?'
+token LENOP 'len'
+token LISTP 'list\?'
+token OBJECTP 'object\?'
+token CLASSP 'class\?'
+token FIRSTOP 'first'
+token RESTOP 'rest'
+token ADDLISTOP 'add'
+token SHUTTLEOP 'shuttle'
+token REVERSEOP 'reverse'
+token APPENDOP 'append'
+token IF 'if'
+token THEN 'then'
+token ELSE 'else'
+token LET 'let'
+token LETREC 'letrec'
+token DEFINE 'define'
+token IN 'in'
+token EQUALS '='
+token EXIT 'exit'
+token PROC 'proc'
+token SET 'set'
+token CLASS 'class'
+token EXTENDS 'extends'
+token STATIC 'static'
+token FIELD 'field'
+token METHOD 'method'
+token END 'end'
+token NEW 'new'
+token NIL 'nil'
+token DISPLAY 'display'
+token DISPLAY1 'display#'
+token NEWLINE 'newline'
+token PUTC 'putc'
+token PUTS 'puts'
+token ERROR 'error'
+token PERROR 'perror'
+token AT '@'
+token ATAT '@@'
+token DOT '\.'
+token LBRACE '\{'
+token RBRACE '\}'
+token LBRACK '\['
+token RBRACK '\]'
+token LANGLE '<'
+token RANGLE '>'
+token LLANGLE '!<'
+token RRANGLE '!>'
+token BANGAT '!@'
+token SEMI ';'
+token CHR "'."
+token STRNG '\"(\\.|[^\"\\])*\"'
+token SYMBOL '[A-Za-z\&\?\$][\w\?\&\$]*'
+%
+<Program:Define> ::= DEFINE <SYMBOL> EQUALS <Exp>
+<Program:Eval>   ::= <Exp>
+<Exp:ExitExp>    ::= EXIT
+<Exp:LitExp>     ::= <LIT>
+<Exp:ChrExp>     ::= <CHR>
+<Exp:StrngExp>   ::= <STRNG>
+<Exp:VarExp>     ::= <SYMBOL>
+<Exp:IfExp>      ::= IF <Exp:testExp> THEN <Exp:trueExp> ELSE <Exp:falseExp>
+<Exp:PrimappExp> ::= <Prim> LPAREN <Rands> RPAREN
+<Exp:LetExp>     ::= LET <LetDecls> IN <Exp>
+<Exp:LetrecExp>  ::= LETREC <LetDecls> IN <Exp>
+<Exp:ProcExp>    ::= <Proc>
+<Exp:AppExp>     ::= DOT <Exp> LPAREN <Rands> RPAREN
+<Exp:SeqExp>     ::= LBRACE <Exp> <SeqExps> RBRACE
+<Exp:SetExp>     ::= SET <Loc> <SYMBOL> EQUALS <Exp>
+<Exp:ListExp>    ::= LBRACK <Rands> RBRACK
+<Exp:ClassExp>   ::= <ClassDecl>
+<Exp:NilExp>     ::= NIL
+<Exp:NewExp>     ::= NEW <Exp>
+<Exp:EnvExp>     ::= LANGLE <Exp:vExp> RANGLE <Exp:eExp>
+<Exp:BangAtExp>  ::= BANGAT
+<Exp:AtExp>      ::= AT
+<Exp:AtAtExp>    ::= ATAT
+<Exp:DisplayExp> ::= DISPLAY <Exp>
+<Exp:Display1Exp> ::= DISPLAY1 <Exp>
+<Exp:NewlineExp> ::= NEWLINE
+<Exp:PutcExp>    ::= PUTC <Exp>
+<Exp:PutsExp>    ::= PUTS <Exp>
+# !<obj>msg1(rands1)>msg2(rands2)>msg3(rands3)...!>
+# is the same as .<.<.<obj>msg1(rands1)>msg2(rands2)>msg3(rands3) ...
+<Exp:EenvExp>    ::= LLANGLE <Exp> <Mangle> RRANGLE
+<Exp:ErrorExp>   ::= ERROR <Exp>
+<Exp:PerrorExp>  ::= PERROR <STRNG>
+<ClassDecl>      ::= CLASS <Ext> <Statics> <Fields> <Methods> END
+<Mangle>         **= RANGLE <Exp> LPAREN <Rands> RPAREN
+<Ext:Ext1>       ::= EXTENDS <Exp>
+<Ext:Ext0>       ::=
+<Loc:ObjLoc>     ::= LANGLE <Exp> RANGLE
+<Loc:SimpleLoc>  ::=
+<Statics>        **= STATIC <SYMBOL> EQUALS <Exp>
+<Fields>         **= FIELD <SYMBOL>
+<Methods>        **= METHOD <SYMBOL> EQUALS <Proc>
+<SeqExps>        **= SEMI <Exp>
+<Proc>           ::= PROC LPAREN <Formals> RPAREN <Exp>
+<Formals>        **= <SYMBOL> +COMMA
+<LetDecls>       **= <SYMBOL> EQUALS <Exp>
+<Rands>          **= <Exp> +COMMA
+<Prim:AddPrim>   ::= ADDOP
+<Prim:SubPrim>   ::= SUBOP
+<Prim:MulPrim>   ::= MULOP
+<Prim:DivPrim>   ::= DIVOP
+<Prim:Add1Prim>  ::= ADD1OP
+<Prim:Sub1Prim>  ::= SUB1OP
+<Prim:ZeropPrim> ::= ZEROP
+<Prim:NilpPrim>  ::= NILP
+<Prim:LTPrim>    ::= LTP
+<Prim:LEPrim>    ::= LEP
+<Prim:GTPrim>    ::= GTP
+<Prim:GEPrim>    ::= GEP
+<Prim:NEPrim>    ::= NEP
+<Prim:EQPrim>    ::= EQP
+<Prim:ObjectpPrim> ::= OBJECTP
+<Prim:ClasspPrim>  ::= CLASSP
+<Prim:ListpPrim>   ::= LISTP
+<Prim:LenPrim>     ::= LENOP
+<Prim:FirstPrim>   ::= FIRSTOP
+<Prim:RestPrim>    ::= RESTOP
+<Prim:AddListPrim> ::= ADDLISTOP
+<Prim:ShuttlePrim> ::= SHUTTLEOP
+<Prim:ReversePrim> ::= REVERSEOP
+<Prim:AppendPrim>  ::= APPENDOP

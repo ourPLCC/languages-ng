@@ -1,0 +1,5 @@
+define c = class static x = 7 static f = proc(t) *(2,t) end
+<c>x
+.<c>f(3)
+!<c>f(3)!>
+let y = 9 in <@>y

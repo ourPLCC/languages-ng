@@ -1,0 +1,6 @@
+define c = class field x method init = proc(v) {set <this>x = v ; self} method get = proc() x end
+define o = .<new c>init(5)
+.<o>get()
+object?(o)
+object?(5)
+class?(c)
