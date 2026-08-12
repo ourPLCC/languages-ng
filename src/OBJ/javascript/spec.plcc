@@ -1133,8 +1133,9 @@ AtAtExp
 %%%
 eval(env) {
     // Buffered, never printed -- see the Program block. The trailing "\n"
-    // reproduces System.out.println in src/OBJ/code:379-382: Env's own
-    // string already ends in a newline (EnvNull), so println emitted a
+    // reproduces System.out.println in old PLCC's src/OBJ/code:379-382
+    // (deleted in this migration; see git history before d572089): Env's
+    // own string already ends in a newline (EnvNull), so println emitted a
     // blank line after the dump. Dropping it would silently reflow the
     // output of every example that uses @@ (Prog/pobj, Prog/fig56). Do not
     // use console.log here: plcc-rep reserves stdout for its private JSON
