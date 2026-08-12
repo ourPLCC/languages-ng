@@ -8,7 +8,7 @@
   // Do not "fix" a stale container with `pipx upgrade plcc-ng`; that
   // defeats this pin. See
   // dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md
-  "image": "ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.1@sha256:a50898fdf863e9792d8a62d79d0f5f664a1e89634397f1498a7ccc0c29fc2d24",
+  "image": "ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.2@sha256:ebab585854e2c2dd5133db9616b398f6ede19702b514a5f4ace14757ae63dc9a",
   "features": {
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/devcontainers-extra/features/shellcheck:1": {}
