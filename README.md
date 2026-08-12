@@ -4,17 +4,16 @@ This repository contains languages implemented using PLCC.
 
 ## Run tests
 
-Test languages in your current environment. Requires PLCC and bats to be installed.
+Open this repository in its devcontainer (VS Code: "Dev Containers:
+Reopen in Container"), then:
 
 ```bash
 bin/test.bash
 ```
 
-Run tests in the same Docker container used in CI/CD. Requires Docker.
-
-```bash
-bin/test-using-pipeline-container.bash
-```
+CI runs the same suite in the same image, so a local pass predicts a CI
+pass. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development
+workflow.
 
 ---
 
