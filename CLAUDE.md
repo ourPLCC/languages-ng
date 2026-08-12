@@ -71,6 +71,30 @@ blocked because reality contradicts it, assume they are right until shown
 otherwise — that happened three times on issue #25 and they were correct
 every time.
 
+### Verifying a subagent's commits
+
+A subagent's reported SHA is not evidence of which branch the commit is
+on. When dispatching implementation agents while working in a git
+worktree, check that each commit actually landed on the intended branch
+before accepting a DONE report — `git branch --contains <sha>`, or
+`git log --oneline -1` in the worktree, not the SHA the agent hands back.
+
+On issue [#31](dev-docs/issues/031-suite-exhausts-disk-and-reports-spurious-failure.md)
+(2026-08-06), a subagent told "do NOT cd to the parent repo" did exactly
+that and committed to `main` in `/workspaces/languages-ng`. Its return
+looked completely normal — status DONE, a real SHA, a plausible summary.
+The commit was real; it was just on the wrong branch, and the worktree's
+HEAD had not moved. Nothing in the report could reveal this, since the SHA
+exists and resolves either way. Left undetected it would have merged a
+phantom commit into `main` and left the branch's history incomplete.
+
+Put the branch name in the dispatch prompt and require the agent to
+confirm `git branch --show-current` before committing, then verify it
+yourself afterward. Recovery is cheap when caught early: cherry-pick onto
+the correct branch, then `git reset --hard` the parent back to its prior
+commit — safe while unpushed, and it stays in the reflog — but confirm
+before resetting anyone's checkout.
+
 ## Course-material impact log
 
 Some changes made while porting a language don't just change internals —
