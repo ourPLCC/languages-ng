@@ -14,6 +14,8 @@
   `release.yaml` uses `codfish/semantic-release-action@v3`, whose repository GitHub suspended for a TOS violation on 2026-06-25; the runner cannot download it, so every push to `main` fails during *Prepare all required actions* before any step runs. Replace it with a direct `npx semantic-release` invocation, which needs no config change and removes the third-party-action failure class entirely.
 - **[#46](issues/046-release-notes-generator-not-loaded.md) — Every GitHub Release gets an empty body**
   `.releaserc.yaml`'s `plugins` key replaces semantic-release's default plugin list rather than extending it, so `@semantic-release/release-notes-generator` never loads, nothing implements `generateNotes`, and every Release is created with an empty body. One entry fixes it — worth doing before the next release, which covers the whole plcc-ng migration.
+- **[#48](issues/048-release-success-step-resolves-file-issue-refs.md) — Release fails in `success`: `#NNN` in commits means a file, not a GitHub issue**
+  `@semantic-release/github` reads `Closes #26` in a commit body as a GitHub issue number and fails with `NOT_FOUND`, but this project's issues are files and `#26` means `dev-docs/issues/026-*.md`; some references belong to other repositories entirely. The release publishes and then the run reports red. Fixed by turning off the plugin's issue and PR writes, which this project never used.
 
 ### Docs
 
