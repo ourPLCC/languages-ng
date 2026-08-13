@@ -24,6 +24,15 @@ worth carrying forward, put it where it belongs and commit it: an issue in
 [dev-docs/course-material-impact.md](dev-docs/course-material-impact.md),
 or a working convention in this file.
 
+## Read CONTRIBUTING.md
+
+[CONTRIBUTING.md](CONTRIBUTING.md) is required reading before making
+changes. It owns the development workflow — worktree, commit types,
+`bin/test.bash`, pull request, merge — and the `main` branch protection
+settings, which live in GitHub and have no other copy in this
+repository. Direct pushes to `main` are rejected; every change goes in
+through a pull request whose `Test Languages` check is green.
+
 ## Creating and closing issues
 
 Issue workflow conventions live in [dev-docs/issue-conventions.md](dev-docs/issue-conventions.md). The short version:
