@@ -10,6 +10,8 @@
   `bin/issues/new.bash --help` prints no usage: its guard only catches the zero-argument case, so `--help` becomes the slug, creating `NNN---help.md` and silently incrementing `.next-id.txt`. A defect in the one mechanism the repo's "never assign issue numbers by hand" convention rests on.
 - **[#42](issues/042-test-bash-75-minute-run-and-lost-implementers.md) — test.bash's 75-minute run, and two implementers lost mid-task**
   A `bin/test.bash` run reached a correct `EXIT=0, 186/186, ok 186` but took ~75 minutes against a normal ~2 minutes, with no root cause established; separately, two OBJ-migration implementer subagents were killed by infrastructure mid-task (an API spend limit, a stall watchdog) but both landed clean on verification. An observation, not a diagnosis — filed so the record survives the worktree being deleted, in case it recurs.
+- **[#45](issues/045-release-workflow-uses-blocked-action.md) — Release workflow depends on a TOS-blocked action**
+  `release.yaml` uses `codfish/semantic-release-action@v3`, whose repository GitHub suspended for a TOS violation on 2026-06-25; the runner cannot download it, so every push to `main` fails during *Prepare all required actions* before any step runs. Replace it with a direct `npx semantic-release` invocation, which needs no config change and removes the third-party-action failure class entirely.
 
 ### Docs
 
