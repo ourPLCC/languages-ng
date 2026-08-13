@@ -33,7 +33,7 @@ jobs:
         run: >
           npx --yes
           -p semantic-release@25
-          -p conventional-changelog-conventionalcommits
+          -p conventional-changelog-conventionalcommits@10
           semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

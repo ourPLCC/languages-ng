@@ -84,7 +84,7 @@ jobs:
         run: >
           npx --yes
           -p semantic-release@25
-          -p conventional-changelog-conventionalcommits
+          -p conventional-changelog-conventionalcommits@10
           semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -107,9 +107,15 @@ jobs:
   runner image.
 - **`-p semantic-release@25`** — a floating version would let a future
   major land unreviewed in the release path.
-- **`-p conventional-changelog-conventionalcommits`** — required by the
+- **`-p conventional-changelog-conventionalcommits@10`** — required by the
   `conventionalcommits` preset that `.releaserc.yaml` names. This is what
-  the action's `additional-packages` input supplied.
+  the action's `additional-packages` input supplied. Pinned to `@10` for
+  the same reason as `semantic-release@25`: it is the one component
+  `@semantic-release/commit-analyzer` loads by dynamic import with no
+  version constraint anywhere, so a floating version would let a future
+  major (it has shipped 8 → 9 → 10 recently) land unreviewed and surface
+  as a preset-load failure at `analyzeCommits` — a silently broken
+  release.
 - **`fetch-depth: 0` is retained** — semantic-release reads full history
   and tags to compute the next version.
 - **`id: semantic` is dropped** — nothing consumed the action's outputs.

@@ -59,11 +59,16 @@ Drop the third-party action and invoke semantic-release directly:
 
 ```yaml
       -
+        name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      -
         name: Tag
         run: >
           npx --yes
           -p semantic-release@25
-          -p conventional-changelog-conventionalcommits
+          -p conventional-changelog-conventionalcommits@10
           semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,14 +83,22 @@ from the action's semantic-release v22 era to v25; our config uses only
 `commit-analyzer` and `@semantic-release/github`, both stable across that
 range.
 
-Two adjacent gaps to close in the same change:
+Three adjacent gaps to close in the same change:
 
 - **`permissions:`** is absent from `release.yaml`, so the job depends on
-  the repository's default `GITHUB_TOKEN` scope.
-  `@semantic-release/github` needs `contents: write`; declare it
-  explicitly.
+  the repository's default `GITHUB_TOKEN` scope. Declare `contents:
+  write`, `issues: write`, and `pull-requests: write` explicitly.
+  `@semantic-release/github` needs `contents: write` to create the tag
+  and Release; it also needs `issues: write` and `pull-requests: write`
+  because its default `successComment` and `released` label hit both
+  issue and pull-request resources, which GitHub scopes separately by
+  target type.
 - **No `workflow_dispatch`.** A failed release can currently only be
   retried by pushing another commit to `main`.
+- **No pinned Node version.** `semantic-release@25` declares
+  `engines.node = "^22.14.0 || >= 24.10.0"`; the runner's ambient Node is
+  not guaranteed to satisfy that. Add an `actions/setup-node@v4` step
+  pinning `node-version: '24'` before the `Tag` step.
 
 ### Why not the alternatives
 
@@ -109,6 +122,23 @@ this repository has no Python packaging; adopting it would mean adding a
 exists mostly to publish a wheel to PyPI — work this repository has no
 equivalent of. It avoided this outage by coincidence of timing, not by
 a design choice we should copy.
+
+### What to expect from the first release run
+
+The last tag is `v1.0.2` (2024-03-29). The range since then holds roughly
+50 `feat:` commits and 8 `fix:` commits, so the first green run cuts a
+single `v1.1.0` covering the entire plcc-ng migration — a large version
+jump is expected, not a sign of a misconfigured run.
+
+`.releaserc.yaml`'s `plugins` list replaces semantic-release's default
+plugin list rather than extending it, so
+`@semantic-release/release-notes-generator` is not loaded, `generateNotes`
+produces nothing, and the GitHub Release body will be empty. This is
+pre-existing configuration, not something this change caused, and fixing
+it is out of scope here — it is worth its own issue.
+
+`@semantic-release/github` will post "included in version 1.1.0" comments
+and add `released` labels across the associated older pull requests.
 
 ### Closing this issue
 
