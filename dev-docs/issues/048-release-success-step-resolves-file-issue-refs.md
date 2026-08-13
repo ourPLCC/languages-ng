@@ -2,7 +2,7 @@
 type: chore
 target: this repo
 opened: 2026-08-13
-closed:
+closed: 2026-08-13
 ---
 
 # 048 - Release fails in `success`: `#NNN` in commits means a file, not a GitHub issue
@@ -132,3 +132,39 @@ already written, it asks every contributor to remember a rule that only
 matters to a plugin, and `git log` would no longer read naturally.
 Configuring the plugin fixes it once, at the boundary where the two
 numbering spaces actually meet.
+
+### Verified
+
+Closed on verification (see
+[issue-conventions.md](../issue-conventions.md)), since only a real
+release run could prove it.
+
+The `Release` run for `f8640dd` — the merge of PR #12, which carried the
+fix — completed with conclusion `success`
+([run 31724349715](https://github.com/ourPLCC/languages-ng/actions/runs/31724349715)).
+No `NOT_FOUND` errors, and the workflow finished green for the first time
+in its recent history:
+
+```
+17:10 UTC  f8640dd  success   <- the fix
+14:42 UTC  9e4dc6a  failure   <- this issue's defect
+01:04 UTC  75482e8  failure   <- #45's defect
+```
+
+That run cut no new version, correctly: PR #12 carried only `chore` and
+`docs` commits, which do not bump under conventionalcommits. So the run
+exercised the `success` step without a release to comment about.
+
+That is weaker evidence than a release run would be, and worth being
+precise about. What it proves is that nothing in the changed
+configuration breaks the workflow. What closes this issue is the
+mechanism rather than the observation:
+`successCommentCondition: false` takes a branch in the plugin's
+`success.js` that logs "Skip commenting on issues and pull requests" and
+returns before any GraphQL query is built, so there is no path left on
+which the `NOT_FOUND` errors can be raised — with or without commits in
+the release.
+
+[#46](046-release-notes-generator-not-loaded.md) stays open: it needs a
+`feat` or `fix` to reach `main` and actually cut a version before its
+release body can be inspected.

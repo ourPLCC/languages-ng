@@ -11,9 +11,7 @@
 - **[#42](issues/042-test-bash-75-minute-run-and-lost-implementers.md) — test.bash's 75-minute run, and two implementers lost mid-task**
   A `bin/test.bash` run reached a correct `EXIT=0, 186/186, ok 186` but took ~75 minutes against a normal ~2 minutes, with no root cause established; separately, two OBJ-migration implementer subagents were killed by infrastructure mid-task (an API spend limit, a stall watchdog) but both landed clean on verification. An observation, not a diagnosis — filed so the record survives the worktree being deleted, in case it recurs.
 - **[#46](issues/046-release-notes-generator-not-loaded.md) — Every GitHub Release gets an empty body**
-  `.releaserc.yaml`'s `plugins` key replaces semantic-release's default plugin list rather than extending it, so `@semantic-release/release-notes-generator` never loads, nothing implements `generateNotes`, and every Release is created with an empty body. One entry fixes it — worth doing before the next release, which covers the whole plcc-ng migration.
-- **[#48](issues/048-release-success-step-resolves-file-issue-refs.md) — Release fails in `success`: `#NNN` in commits means a file, not a GitHub issue**
-  `@semantic-release/github` reads `Closes #26` in a commit body as a GitHub issue number and fails with `NOT_FOUND`, but this project's issues are files and `#26` means `dev-docs/issues/026-*.md`; some references belong to other repositories entirely. The release publishes and then the run reports red. Fixed by turning off the plugin's issue and PR writes, which this project never used.
+  `.releaserc.yaml`'s `plugins` key replaces semantic-release's default plugin list rather than extending it, so `@semantic-release/release-notes-generator` never loads, nothing implements `generateNotes`, and every Release is created with an empty body. The plugin entry is merged as of PR #12; the issue stays open awaiting verification, which needs a `feat` or `fix` to reach `main` and actually cut a version whose body can be inspected.
 
 ### Docs
 
