@@ -51,6 +51,33 @@ grep -L '^closed: [0-9]' dev-docs/issues/[0-9]*.md   # open issues
 The id and slug live in the filename and the title in the `#` heading;
 they are deliberately not duplicated into the frontmatter.
 
+## Listing open issues
+
+[bin/issues/list.bash](../bin/issues/list.bash) prints the path of every
+open issue, one per line, in id order — the second `grep` above, with the
+guards that make it safe to build on:
+
+```bash
+$ bin/issues/list.bash
+dev-docs/issues/016-cross-target-integer-divergence.md
+dev-docs/issues/019-python-recursion-ceiling.md
+...
+```
+
+Paths only, so the output composes with anything that takes file
+arguments. `head` supplies its own `==> path <==` banner, which is why
+the script has no verbose mode of its own:
+
+```bash
+bin/issues/list.bash | xargs head -n 15      # frontmatter and title of each
+bin/issues/list.bash | xargs grep -l readline
+```
+
+Paths are relative to the root of the tree the script lives in, which is
+also where it runs. To list a worktree's open issues, run that worktree's
+copy from that worktree — the answer differs per worktree, since a branch
+can open or close issues.
+
 ## The `target` field
 
 Every issue's frontmatter names a `target` — the repository the issue is
