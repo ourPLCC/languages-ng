@@ -8,6 +8,12 @@ branches:
 
 plugins:
     # Order matters.
+    #
+    # This list REPLACES semantic-release's default plugin list rather than
+    # extending it (lib/get-config.js spreads the defaults, then spreads
+    # these over them), so every plugin the release needs must appear here.
+    # @semantic-release/npm is deliberately absent: this project publishes
+    # no package.
 
     - - "@semantic-release/commit-analyzer"
       # Analyzes the commit messages since the last release
@@ -15,5 +21,30 @@ plugins:
       # Populates ${nextRelease.version} among other variables.
       - preset: conventionalcommits
 
+    - - "@semantic-release/release-notes-generator"
+      # Renders ${nextRelease.notes} from those same commits. Without it
+      # nothing implements generateNotes and every release body is empty
+      # -- see dev-docs/issues/046-release-notes-generator-not-loaded.md.
+      # The preset must match commit-analyzer's, or the notes would be
+      # grouped by Angular's conventions while the version was computed
+      # by conventionalcommits'.
+      - preset: conventionalcommits
+
     - - "@semantic-release/github"
       # Creates GitHub release entry and uploads specified assets.
+      #
+      # Both writes to issues and pull requests are off. This project
+      # tracks issues as files under dev-docs/issues/ and refers to them
+      # in commit messages with the same #NNN syntax GitHub uses for its
+      # own issues, so the plugin resolves "Closes #26" against GitHub's
+      # numbering and fails the run with NOT_FOUND -- see
+      # dev-docs/issues/048-release-success-step-resolves-file-issue-refs.md.
+      #
+      # successCommentCondition takes an early branch that skips the
+      # GraphQL lookups entirely. failCommentCondition suppresses the
+      # "automated release is failing" issue the plugin would otherwise
+      # open here. Prefer these over successComment/failComment/failTitle
+      # false, which the plugin marks deprecated for removal in a future
+      # major.
+      - successCommentCondition: false
+        failCommentCondition: false
