@@ -125,3 +125,13 @@ Upstream notes these are protocol changes touching every target runtime
 `_wait_for_ready`'s existing `ready` record is the precedent for a
 non-`result` kind on the same channel. This issue stays open while OBJ's
 buffering workaround and `exit`'s status-code divergence live in `src/`.
+
+**Upstream status, checked 2026-08-13** against `ourPLCC/plcc-ng` at
+`48fb1a5` (v2.0.2): #187 is still open — in `dev-docs/issues/`, not
+`done/` — and no branch is working it. This is the one whose arrival
+unblocks local work: the revert of OBJ's `Program.out` buffering, the
+restoration of `exit`'s clean exit status, and the removal of both
+caveats from [course-material-impact.md](../course-material-impact.md)
+under `## OBJ`. Issue [#006](006-multi-capture-alt-name-case-mismatch.md)
+is the model — workaround ships, upstream fixes the root cause, workaround
+is reverted with an impact-log note.

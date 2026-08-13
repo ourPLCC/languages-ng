@@ -2,7 +2,7 @@
 type: docs
 target: ourPLCC/plcc-ng
 opened: 2026-08-03
-closed:
+closed: 2026-08-13
 ---
 
 # 022 - plcc-rep-parses-each-source-independently
@@ -66,6 +66,24 @@ are reported upstream manually, with explicit go-ahead.
 settled on and `SourceRunner` applies it to `plcc-scan`, `plcc-parse`, and
 `plcc-rep` alike, so the fix there is a migration-guide entry rather than a
 behavior change — with the question of whether `plcc-rep` specifically
-should join its sources left open on top of that. This issue stays open
-until that lands and V6's two-file `Prog/p1` + `Prog/p2` example either
-works or is documented as needing `cat`.
+should join its sources left open on top of that.
+
+**Closed 2026-08-13 with upstream #185 still open.** The condition written
+above was that this issue stays open until upstream lands *and* V6's
+two-file `Prog/p1` + `Prog/p2` example either works or is documented as
+needing `cat`. The second half is already satisfied — the entry is in
+[course-material-impact.md](../course-material-impact.md) under `## V6`,
+naming this issue — and the first half is not work in this repository. No
+change to `src/` is pending, no workaround is carried, and the one course
+example affected reads correctly today with `cat Prog/p1 Prog/p2 |
+plcc-rep`, which still yields `7`. What remains is a documentation task in
+someone else's tracker, so tracking it as an open issue here overstated
+what was outstanding.
+
+Upstream status verified 2026-08-13 against `ourPLCC/plcc-ng` at `48fb1a5`
+(v2.0.2): #185 is still in `dev-docs/issues/` rather than
+`dev-docs/issues/done/`, still listed under Open Issues in that repo's
+roadmap, with no branch working it. If upstream later decides `plcc-rep`
+*should* join its sources after all, that is a behavior change arriving
+through a plcc-ng release, and the V6 entry in the impact log is what needs
+revisiting — file a fresh issue then rather than reopening this one.
