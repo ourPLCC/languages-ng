@@ -8,10 +8,12 @@ on:
       - main
   workflow_dispatch:
 
+# contents: write creates the tag and the Release. Nothing else is needed:
+# .releaserc.yaml turns off @semantic-release/github's writes to issues and
+# pull requests, so the issues/pull-requests scopes this job used to hold
+# would now grant more than it can use.
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
 
 jobs:
   release:
