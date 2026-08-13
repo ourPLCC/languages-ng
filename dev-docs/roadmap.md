@@ -12,6 +12,8 @@
   A `bin/test.bash` run reached a correct `EXIT=0, 186/186, ok 186` but took ~75 minutes against a normal ~2 minutes, with no root cause established; separately, two OBJ-migration implementer subagents were killed by infrastructure mid-task (an API spend limit, a stall watchdog) but both landed clean on verification. An observation, not a diagnosis — filed so the record survives the worktree being deleted, in case it recurs.
 - **[#46](issues/046-release-notes-generator-not-loaded.md) — Every GitHub Release gets an empty body**
   `.releaserc.yaml`'s `plugins` key replaces semantic-release's default plugin list rather than extending it, so `@semantic-release/release-notes-generator` never loads, nothing implements `generateNotes`, and every Release is created with an empty body. The plugin entry is merged as of PR #12; the issue stays open awaiting verification, which needs a `feat` or `fix` to reach `main` and actually cut a version whose body can be inspected.
+- **[#49](issues/049-retire-roadmap-open-issues-section.md) — retire the roadmap's Open Issues section**
+  Every open issue is recorded twice — as a file whose `closed:` field is empty, and as a hand-maintained entry in this section — so unrelated parallel branches collide here whenever they file or close anything, and `close.bash` and `check.bash` both carry machinery that exists only to keep the copy in sync. `bin/issues/list.bash` now derives the same list from the issue files. The open question is where the entries' one-line summaries go, since that prose lives nowhere else; the milestone sections are authored content and stay.
 
 ### Docs
 
