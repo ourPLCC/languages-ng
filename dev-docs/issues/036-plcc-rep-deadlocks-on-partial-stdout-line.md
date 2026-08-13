@@ -92,3 +92,12 @@ splits the work: `_read_response` must stop treating an unbounded
 stdout directly, while the wider fix is upstream #187's output record kind.
 This issue stays open while OBJ's `Program.out` buffering workaround lives
 in `src/`.
+
+**Upstream status, checked 2026-08-13** against `ourPLCC/plcc-ng` at
+`48fb1a5` (v2.0.2): #186 is still open — in `dev-docs/issues/`, not
+`done/` — and no branch is working it. Note that upstream split the report:
+#186 (the bounded-read fix) does not depend on #187 (the record kinds) and
+is much the smaller change, so it can land first. If it does, the failure
+mode improves from a silent hang to a diagnostic, which is most of the
+classroom benefit — but it would **not** let OBJ drop its buffering
+workaround. Only #187 does that. Treat the two as separate arrivals.
