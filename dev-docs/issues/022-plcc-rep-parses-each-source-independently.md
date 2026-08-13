@@ -2,7 +2,7 @@
 type: docs
 target: ourPLCC/plcc-ng
 opened: 2026-08-03
-closed:
+closed: 2026-08-13
 ---
 
 # 022 - plcc-rep-parses-each-source-independently
