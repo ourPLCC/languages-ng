@@ -12,6 +12,8 @@
   A `bin/test.bash` run reached a correct `EXIT=0, 186/186, ok 186` but took ~75 minutes against a normal ~2 minutes, with no root cause established; separately, two OBJ-migration implementer subagents were killed by infrastructure mid-task (an API spend limit, a stall watchdog) but both landed clean on verification. An observation, not a diagnosis — filed so the record survives the worktree being deleted, in case it recurs.
 - **[#45](issues/045-release-workflow-uses-blocked-action.md) — Release workflow depends on a TOS-blocked action**
   `release.yaml` uses `codfish/semantic-release-action@v3`, whose repository GitHub suspended for a TOS violation on 2026-06-25; the runner cannot download it, so every push to `main` fails during *Prepare all required actions* before any step runs. Replace it with a direct `npx semantic-release` invocation, which needs no config change and removes the third-party-action failure class entirely.
+- **[#46](issues/046-release-notes-generator-not-loaded.md) — Every GitHub Release gets an empty body**
+  `.releaserc.yaml`'s `plugins` key replaces semantic-release's default plugin list rather than extending it, so `@semantic-release/release-notes-generator` never loads, nothing implements `generateNotes`, and every Release is created with an empty body. One entry fixes it — worth doing before the next release, which covers the whole plcc-ng migration.
 
 ### Docs
 
