@@ -2,7 +2,7 @@
 type: chore
 target: this repo
 opened: 2026-08-13
-closed:
+closed: 2026-08-13
 ---
 
 # 045 - Release workflow depends on a TOS-blocked action
@@ -92,7 +92,10 @@ Three adjacent gaps to close in the same change:
   and Release; it also needs `issues: write` and `pull-requests: write`
   because its default `successComment` and `released` label hit both
   issue and pull-request resources, which GitHub scopes separately by
-  target type.
+  target type. *(Superseded by
+  [#48](048-release-success-step-resolves-file-issue-refs.md): those
+  writes are now off, and the workflow holds `contents: write` alone.
+  Do not restore the extra scopes from this snippet.)*
 - **No `workflow_dispatch`.** A failed release can currently only be
   retried by pushing another commit to `main`.
 - **No pinned Node version.** `semantic-release@25` declares
@@ -146,3 +149,31 @@ This is a "close on verification" case (see
 [issue-conventions.md](../issue-conventions.md)): the fix can only be
 proven by a real release run on `main` after the merge. Merge without
 closing, then close in a follow-up commit once a `Release` run is green.
+
+**Verified 2026-08-13.** The run triggered by merging PR #11 downloaded
+both actions, ran Node, analyzed 367 commits, and reached the end of
+`publish`:
+
+```
+✔  Created tag v1.0.0
+ℹ  Published GitHub release: .../releases/tag/v1.0.0
+✔  Completed step "publish" of plugin "@semantic-release/github"
+```
+
+`Repository access blocked` did not recur, and the workflow got past
+*Prepare all required actions* — the step it had been dying in. That is
+this issue's defect, and it is gone.
+
+The same run then failed in the post-publish `success` step for an
+unrelated reason, filed as
+[#48](048-release-success-step-resolves-file-issue-refs.md). The empty
+release body predicted above is [#46](046-release-notes-generator-not-loaded.md).
+Neither is a regression of this fix, so neither holds this issue open.
+
+Two predictions in this issue were wrong, recorded here rather than
+edited away. The first release was `v1.0.0`, not `v1.1.0`: the remote had
+no tags at all, so semantic-release found no previous release and started
+over. The `v1.0.0`/`v1.0.1`/`v1.0.2` tags this issue reasoned from existed
+only in old local clones — residue from the original `languages`
+repository, never pushed to this remote. They have since been deleted
+locally, and `v1.0.0` now means the 2026-08-13 release everywhere.
