@@ -2,7 +2,7 @@
 type: chore
 target: this repo
 opened: 2026-08-13
-closed:
+closed: 2026-08-14
 ---
 
 # 049 - retire the roadmap's Open Issues section
@@ -97,3 +97,19 @@ that issue's Notes — the unescaped `sed` BRE, the `[[ ... ]] && usage` form,
 the raw arithmetic error on a non-numeric id, and staging before `check.bash`
 runs — are about argument handling and staging, and survive this change
 untouched. Whoever does this work should re-scope #20 rather than close it.
+
+**Resolved.** Design in
+[dev-docs/specs/2026-08-14-retire-roadmap-design.md](../specs/2026-08-14-retire-roadmap-design.md),
+plan in [dev-docs/plans/2026-08-14-retire-roadmap.md](../plans/2026-08-14-retire-roadmap.md).
+
+Two things turned out differently than this issue assumed. `roadmap.md`
+had no milestone sections at all — all 52 lines were the Open Issues
+section — so the file was deleted outright and the milestone convention
+retired with it, rather than the section being trimmed out of a surviving
+document. And of the four #20 sweep-up items named above, only three
+survive: the unescaped `sed` BRE was in the milestone-checkbox pass, which
+this change also deleted.
+
+The summaries went to a required `## Summary` body section on every open
+issue, not to a `summary:` frontmatter key — the prose runs 40-70 words,
+which as a flat scalar would be one unwrapped line with whole-line diffs.

@@ -2,7 +2,7 @@
 type: docs
 target: this repo
 opened: 2026-08-13
-closed:
+closed: 2026-08-14
 ---
 
 # 047 - issue-conventions.md credits a CHANGELOG.md that does not exist
@@ -66,3 +66,15 @@ protection consequence is already known rather than rediscovered.
 Found while working [#45](045-release-workflow-uses-blocked-action.md).
 Pre-existing and unrelated to that change, so it was filed separately
 rather than folded in.
+
+**Resolved by [#49](049-retire-roadmap-open-issues-section.md).** That
+change deleted `issue-conventions.md`'s "The roadmap" section outright,
+and the false sentence with it — option 1 above, taken to its limit: the
+claim was not corrected, it was removed along with the rule it justified.
+The roadmap itself no longer exists, so "do not duplicate shipped history
+in the roadmap" has no subject left to govern.
+
+Option 2 was not taken. Its cost analysis stands as written, should a
+committed changelog ever be proposed again: `@semantic-release/changelog`
+needs `@semantic-release/git`, which makes semantic-release push commits
+to `main` and forces the branch ruleset to be revisited.
