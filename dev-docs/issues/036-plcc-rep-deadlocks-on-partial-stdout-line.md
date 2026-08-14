@@ -1,6 +1,7 @@
 ---
 type: chore
 target: ourPLCC/plcc-ng
+upstream: ourPLCC/plcc-ng 186-rep-deadlocks-on-partial-stdout-line.md
 opened: 2026-08-11
 closed:
 ---

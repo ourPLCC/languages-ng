@@ -99,3 +99,12 @@ divergence than exists today, and one no test would catch. Fix both sites
 in Python **and** the corresponding Java/JavaScript sites in the same
 change, then add a case to `tests/strings-chars/` covering a negative code
 and one above 0xFFFF — those two inputs are what would have caught this.
+
+**This defect straddles two repositories.** The 16-bit truncation in Java
+and JavaScript is this repo's — it is the `(char)` cast and
+`String.fromCharCode` in the specs above, and the fix is local. But
+Python's `ValueError` escaping as a session-fatal "Specification error" is
+plcc-ng's error handling: the string appears nowhere in `src/**/*.plcc`.
+Per "Upstream defects" in [issue-conventions.md](../issue-conventions.md),
+the local half stays here and the upstream half is reported separately;
+this issue keeps `target: this repo` because its fix is local.
