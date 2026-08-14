@@ -1,6 +1,6 @@
 # Upstream issue tracking: local issues track local work
 
-**Issue:** [#50](../issues/050-upstream-issues-track-local-work-only.md)
+**Issue:** [#52](../issues/052-upstream-issues-track-local-work-only.md)
 **Date:** 2026-08-14
 
 Extends [Issue status as frontmatter, not
@@ -160,12 +160,33 @@ own decision.
 | File | Change |
 |---|---|
 | [issue-conventions.md](../issue-conventions.md) | Replace §"The `target` field" with §"Upstream defects": the principle, the three cases, the field format, the never-cache rule. Preserve the existing "reported upstream manually, with explicit go-ahead" norm. |
-| [issues/TEMPLATE.md](../issues/TEMPLATE.md) | Add `upstream:` with an explanatory comment. |
-| [bin/issues/check.bash](../../bin/issues/check.bash) | Validate `upstream:` **when present and non-empty**: each comma-separated ref is `owner/repo` plus a filename. Never required, so no backfill across the 42 local issues. |
-| `bin/tests/issues-check.bats` | Coverage for the validation, including a malformed ref and the absent-field case. |
+| [issues/TEMPLATE.md](../issues/TEMPLATE.md) | Add the `upstream:` key, plus a **one-line** pointer to §"Upstream defects" in the comment block — not a full explanation. See *The TEMPLATE.md comment block* below. |
+| [bin/issues/check.bash](../../bin/issues/check.bash) | Validate `upstream:` **when present and non-empty**: each comma-separated ref is `owner/repo` plus a filename. Never required, so no backfill across the local issues. Slots in after the existing `for key in type target opened closed` loop. |
+| [bin/tests/issues-check.bats](../../bin/tests/issues-check.bats) | Extend (the file now exists, added by #49) with coverage for a malformed ref and the absent-field case. |
 | `src/OBJ/{python,java,javascript}/spec.plcc` | Reattribute the `Program.out` buffering comment to #37. |
 
 `bin/issues/new.bash` needs no change — it copies the template.
+
+### The TEMPLATE.md comment block
+
+Issue [#50](../issues/050-head-idiom-coupled-to-template-comment.md)
+records that four documents promise `bin/issues/list.bash | xargs head -n
+50` shows an issue's frontmatter, title, and summary — and that the number
+holds only while TEMPLATE.md's HTML comment block stays its current
+length, because the comment sits between the `#` title and `## Summary`.
+It drifted three times during #49 and nothing detects the next drift.
+
+Explaining `upstream:` at the same length as `type`, `target`, and
+`closed` would add roughly six lines and be that fourth drift. So the
+template gets a **one-line pointer** to §"Upstream defects" instead, and
+the full explanation lives in
+[issue-conventions.md](../issue-conventions.md), which is already the
+authoritative home for the upstream rules.
+
+Measured: `## Summary` sits at TEMPLATE.md line 34 today, so one added
+line puts it at 35 — comfortably inside the documented 50, with 15 lines
+of summary room left. Recorded here so the count is traceable rather than
+silently absorbed.
 
 The `src/` edits are comments only: type `docs`, no version bump, and no
 [course-material-impact.md](../course-material-impact.md) entry, since
@@ -201,19 +222,38 @@ is local. Reporting the wording upstream needs the reporter's go-ahead.
 2. `chore(issues)` — `check.bash` validation + bats coverage
 3. `docs(obj)` — reattribute the buffering comments in the three specs
 4. `docs(issues)` — data fixes to #37, #22, #39; then close #36 via
-   `bin/issues/close.bash 36`, which fills its `closed:` date and removes
-   its roadmap entry
-5. `docs(issues): close issue 50 …` — final commit, via `close.bash 50`
+   `bin/issues/close.bash 36`, which fills in its `closed:` date
+5. `docs(issues): close issue 52 …` — final commit, via `close.bash 52`
 
 Two issues close on this branch. #36 closes as *work product* — case A2
-applied to it is part of the change — while #50 closes last as the
+applied to it is part of the change — while #52 closes last as the
 branch's own bookkeeping, per
 [issue-conventions.md](../issue-conventions.md).
 
-## Interaction with #49
+## What #49 changed under this design
 
-[#49](../issues/049-retire-roadmap-open-issues-section.md) retires the
-roadmap's Open Issues section. Closing #36 and #50 both edit that section
-via `close.bash`, so the two touch the same machinery. They do not
-conflict, but landing #49 first would remove the roadmap churn from this
-branch entirely. Sequencing is a deliberate choice, not a blocker.
+[#49](../issues/049-retire-roadmap-open-issues-section.md) landed on
+`main` while this spec was being written, and it settled three things this
+design had treated as open.
+
+**`dev-docs/roadmap.md` is deleted.** Filing an issue no longer adds a
+roadmap entry, and `close.bash` no longer removes one. Every step in
+*Commit sequence* that mentioned roadmap churn is simply gone, and the
+sequencing question this section used to pose — whether to land #49 first
+— answered itself.
+
+**Every open issue now carries a required `## Summary`.** `check.bash`
+fails an open issue without a non-empty one, so the triage prose that
+lived in the roadmap now lives in the issue. Any issue this design edits
+keeps its summary current; #36, which this design closes, does not need
+one after closing, and its existing summary is left in place.
+
+**`bin/tests/issues-check.bats` now exists.** The validation coverage in
+*Changes* extends that file rather than creating it.
+
+One collision was resolved in the merge: `main` filed its own #50 and #51
+for work deferred out of #49's review, so this design's issue was
+renumbered from #50 to **#52**. The two #50s were different issues with
+different slugs, so nothing conflicted at the file level and both would
+have merged silently — worth noting as the failure mode of a hand-managed
+ID counter across parallel branches.
