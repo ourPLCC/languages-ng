@@ -2,7 +2,7 @@
 type: docs
 target: this repo
 opened: 2026-08-14
-closed:
+closed: 2026-08-14
 ---
 
 # 052 - upstream-targeted issues should track local work, not upstream status
