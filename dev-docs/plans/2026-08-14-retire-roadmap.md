@@ -971,8 +971,8 @@ leaving the idiom broken.
 > anticipate — `TEMPLATE.md`'s `## Summary` heading sits at line 34 in
 > what `new.bash` produces today, seven lines lower than when this number
 > was first chosen, so `## Description` lands at line 37 plus the
-> summary's own line count. The longest existing summary (9 lines) pushes
-> it to line 46, past 40. The number was raised again, to `head -n 50`, in
+> summary's own line count. The longest existing summary (8 lines) pushes
+> it to line 45, past 40. The number was raised again, to `head -n 50`, in
 > the final pre-PR fix pass, measured against `new.bash`'s current output
 > rather than the legacy issue files.
 

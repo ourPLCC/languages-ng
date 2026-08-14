@@ -75,8 +75,8 @@ line" shape. It also falls inside `head -n 20`, so the documented
 > noticed that `TEMPLATE.md` had grown by seven lines earlier on this same
 > branch — moving a freshly filed issue's `## Summary` down to line 34 and
 > `## Description` to line 37 plus the summary's own line count — 40 also
-> proved too small for the longest existing summary (9 lines, landing
-> `## Description` at line 46). The number had to be measured against what
+> proved too small for the longest existing summary (8 lines, landing
+> `## Description` at line 45). The number had to be measured against what
 > `new.bash` produces today, not against the legacy files this section
 > reasoned from. It shipped as `head -n 50`, which reaches a 13-line
 > summary. The other two mentions below carry the same correction; see
