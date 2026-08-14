@@ -5,7 +5,7 @@ opened: 2026-08-13
 closed:
 ---
 
-# 044 - relocate-swallows-git-failure-reason
+# 044 - relocate swallows git's reason for refusing a checkout
 
 <!--
 `type` is a conventional commit type: fix, feat, refactor, perf, docs,
@@ -23,6 +23,16 @@ the defect is there rather than in this repo's own src/.
 
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
+
+## Summary
+
+`relocate_copy_tree`'s opening guard sends git's stderr to `/dev/null` and
+replaces it with "is not in a git checkout", which is the least likely of
+the reasons `rev-parse --git-dir` can fail under `src/`. It cost a CI
+round-trip on issue #12: all 165 language tests failed against a perfectly
+good checkout that git was refusing as dubious ownership, and git's own
+message naming the `safe.directory` remedy had been discarded. Same shape as
+#28.
 
 ## Description
 

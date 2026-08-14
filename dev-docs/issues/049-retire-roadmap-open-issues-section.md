@@ -7,6 +7,17 @@ closed:
 
 # 049 - retire the roadmap's Open Issues section
 
+## Summary
+
+Every open issue is recorded twice — as a file whose `closed:` field is
+empty, and as a hand-maintained entry in this section — so unrelated
+parallel branches collide here whenever they file or close anything, and
+`close.bash` and `check.bash` both carry machinery that exists only to keep
+the copy in sync. `bin/issues/list.bash` now derives the same list from the
+issue files. The open question is where the entries' one-line summaries go,
+since that prose lives nowhere else; the milestone sections are authored
+content and stay.
+
 ## Description
 
 Every open issue is recorded twice: once as a file in

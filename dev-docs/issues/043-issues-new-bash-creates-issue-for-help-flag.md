@@ -24,6 +24,13 @@ the defect is there rather than in this repo's own src/.
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
 
+## Summary
+
+`bin/issues/new.bash --help` prints no usage: its guard only catches the
+zero-argument case, so `--help` becomes the slug, creating `NNN---help.md`
+and silently incrementing `.next-id.txt`. A defect in the one mechanism the
+repo's "never assign issue numbers by hand" convention rests on.
+
 ## Description
 
 `bin/issues/new.bash --help` does not print usage. It creates an issue

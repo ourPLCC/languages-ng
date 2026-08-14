@@ -5,7 +5,7 @@ opened: 2026-07-31
 closed:
 ---
 
-# 019 - python-recursion-ceiling
+# 019 - Python recursion ceiling far below Java/JavaScript
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".
@@ -16,6 +16,15 @@ not user-facing — classify it `test` or `chore` instead so it doesn't
 spin the version. `docs` is for documentation content, and never bumps
 the version either way.
 -->
+
+## Summary
+
+Direct language-level recursion (`letrec f = proc(x) ... .f(sub1(x)) ... in
+.f(N)`) dies in Python around `N=330` but survives past `N=2700` in Java and
+JavaScript, since each language-level call costs several Python interpreter
+frames; the Python failure also mislabels the cause as a specification
+error. Inherited from V0/V4, not a V5 defect, but `letrec` makes deep
+recursion the natural thing to write.
 
 ## Description
 

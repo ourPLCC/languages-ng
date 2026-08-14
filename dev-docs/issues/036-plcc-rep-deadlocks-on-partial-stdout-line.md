@@ -24,6 +24,14 @@ the defect is there rather than in this repo's own src/.
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
 
+## Summary
+
+A semantic action that writes a partial line (no trailing newline) to stdout
+deadlocks `plcc-rep` with no diagnostic: the merged partial+result line is
+unparseable JSON, destroying the result record before `readline()` blocks
+forever. Measured in Python and JavaScript, via stdin and via a SOURCE file:
+exit 124, no output, no error.
+
 ## Description
 
 A semantic action that writes a partial line (no trailing newline) to

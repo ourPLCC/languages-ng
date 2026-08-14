@@ -7,6 +7,15 @@ closed:
 
 # 020 - close.bash's roadmap awk has two dormant edge cases
 
+## Summary
+
+The `END` block collapses blank-line runs across the whole roadmap rather
+than just the removed entry's span, and the bullet-removal skip state ends
+on a blank line, so a multi-paragraph Open Issues entry would leave an
+orphaned fragment. Both predate #18 and were inherited verbatim by its
+rewrite; neither fires against the roadmap's current shape, where every
+entry is a bullet plus one indented continuation line.
+
 ## Description
 
 The roadmap-editing `awk` in [bin/issues/close.bash](../../bin/issues/close.bash)
