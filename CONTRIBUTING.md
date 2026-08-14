@@ -43,7 +43,7 @@ bats. Do not install toolchain pieces by hand — see the warning in
 | [bin/issues/new.bash](bin/issues/new.bash) | Create an issue. Never assign issue numbers by hand. |
 | [bin/issues/close.bash](bin/issues/close.bash) | Close an issue, as the final commit of the branch that does the work. |
 | [bin/issues/check.bash](bin/issues/check.bash) | Verify issue-file consistency. |
-| [bin/issues/list.bash](bin/issues/list.bash) | Print the path of every open issue, one per line. Pipe it: `\| xargs head -n 40`. |
+| [bin/issues/list.bash](bin/issues/list.bash) | Print the path of every open issue, one per line. Pipe it: `\| xargs head -n 50`. |
 
 ## Continuous integration
 

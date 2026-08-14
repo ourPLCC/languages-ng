@@ -68,6 +68,20 @@ normally wrapped, with readable diffs, instead of becoming one unwrapped
 line" shape. It also falls inside `head -n 20`, so the documented
 `list.bash | xargs head` idiom surfaces it with no new tooling.
 
+> **Amended 2026-08-14, mid-execution.** `head -n 20` was wrong even
+> against the issue files as they stood when this was written: the
+> deepest `## Description` among them was already at line 38, past where
+> 20 lines reaches. It shipped as `head -n 40` instead. Then, once it was
+> noticed that `TEMPLATE.md` had grown by seven lines earlier on this same
+> branch — moving a freshly filed issue's `## Summary` down to line 34 and
+> `## Description` to line 37 plus the summary's own line count — 40 also
+> proved too small for the longest existing summary (9 lines, landing
+> `## Description` at line 46). The number had to be measured against what
+> `new.bash` produces today, not against the legacy files this section
+> reasoned from. It shipped as `head -n 50`, which reaches a 13-line
+> summary. The other two mentions below carry the same correction; see
+> here rather than repeating it.
+
 **The requirement applies while the issue is open.** `check.bash` requires
 a non-empty `## Summary` when `closed:` is empty and says nothing about
 closed issues. The section exists to triage open work; closed work needs
@@ -82,6 +96,9 @@ beyond `-h`/`--help`. The documented idiom moves from `head -n 15` to
 `head -n 20` so a full Summary always fits. A `--summary` digest mode was
 considered and rejected as unneeded surface on the one script other
 tooling composes with — issue #43 is what a loose argument guard costs.
+
+**Amended 2026-08-14, mid-execution** — shipped as `head -n 50`; see the
+Amended block earlier in this document for why.
 
 ## Changes
 
@@ -169,6 +186,10 @@ placeholder text instead would let a placeholder pass the check.
   the `bin/issues/list.bash` pointer; the command-table row for
   `check.bash` drops "and roadmap".
 - **`dev-docs/index.md`** — remove the `[Roadmap](roadmap.md)` bullet.
+
+**Amended 2026-08-14, mid-execution** — the two bullets above that say
+"change `head -n 15` to `head -n 20`" both shipped as `head -n 50`
+instead; see the Amended block earlier in this document for why.
 
 Four archived plans in `dev-docs/plans/` carry markdown links to
 `roadmap.md` that will dangle. They are left alone: those documents are

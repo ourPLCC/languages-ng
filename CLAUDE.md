@@ -47,7 +47,7 @@ This reads [dev-docs/issues/.next-id.txt](dev-docs/issues/.next-id.txt) for the 
 
 To close an issue, always use [bin/issues/close.bash](bin/issues/close.bash) — as the final commit of the branch that does the work. It fills in the issue's `closed` date and stages the file. Issue files never move, so links to them never break. Verify consistency any time with [bin/issues/check.bash](bin/issues/check.bash).
 
-To see what is open, use [bin/issues/list.bash](bin/issues/list.bash). It prints one path per open issue, in id order, and nothing else — pipe it into `xargs head -n 40` for each issue's frontmatter, title, and summary. Run it from the tree whose issues you want, since a worktree's branch may open or close issues the others do not have.
+To see what is open, use [bin/issues/list.bash](bin/issues/list.bash). It prints one path per open issue, in id order, and nothing else — pipe it into `xargs head -n 50` for each issue's frontmatter, title, and summary. Run it from the tree whose issues you want, since a worktree's branch may open or close issues the others do not have.
 
 ## Design specs and implementation plans
 

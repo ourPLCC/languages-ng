@@ -80,7 +80,7 @@ arguments. `head` supplies its own `==> path <==` banner, which is why
 the script has no verbose mode of its own:
 
 ```bash
-bin/issues/list.bash | xargs head -n 40      # frontmatter, title, and summary
+bin/issues/list.bash | xargs head -n 50      # frontmatter, title, and summary
 bin/issues/list.bash | xargs grep -l readline
 ```
 
