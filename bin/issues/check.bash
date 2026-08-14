@@ -8,6 +8,12 @@ cd "${PROJECT_ROOT}"
 ISSUES_DIR="dev-docs/issues"
 NEXT_ID_FILE="${ISSUES_DIR}/.next-id.txt"
 
+# An upstream ref is "owner/repo" plus the issue's filename in that repo's
+# dev-docs/issues/. Deliberately not GitHub's owner/repo#N form: upstream
+# numbers issues and pull requests in one sequence, so #N there names a
+# pull request, not the issue meant.
+UPSTREAM_RE='^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+[[:space:]]+[0-9]+-[A-Za-z0-9._-]+\.md$'
+
 failures=0
 fail() {
     echo "FAIL: $*" >&2
@@ -83,6 +89,18 @@ for f in "${ISSUES_DIR}"/[0-9]*.md; do
             in_s && NF                      { found = 1; exit }
             END                             { exit !found }
         ' "${f}" || fail "open issue ${basename} has no non-empty '## Summary' section"
+    fi
+
+    # `upstream:` is optional: absent and empty both mean "not reported".
+    # When present, every comma-separated ref must be well formed. An empty
+    # segment fails the pattern, which is what catches a stray comma.
+    upstream="$(fm_value "${f}" upstream)"
+    if [[ -n "${upstream}" ]]; then
+        while IFS= read -r ref; do
+            if [[ ! "${ref}" =~ ${UPSTREAM_RE} ]]; then
+                fail "${basename} has a malformed upstream ref: '${ref}'"
+            fi
+        done < <(tr ',' '\n' <<< "${upstream}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
     fi
 done
 

@@ -35,6 +35,31 @@ The full account.
 EOF
 }
 
+# Write an open issue carrying an upstream: ref. An empty ref value leaves
+# the key present but blank, which must still pass.
+make_upstream_issue() {
+  local name="$1" ref="$2"
+  cat > "${REPO}/dev-docs/issues/${name}" <<EOF
+---
+type: chore
+target: ourPLCC/plcc-ng
+upstream:${ref:+ ${ref}}
+opened: 2026-01-01
+closed:
+---
+
+# ${name%%-*} - ${name}
+
+## Summary
+
+A one-paragraph triage summary.
+
+## Description
+
+The full account.
+EOF
+}
+
 @test "check.bash passes an open issue with no roadmap.md present" {
   make_issue "001-open-one.md" ""
 
@@ -159,4 +184,65 @@ The full account."
   run "${REPO}/bin/issues/check.bash"
 
   [ "${status}" -eq 0 ]
+}
+
+@test "check.bash accepts an issue with no upstream key" {
+  make_issue "001-no-upstream.md" ""
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 0 ]
+}
+
+@test "check.bash accepts an empty upstream key" {
+  make_upstream_issue "001-empty-upstream.md" ""
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 0 ]
+}
+
+@test "check.bash accepts a well-formed upstream ref" {
+  make_upstream_issue "001-good-ref.md" "ourPLCC/plcc-ng 187-rep-lacks-output.md"
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 0 ]
+}
+
+@test "check.bash accepts two comma-separated upstream refs" {
+  make_upstream_issue "001-two-refs.md" \
+    "ourPLCC/plcc-ng 186-rep-deadlocks.md, ourPLCC/plcc-ng 187-rep-lacks-output.md"
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 0 ]
+}
+
+@test "check.bash rejects the GitHub owner/repo#N ref form" {
+  make_upstream_issue "001-hash-form.md" "ourPLCC/plcc-ng#187"
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 1 ]
+  [[ "${output}" == *"malformed upstream ref"* ]]
+  [[ "${output}" == *"ourPLCC/plcc-ng#187"* ]]
+}
+
+@test "check.bash rejects an upstream ref with no repository" {
+  make_upstream_issue "001-no-repo.md" "187-rep-lacks-output.md"
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 1 ]
+  [[ "${output}" == *"malformed upstream ref"* ]]
+}
+
+@test "check.bash rejects a stray trailing comma in upstream" {
+  make_upstream_issue "001-trailing-comma.md" "ourPLCC/plcc-ng 187-rep-lacks-output.md,"
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 1 ]
+  [[ "${output}" == *"malformed upstream ref"* ]]
 }
