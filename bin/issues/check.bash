@@ -72,6 +72,17 @@ for f in "${ISSUES_DIR}"/[0-9]*.md; do
     else
         open_count=$(( open_count + 1 ))
     fi
+
+    # An open issue carries the triage summary that used to live in the
+    # roadmap's Open Issues entry. Closed issues are not required to.
+    if [[ -z "${closed}" ]]; then
+        awk '
+            $0 ~ /^## Summary[[:space:]]*$/ { in_s = 1; next }
+            in_s && /^## /                  { exit }
+            in_s && NF                      { found = 1; exit }
+            END                             { exit !found }
+        ' "${f}" || fail "open issue ${basename} has no non-empty '## Summary' section"
+    fi
 done
 
 # The ID counter is ahead of every issue ever filed.

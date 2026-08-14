@@ -22,7 +22,16 @@ this repo; set it to the upstream repository (e.g. ourPLCC/plcc-ng) when
 the defect is there rather than in this repo's own src/.
 
 `closed` stays empty until bin/issues/close.bash fills it in.
+
+`## Summary` is one paragraph: what is wrong and why it matters, for
+someone triaging the backlog without opening the file. It is required
+while the issue is open — bin/issues/check.bash fails until you write
+it — and it is deliberately blank here so that filing an issue and
+leaving it unsummarized is not a silent state. The full account belongs
+in `## Description`.
 -->
+
+## Summary
 
 ## Description
 

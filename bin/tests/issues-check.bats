@@ -79,3 +79,84 @@ EOF
   [ "${status}" -ne 0 ]
   [[ "${output}" == *"already exists"* ]]
 }
+
+# Write an issue whose body is exactly the given lines: for Summary shapes
+# that make_issue's well-formed body cannot express.
+make_issue_body() {
+  local name="$1" closed="$2" body="$3"
+  cat > "${REPO}/dev-docs/issues/${name}" <<EOF
+---
+type: chore
+target: this repo
+opened: 2026-01-01
+closed:${closed:+ ${closed}}
+---
+
+# ${name%%-*} - ${name}
+
+${body}
+EOF
+}
+
+@test "check.bash rejects an open issue with no Summary section" {
+  make_issue_body "001-no-summary.md" "" "## Description
+
+The full account."
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -ne 0 ]
+  [[ "${output}" == *"001-no-summary.md has no non-empty '## Summary' section"* ]]
+}
+
+@test "check.bash rejects an open issue whose Summary is empty" {
+  make_issue_body "001-empty-summary.md" "" "## Summary
+
+## Description
+
+The full account."
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -ne 0 ]
+  [[ "${output}" == *"has no non-empty '## Summary' section"* ]]
+}
+
+@test "check.bash rejects a Summary holding only whitespace" {
+  printf '%s\n' '---' 'type: chore' 'target: this repo' 'opened: 2026-01-01' \
+      'closed:' '---' '' '# 001 - ws' '' '## Summary' '   ' '	' \
+      '## Description' '' 'x' > "${REPO}/dev-docs/issues/001-ws-summary.md"
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -ne 0 ]
+  [[ "${output}" == *"has no non-empty '## Summary' section"* ]]
+}
+
+@test "check.bash does not require a Summary on a closed issue" {
+  make_issue_body "001-closed-no-summary.md" "2026-01-02" "## Description
+
+The full account."
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 0 ]
+}
+
+@test "check.bash accepts a Summary containing a ### subheading" {
+  make_issue_body "001-sub.md" "" "## Summary
+
+Prose.
+
+### An aside
+
+More prose.
+
+## Description
+
+The full account."
+
+  run "${REPO}/bin/issues/check.bash"
+
+  [ "${status}" -eq 0 ]
+}
