@@ -5,7 +5,7 @@ opened: 2026-08-05
 closed:
 ---
 
-# 027 - use-spec-flag-instead-of-copying-tree
+# 027 - use `plcc-rep -s` instead of copying `src/` into each test tmpdir
 
 <!--
 `type` is a conventional commit type: fix, feat, refactor, perf, docs,
@@ -23,6 +23,14 @@ the defect is there rather than in this repo's own src/.
 
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
+
+## Summary
+
+`plcc-rep -s <abs spec path>` resolves `%include` from the spec's real
+location while writing build output to the current directory, so the 39
+migrated test files need no copied tree at all — isolation becomes
+structural rather than a filtered copy. The 3 legacy `plccmk` languages
+still need `relocate`, so both mechanisms coexist until they migrate.
 
 ## Description
 

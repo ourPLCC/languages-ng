@@ -6,7 +6,6 @@ PROJECT_ROOT="$( cd "${SCRIPT_DIR}/../.." &> /dev/null && pwd )"
 cd "${PROJECT_ROOT}"
 
 ISSUES_DIR="dev-docs/issues"
-ROADMAP="dev-docs/roadmap.md"
 NEXT_ID_FILE="${ISSUES_DIR}/.next-id.txt"
 
 failures=0
@@ -74,43 +73,18 @@ for f in "${ISSUES_DIR}"/[0-9]*.md; do
         open_count=$(( open_count + 1 ))
     fi
 
-    # Open issues are listed in the roadmap; closed ones are not.
+    # An open issue carries the triage summary that used to live in the
+    # roadmap's Open Issues entry. Closed issues are not required to carry
+    # one.
     if [[ -z "${closed}" ]]; then
-        grep -q "^- \*\*\[#${id}\](issues/${basename})" "${ROADMAP}" \
-            || fail "open issue ${basename} has no Open Issues entry in ${ROADMAP}"
-    else
-        if grep -q "^- \*\*\[#${id}\](issues/${basename})" "${ROADMAP}"; then
-            fail "closed issue ${basename} still has an Open Issues entry in ${ROADMAP}"
-        fi
+        awk '
+            $0 ~ /^## Summary[[:space:]]*$/ { in_s = 1; next }
+            in_s && /^## /                  { exit }
+            in_s && NF                      { found = 1; exit }
+            END                             { exit !found }
+        ' "${f}" || fail "open issue ${basename} has no non-empty '## Summary' section"
     fi
 done
-
-# Every roadmap issue link resolves.
-while IFS= read -r target; do
-    [[ -e "${ISSUES_DIR}/${target}" ]] \
-        || fail "roadmap links issues/${target} but that file does not exist"
-done < <(grep -o '(issues/[^)]*\.md)' "${ROADMAP}" | tr -d '()' | sed 's|^issues/||' | sort -u)
-
-# Milestone task lists: the checkbox agrees with the issue's closed field.
-while IFS= read -r line; do
-    box="$(sed -n 's|^[0-9]*\. \[\([ x]\)\].*|\1|p' <<< "${line}")"
-    target="$(sed -n 's|.*(issues/\([^)]*\.md\)).*|\1|p' <<< "${line}")"
-    if [[ -z "${target}" ]]; then
-        fail "milestone item links no issue: ${line}"
-        continue
-    fi
-    if [[ ! -e "${ISSUES_DIR}/${target}" ]]; then
-        fail "milestone item links a nonexistent issue: ${line}"
-        continue
-    fi
-    milestone_closed="$(fm_value "${ISSUES_DIR}/${target}" closed)"
-    if [[ "${box}" == " " && -n "${milestone_closed}" ]]; then
-        fail "unchecked milestone item links a closed issue: ${line}"
-    fi
-    if [[ "${box}" == "x" && -z "${milestone_closed}" ]]; then
-        fail "checked milestone item links an open issue: ${line}"
-    fi
-done < <(grep '^[0-9]*\. \[[ x]\] ' "${ROADMAP}" || true)
 
 # The ID counter is ahead of every issue ever filed.
 next_id=$(( 10#$(cat "${NEXT_ID_FILE}") ))
@@ -121,4 +95,4 @@ if (( failures > 0 )); then
     echo "${failures} check(s) failed" >&2
     exit 1
 fi
-echo "OK: ${open_count} open, ${closed_count} closed, roadmap consistent, next id ${next_id}"
+echo "OK: ${open_count} open, ${closed_count} closed, next id ${next_id}"

@@ -24,6 +24,15 @@ the defect is there rather than in this repo's own src/.
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
 
+## Summary
+
+A `bin/test.bash` run reached a correct `EXIT=0, 186/186, ok 186` but took
+~75 minutes against a normal ~2 minutes, with no root cause established;
+separately, two OBJ-migration implementer subagents were killed by
+infrastructure mid-task (an API spend limit, a stall watchdog) but both
+landed clean on verification. An observation, not a diagnosis — filed so the
+record survives the worktree being deleted, in case it recurs.
+
 ## Description
 
 **This is an observation, not a diagnosis.** Filed so the record

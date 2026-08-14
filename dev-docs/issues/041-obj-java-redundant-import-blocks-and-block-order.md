@@ -24,6 +24,16 @@ the defect is there rather than in this repo's own src/.
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
 
+## Summary
+
+26 `:import` blocks across OBJ's Java prims contain only `import
+runtime.LanguageError;`, which plcc-ng auto-injects into grammar-derived
+classes — verified deletable in a scratch tree with identical output, 1,407
+bytes lighter. Separately, OBJ's Python and Java specs open with
+`Program`/`Eval`/`Define` rather than the free-standing value classes that
+SET, TYPE1, REF, and OBJ's own JavaScript spec open with. Zero behavioral
+impact; matters for reading the six predecessor specs side by side.
+
 ## Description
 
 Two zero-behavior-impact cleanups in `src/OBJ/java/spec.plcc`, found

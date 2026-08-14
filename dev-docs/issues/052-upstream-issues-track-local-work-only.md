@@ -5,7 +5,18 @@ opened: 2026-08-14
 closed:
 ---
 
-# 050 - upstream-targeted issues should track local work, not upstream status
+# 052 - upstream-targeted issues should track local work, not upstream status
+
+## Summary
+
+An upstream-targeted issue conflates a defect report owed to upstream with
+local work in this repository that is blocked on it, so `target:
+ourPLCC/plcc-ng` reads as "nothing for us here" while #37 quietly carries a
+revert of OBJ's `Program.out` buffering. It also invites caching upstream's
+status locally, which goes stale unnoticed, and no scalar status field
+survives an issue naming two upstream refs. Resolved by a rule: an issue
+tracks work in *this* repo, and upstream status is read on demand rather
+than recorded.
 
 ## Description
 

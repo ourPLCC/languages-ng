@@ -5,7 +5,7 @@ opened: 2026-07-30
 closed:
 ---
 
-# 016 - cross-target-integer-divergence
+# 016 - cross-target integer divergence
 
 <!--
 Classify by user-facing impact, not by whether something was "broken".
@@ -16,6 +16,15 @@ not user-facing — classify it `test` or `chore` instead so it doesn't
 spin the version. `docs` is for documentation content, and never bumps
 the version either way.
 -->
+
+## Summary
+
+Java's 32-bit `IntVal.val` silently overflows where Python's
+arbitrary-precision and JavaScript's double integers don't (measured:
+`.fact(20)` gives `2432902008176640000` in Python/JS, `-2102132736` in
+Java). Inherited from V0 and repo-wide, not a V4 defect, but V4's
+`Prog/fact-acc` and its new `recursion/` test make the boundary trivially
+reachable in a live demo.
 
 ## Description
 
