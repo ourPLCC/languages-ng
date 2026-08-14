@@ -367,10 +367,10 @@ Keep it to these two lines. A full explanation here would push
 
 Run: `grep -n "^## Summary" dev-docs/issues/TEMPLATE.md`
 
-Expected: a line number of **37 or lower** (34 before this change, plus
-one frontmatter line and two comment lines). If it exceeds 50, the
-documented `head -n 50` idiom is broken and the comment addition must
-shrink.
+Expected: **38** — 34 before this change, plus one frontmatter line, two
+comment lines, and the blank line separating the comment paragraphs. The
+constraint that matters is 50: if it exceeds that, the documented
+`head -n 50` idiom is broken and the comment addition must shrink.
 
 - [ ] **Step 5: Verify a newly filed issue still passes**
 

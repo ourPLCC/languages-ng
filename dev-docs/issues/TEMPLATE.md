@@ -1,6 +1,7 @@
 ---
 type: TYPE
 target: this repo
+upstream:
 opened: YYYY-MM-DD
 closed:
 ---
@@ -20,6 +21,9 @@ the version either way.
 `target` is the repository the issue is actually about. It defaults to
 this repo; set it to the upstream repository (e.g. ourPLCC/plcc-ng) when
 the defect is there rather than in this repo's own src/.
+
+`upstream:` points at the upstream tracker entry — see "Upstream defects"
+in dev-docs/issue-conventions.md. Leave it empty otherwise.
 
 `closed` stays empty until bin/issues/close.bash fills it in.
 
