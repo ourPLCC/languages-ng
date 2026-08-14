@@ -5,77 +5,59 @@ opened: 2026-08-01
 closed:
 ---
 
-# 020 - close.bash's roadmap awk has two dormant edge cases
+# 020 - close.bash's argument handling and staging order
 
 ## Summary
 
-The `END` block collapses blank-line runs across the whole roadmap rather
-than just the removed entry's span, and the bullet-removal skip state ends
-on a blank line, so a multi-paragraph Open Issues entry would leave an
-orphaned fragment. Both predate #18 and were inherited verbatim by its
-rewrite; neither fires against the roadmap's current shape, where every
-entry is a bullet plus one indented continuation line.
+`bin/issues/close.bash` has three dormant defects around its argument and
+its staging order: `[[ $# -ne 1 ]] && usage` in place of an explicit `if`,
+a raw bash arithmetic error rather than `usage()` when the id is not a
+number, and `git add` running before `check.bash`, so a failed check
+leaves a half-applied close staged with no recovery hint. None can
+corrupt an issue file; all three are diagnostics quality.
 
 ## Description
 
-The roadmap-editing `awk` in [bin/issues/close.bash](../../bin/issues/close.bash)
-carries two defects. Both predate [#18](018-close-bash-rewrites-plan-prose.md) —
-they were inherited verbatim when that issue rewrote the script around the
-`closed:` frontmatter field, and #18 deliberately left them alone as out of
-scope. Neither can fire against the roadmap as it stands today, which is why
-they were deferred rather than fixed.
+This issue originally reported two defects in the roadmap-editing `awk` in
+[close.bash](../../bin/issues/close.bash) — blank-line collapsing that was
+file-wide rather than entry-scoped, and a skip state that a blank line
+ended prematurely — plus four lower-severity observations swept up from the
+whole-branch review of [#18](018-close-bash-rewrites-plan-prose.md).
 
-1. **Blank-line collapsing is file-wide, not entry-scoped.** The `END` block
-   rebuilds the whole file through a `blank`/`printed` filter that emits at
-   most one blank line between any two kept lines. Any pre-existing run of two
-   or more consecutive blank lines *anywhere* in `dev-docs/roadmap.md` — between
-   unrelated sections, or inside a fenced code block — is silently collapsed on
-   every close. The removal logic itself is carefully scoped to the entry being
-   deleted; this normalization pass is not.
+[#49](049-retire-roadmap-open-issues-section.md) deleted `dev-docs/roadmap.md`
+and every line of `close.bash` that edited it. Both numbered defects went
+with that `awk`, and so did one of the four sweep-up items: the unescaped
+`${basename}` interpolated into a BRE `sed` pattern was the
+milestone-checkbox pass, which no longer exists. Three remain:
 
-2. **A blank line ends the bullet-removal skip state.** The state machine
-   continues skipping only while lines match `/^[ \t]/`. A blank line does not,
-   so it resets `skip` to 0, and any further indented lines belonging to the
-   same entry are kept — leaving an orphaned fragment of the deleted entry
-   behind, along with the stray blank line.
-
-## Steps to Reproduce
-
-Neither reproduces against the current roadmap. To see (2):
-
-1. Give an Open Issues entry a multi-paragraph continuation — a bullet, an
-   indented line, a blank line, then another indented line.
-2. Close that issue with `bin/issues/close.bash <id>`.
-3. The bullet and its first continuation line are removed; the blank line and
-   the second continuation line remain.
-
-For (1), add a second consecutive blank line anywhere in the roadmap, close any
-issue, and observe that it is gone.
+1. **`[[ $# -ne 1 ]] && usage` instead of `if ...; then ...; fi`.** The
+   script runs under `set -euo pipefail`, and this form survives only
+   because `set -e` exempts every command in an AND-list except the last:
+   the failing `[[ ]]` is not that command, so the shell does not exit. It
+   is a well-known footgun that happens to be standing on the exemption.
+   `list.bash` already uses the explicit `if` form.
+2. **A non-numeric id produces a raw bash arithmetic error** rather than
+   the `usage()` message, though it fails before touching any file.
+3. **Staging precedes verification.** `close.bash` stages the issue file
+   and then runs `check.bash`. A failed check leaves the filled-in
+   `closed:` date staged, with nothing printed about how to undo it.
 
 ## Notes
 
-Why they are dormant today: every Open Issues entry is a bullet plus exactly one
-indented continuation line, and the roadmap contains no fenced blocks and no
-double-blank runs. `bin/issues/check.bash` does not police either property, so
-nothing prevents a future entry from tripping (2).
+All three were raised in the whole-branch review of #18 and deferred by
+explicit decision. Item 3 is the only one with a real cost: recovery is
+`git restore --staged --worktree <file>`, which the script could simply
+print.
 
-Fix directions:
+A correction to what this issue used to claim: it cited
+[issue-conventions.md](../issue-conventions.md) as prescribing
+`if ...; then ...; fi` over `[[ ... ]] && ...`. That document contains no
+shell style rule and appears never to have. Item 1 stands on the `set -e`
+reasoning above, not on a convention.
 
-1. Scope the blank-line normalization to the span the removal actually touched,
-   rather than re-normalizing the entire file.
-2. Track the skip state by indentation depth instead of treating any
-   non-indented line — including a blank one — as the end of the entry.
+`bin/issues/new.bash` uses the same `[[ $# -lt 1 ]] && usage` form, on the
+same exemption. Fixing item 1 should fix both.
 
-Both were raised in the whole-branch review of #18 and deferred by explicit
-decision. Related lower-severity observations from that same review, all
-similarly dormant, if this issue is a convenient place to sweep them up:
-
-- `close.bash` interpolates `${basename}` unescaped into a BRE `sed` pattern, so
-  the `.` before `md` is a wildcard rather than a literal.
-- `close.bash` uses `[[ $# -ne 1 ]] && usage`, the form
-  [dev-docs/issue-conventions.md](../issue-conventions.md) tells us to avoid in
-  favor of `if ...; then ...; fi`.
-- A non-numeric id produces a raw bash arithmetic error rather than the
-  `usage()` message, though it fails before touching any file.
-- `close.bash` stages both files before running `check.bash`, so a failed check
-  leaves a half-applied close staged with no recovery hint printed.
+Retitled and re-scoped by #49. The filename keeps its original
+`close-bash-roadmap-awk-edge-cases` slug: issue files never move, so links
+to this issue never break.
