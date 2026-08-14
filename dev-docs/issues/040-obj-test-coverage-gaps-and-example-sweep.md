@@ -24,6 +24,16 @@ the defect is there rather than in this repo's own src/.
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
 
+## Summary
+
+OBJ's seven committed test cases never exercise `/`, `add1`, `sub1`,
+`zero?`, `exit`, the six comparison prims, `!@`, `@@`, `letrec`, `if`, or
+any prim arity/type error path — verified correct by hand, so a
+regression-detection gap rather than a known bug. Separately, the
+migration's strongest evidence of fidelity, a 59-example × 3-target
+byte-identity sweep, ran from a `/tmp` throwaway script and is not wired
+into `bin/test.bash`.
+
 ## Description
 
 Two related gaps in OBJ's test coverage, filed together since closing

@@ -6,15 +6,12 @@ PROJECT_ROOT="$( cd "${SCRIPT_DIR}/../.." &> /dev/null && pwd )"
 cd "${PROJECT_ROOT}"
 
 ISSUES_DIR="dev-docs/issues"
-ROADMAP="dev-docs/roadmap.md"
 
 usage() {
     echo "Usage: $(basename "$0") <id>"
     echo "  id  issue number, e.g. 135"
     echo
-    echo "Fills in the issue's 'closed' date, removes its entry from the"
-    echo "Open Issues section of ${ROADMAP}, and checks its box in any"
-    echo "milestone task list. Stages the changes; you review and commit."
+    echo "Fills in the issue's 'closed' date and stages the file."
     echo
     echo "Issue files never move: status is the 'closed' frontmatter field,"
     echo "so no link to an issue ever needs rewriting."
@@ -40,7 +37,6 @@ if [[ ${#matches[@]} -gt 1 ]]; then
 fi
 
 issue_file="${matches[0]}"
-basename="${issue_file##*/}"
 
 # Already closed? The frontmatter says so.
 existing=$(awk '
@@ -69,40 +65,10 @@ if ! grep -qx "closed: ${today}" "${issue_file}"; then
     exit 1
 fi
 
-# Roadmap, pass 1: in milestone task lists, check the box. The link is not
-# touched — it has always been issues/${basename} and stays that way.
-sed -i -e "s|\[ \] \(\[#[0-9]*\](issues/${basename})\)|[x] \1|" "${ROADMAP}"
-
-# Roadmap, pass 2: drop the issue's Open Issues entry — the bullet line plus
-# its indented continuation lines, so back-to-back neighbors are untouched —
-# then drop any "###" heading whose section is now empty.
-awk -v link="(issues/${basename})" '
-    skip { if ($0 ~ /^[ \t]/) next; skip = 0 }
-    /^- / && index($0, link) { skip = 1; next }
-    { lines[n++] = $0 }
-    END {
-        for (i = 0; i < n; i++) {
-            if (lines[i] ~ /^### /) {
-                j = i + 1
-                while (j < n && lines[j] == "") j++
-                if (j >= n || lines[j] ~ /^##/) { i = j - 1; continue }
-            }
-            keep[m++] = lines[i]
-        }
-        for (k = 0; k < m; k++) {
-            if (keep[k] == "") { blank = 1; continue }
-            if (printed && blank) print ""
-            print keep[k]
-            blank = 0; printed = 1
-        }
-    }
-' "${ROADMAP}" > "${ROADMAP}.tmp"
-mv "${ROADMAP}.tmp" "${ROADMAP}"
-
-git add "${issue_file}" "${ROADMAP}"
+git add "${issue_file}"
 
 bin/issues/check.bash
 
 echo "closed ${issue_file} (closed: ${today})"
-echo "Review ${ROADMAP} (milestone rationale text is not auto-edited), then commit:"
-echo "  docs(issues): close issue $(( 10#$1 )) (<short title>), update roadmap"
+echo "Commit:"
+echo "  docs(issues): close issue $(( 10#$1 )) (<short title>)"

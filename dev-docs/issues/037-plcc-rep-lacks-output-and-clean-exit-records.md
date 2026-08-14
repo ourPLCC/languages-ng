@@ -24,6 +24,14 @@ the defect is there rather than in this repo's own src/.
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
 
+## Summary
+
+Semantic actions have no supported way to emit user-visible output or end
+the session cleanly — both are missing record kinds in `_render_record`'s
+dispatch. OBJ works around the first by buffering into `Program.out` and
+ships `exit`'s wrong stderr/status as a documented divergence for want of
+the second.
+
 ## Description
 
 Semantic actions have no supported way to emit user-visible output, nor

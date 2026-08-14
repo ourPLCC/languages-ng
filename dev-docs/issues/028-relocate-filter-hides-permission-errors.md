@@ -5,7 +5,7 @@ opened: 2026-08-05
 closed:
 ---
 
-# 028 - relocate-filter-hides-permission-errors
+# 028 - relocate's `[[ -e ]]` filter hides permission errors
 
 <!--
 `type` is a conventional commit type: fix, feat, refactor, perf, docs,
@@ -23,6 +23,15 @@ the defect is there rather than in this repo's own src/.
 
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
+
+## Summary
+
+`relocate_copy_tree`'s existence filter can't tell "deleted with `rm`" from
+"exists but unreadable" (`chmod 000` on a tracked file's parent directory
+reproduces it), so an `EACCES` path is silently dropped from the copy
+instead of failing loudly — the same silent-corruption class as issue #25,
+reintroduced one layer down. Dormant: nothing in this repo `chmod`s a spec
+directory today.
 
 ## Description
 

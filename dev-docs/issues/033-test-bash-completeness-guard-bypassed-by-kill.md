@@ -7,6 +7,15 @@ closed:
 
 # 033 - test.bash's completeness guard is bypassed when test.bash itself is killed
 
+## Summary
+
+Issue #31's `check_run_complete` only runs if `bin/test.bash` reaches the
+line that calls it, so a SIGKILL of `test.bash` leaves a truncated stdout
+file with no banner, a plausible-but-wrong pass count, and a leaked report
+directory — the exact lie #31 set out to eliminate, one layer up. Observed
+during the TYPE0 migration: a run died at test 58 of 148 and counted cleanly
+as 57 ok / 1 not ok.
+
 ## Description
 
 Issue [#31](031-suite-exhausts-disk-and-reports-spurious-failure.md) gave

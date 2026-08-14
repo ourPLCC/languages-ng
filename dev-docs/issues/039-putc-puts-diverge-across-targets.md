@@ -24,6 +24,17 @@ the defect is there rather than in this repo's own src/.
 `closed` stays empty until bin/issues/close.bash fills it in.
 -->
 
+## Summary
+
+Java's `(char)` cast and JavaScript's `String.fromCharCode` silently
+truncate wide character codes to 16 bits where Python's `chr()` doesn't, so
+the same program prints different characters on different targets;
+separately, Python's `chr()` raises `ValueError` (not a catchable
+`LanguageError`) on a negative code, which escapes as a session-fatal
+"Specification error" and kills the rest of the REPL session. `putc`/`puts`
+are how students build character output, so off-by-one arithmetic is the
+ordinary route in.
+
 ## Description
 
 `putc`/`puts` behave differently on all three OBJ targets for an

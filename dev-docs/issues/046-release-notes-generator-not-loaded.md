@@ -7,6 +7,16 @@ closed:
 
 # 046 - Every GitHub Release gets an empty body
 
+## Summary
+
+`.releaserc.yaml`'s `plugins` key replaces semantic-release's default plugin
+list rather than extending it, so
+`@semantic-release/release-notes-generator` never loads, nothing implements
+`generateNotes`, and every Release is created with an empty body. The plugin
+entry is merged as of PR #12; the issue stays open awaiting verification,
+which needs a `feat` or `fix` to reach `main` and actually cut a version
+whose body can be inspected.
+
 ## Description
 
 [.releaserc.yaml](../../.releaserc.yaml) names two plugins:

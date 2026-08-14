@@ -18,7 +18,7 @@ usage() {
     echo "that worktree's copy from that worktree."
     echo
     echo "Compose it with anything that takes file arguments:"
-    echo "  $(basename "$0") | xargs head -n 15      # metadata and title"
+    echo "  $(basename "$0") | xargs head -n 50      # frontmatter, title, and summary"
     echo "  $(basename "$0") | xargs grep -l readline"
 }
 
