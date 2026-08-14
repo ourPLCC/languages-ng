@@ -37,7 +37,6 @@ if [[ ${#matches[@]} -gt 1 ]]; then
 fi
 
 issue_file="${matches[0]}"
-basename="${issue_file##*/}"
 
 # Already closed? The frontmatter says so.
 existing=$(awk '

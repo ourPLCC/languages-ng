@@ -74,7 +74,8 @@ for f in "${ISSUES_DIR}"/[0-9]*.md; do
     fi
 
     # An open issue carries the triage summary that used to live in the
-    # roadmap's Open Issues entry. Closed issues are not required to.
+    # roadmap's Open Issues entry. Closed issues are not required to carry
+    # one.
     if [[ -z "${closed}" ]]; then
         awk '
             $0 ~ /^## Summary[[:space:]]*$/ { in_s = 1; next }
