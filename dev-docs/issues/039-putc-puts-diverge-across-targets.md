@@ -108,3 +108,14 @@ plcc-ng's error handling: the string appears nowhere in `src/**/*.plcc`.
 Per "Upstream defects" in [issue-conventions.md](../issue-conventions.md),
 the local half stays here and the upstream half is reported separately;
 this issue keeps `target: this repo` because its fix is local.
+
+**Upstream half reported 2026-08-15** as `ourPLCC/plcc-ng`
+`190-rep-kills-session-on-program-errors.md`, with a self-contained
+reproduction built against plcc-ng alone rather than against this repo's
+specs. That issue is about the classification — every non-`LanguageError`
+exception from a semantic action becomes a session-fatal
+`specification_error` — so it covers this defect's Python symptom without
+naming `putc`. What stays here is unchanged and unblocked: the 16-bit
+truncation in the Java and JavaScript specs, the Python range guard, and
+the `tests/strings-chars/` cases. Read upstream for its current state; it
+is deliberately not cached here.

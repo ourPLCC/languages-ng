@@ -1,6 +1,7 @@
 ---
 type: chore
 target: ourPLCC/plcc-ng
+upstream: ourPLCC/plcc-ng 188-follow-set-omits-nullable-tail.md
 opened: 2026-08-11
 closed: 2026-08-12
 ---
