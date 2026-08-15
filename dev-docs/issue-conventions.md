@@ -89,29 +89,62 @@ also where it runs. To list a worktree's open issues, run that worktree's
 copy from that worktree — the answer differs per worktree, since a branch
 can open or close issues.
 
-## The `target` field
+## Upstream defects
 
-Every issue's frontmatter names a `target` — the repository the issue is
-actually about. It defaults to this repo. Some issues describe a defect
-discovered in an external dependency while working here (e.g. a `plcc-ng`
-bug or a migration-guide inaccuracy) rather than in this repo's own
-`src/`. For those, set `target` to the upstream repository (e.g.
-`ourPLCC/plcc-ng`) instead of leaving the default.
+Every issue's frontmatter names a `target` — the repository the **defect**
+is in. It defaults to this repo; set it to the upstream repository (e.g.
+`ourPLCC/plcc-ng`) when the defect is there rather than in this repo's own
+`src/`.
 
-Upstream-targeted issues still live in this repo's `dev-docs/issues/` like
-any other issue — nothing is filed externally automatically. They get
-reported upstream manually, with the reporter's explicit go-ahead, since
-that's a public action outside this repo.
+An issue in `issues/` tracks work in **this** repository. Whether upstream
+has fixed something is a fact about upstream: read it when you pick the
+issue up, never record it here. A cached copy of another repo's status is
+wrong by default and nothing detects the drift.
 
-When an upstream defect forces a local workaround in shipped `src/` (e.g.
-spelling a grammar field in all-lowercase to dodge a parser bug), the
-issue stays open for as long as that workaround lives in the code — not
-just until it's reported upstream. Reporting it is not the fix; removing
-the workaround is. This is the "close on verification" exception below,
-applied to upstream defects specifically: close the issue only once
-upstream ships a real fix *and* the local workaround has been reverted
-back to the natural, un-worked-around spelling. Until then, the issue is
-the one place tracking that the workaround needs to be revisited.
+So open/closed answers **"is there local work?"**, and that question is
+answerable without leaving this repo. An upstream defect is in exactly one
+of three states:
+
+- **Found, not yet reported.** The local work is to get the go-ahead and
+  file it upstream. The issue is open with `upstream:` empty, and closes
+  when the report is filed.
+- **Reported, nothing here waits on it.** Close it, with `upstream:`
+  naming the ref. The closed file keeps its reproduction detail
+  permanently — issues never move, so links to it never break.
+- **Reported, and a workaround lives in shipped `src/`.** The issue stays
+  open and its subject is *the revert*. It closes when the workaround is
+  gone, not when upstream ships.
+
+A defect that straddles both repositories is **split by repository**: the
+local half is an ordinary issue with `target: this repo`, and the upstream
+half follows the three states above. There is no third "blocked on
+upstream" issue.
+
+Upstream-targeted issues still live in this repo's `issues/` like any
+other issue — nothing is filed externally automatically. They get reported
+upstream manually, with the reporter's explicit go-ahead, since that's a
+public action outside this repo.
+
+### The `upstream:` field
+
+```yaml
+upstream: ourPLCC/plcc-ng 187-rep-lacks-output-and-clean-exit-records.md
+```
+
+Two space-separated tokens — the repository, then the issue's filename in
+that repository's `dev-docs/issues/`. Separate multiple refs with commas.
+Empty or absent means not reported; the ref *is* the evidence of
+reporting, which is why there's no separate `reported:` date.
+
+Deliberately **not** `owner/repo#187`. Upstream numbers issues and pull
+requests in one sequence, so that form names a pull request rather than
+the issue meant. Deliberately not a URL either: upstream closes an issue
+by moving the file into `dev-docs/issues/done/`, so a URL naming the open
+path returns 404 exactly when the state changes. Repository-plus-filename
+names the issue, not its location.
+
+[bin/issues/check.bash](../bin/issues/check.bash) validates the shape when
+the key is non-empty and never requires it.
 
 ## Closing an issue
 

@@ -1,8 +1,9 @@
 ---
 type: chore
 target: ourPLCC/plcc-ng
+upstream: ourPLCC/plcc-ng 186-rep-deadlocks-on-partial-stdout-line.md
 opened: 2026-08-11
-closed:
+closed: 2026-08-14
 ---
 
 # 036 - plcc-rep deadlocks on a partial stdout line
@@ -81,8 +82,8 @@ Found while designing OBJ's port
 trailing newline is what the separate `newline` expression is for. OBJ
 works around this by buffering all output into `Program.out` and
 returning it as part of `_run()`'s result rather than writing it
-directly; that workaround is not the fix, and it is why this issue stays
-open independently.
+directly. That workaround is not this issue's to remove, though — see the
+closing note below.
 
 Related: issue [#037](037-plcc-rep-lacks-output-and-clean-exit-records.md)
 sketches the missing-record-kind fix that would let a semantic action emit
@@ -98,8 +99,6 @@ are reported upstream manually, with explicit go-ahead.
 splits the work: `_read_response` must stop treating an unbounded
 `readline()` as acceptable regardless, since user code can always write to
 stdout directly, while the wider fix is upstream #187's output record kind.
-This issue stays open while OBJ's `Program.out` buffering workaround lives
-in `src/`.
 
 **Upstream status, checked 2026-08-13** against `ourPLCC/plcc-ng` at
 `48fb1a5` (v2.0.2): #186 is still open — in `dev-docs/issues/`, not
@@ -109,3 +108,21 @@ is much the smaller change, so it can land first. If it does, the failure
 mode improves from a silent hang to a diagnostic, which is most of the
 classroom benefit — but it would **not** let OBJ drop its buffering
 workaround. Only #187 does that. Treat the two as separate arrivals.
+
+**Closed 2026-08-14 with upstream still open.** This issue was recorded as
+staying open while OBJ's `Program.out` buffering lives in `src/`, but that
+condition belongs to [#37](037-plcc-rep-lacks-output-and-clean-exit-records.md),
+not here. Removing the buffering needs an output record kind, which is
+upstream #187; a bounded read fixing *this* defect would turn the deadlock
+into a diagnostic and leave OBJ with nowhere to emit output. So nothing in
+`src/` waits on this issue.
+
+Upstream's own #186 says as much: it describes its narrow fix as making a
+partial-line write "produce a message rather than a hang", and attributes
+the buffering workaround to #187.
+
+The defect is real and is reported upstream — see `upstream:` above. Per
+"Upstream defects" in [issue-conventions.md](../issue-conventions.md), an
+upstream defect with no local consequence closes here rather than tracking
+someone else's tracker. If a fix arrives and OBJ later wants to emit
+output directly, that is #37's revert, not a reopening of this issue.

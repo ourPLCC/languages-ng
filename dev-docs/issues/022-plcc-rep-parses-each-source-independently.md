@@ -1,6 +1,7 @@
 ---
 type: docs
 target: ourPLCC/plcc-ng
+upstream: ourPLCC/plcc-ng 185-rep-parses-each-source-independently.md
 opened: 2026-08-03
 closed: 2026-08-13
 ---

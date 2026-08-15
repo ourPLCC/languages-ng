@@ -11,8 +11,11 @@ public static Env env = Env.initEnv();
 // Output is buffered rather than printed. plcc-rep uses this program's
 // stdout as a private line-oriented JSON channel, so a partial line
 // written here merges with the result record and deadlocks the tool with
-// no diagnostic. See issue 36. Every output expression appends to `out`;
-// only _run() emits it, as part of its return value.
+// no diagnostic (issue 36). Removing the buffering needs an output record
+// kind from plcc-rep, which is issue 37 -- fixing issue 36 alone would
+// only turn the deadlock into a diagnostic, with still nowhere to emit.
+// Every output expression appends to `out`; only _run() emits it, as part
+// of its return value.
 public static List<String> out = new ArrayList<String>();
 %%%
 
