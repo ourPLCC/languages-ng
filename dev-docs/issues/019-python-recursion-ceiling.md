@@ -114,3 +114,11 @@ the "Specification error" wording distinguish an interpreter-resource
 error from an actual specification defect, or documenting the ceiling
 so course material stays inside it (tracked separately in
 [dev-docs/course-material-impact.md](../course-material-impact.md)).
+
+**The wording half was reported upstream 2026-08-15** as `ourPLCC/plcc-ng`
+`191-rep-reports-resource-exhaustion-as-specification-error.md`, carrying
+the three-target table above as its measurement and raising the Python
+recursion limit as a secondary suggestion. The remaining local work is the
+third direction — documenting the ceiling so course material stays inside
+it. Read upstream for its current state; it is deliberately not cached
+here.
