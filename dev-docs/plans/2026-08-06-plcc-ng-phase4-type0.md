@@ -23,7 +23,7 @@
   bin/test.bash > /tmp/type0-<task>.txt 2>&1; echo "EXIT=$?"
   ```
 
-  Read the exit status, not just the counts. Issue [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md) gave `bin/test.bash` a three-value contract: **0** every test passed, **1** the run completed with real test failures, **2** the harness itself did not finish. **Exit 2 means the numbers in the file are meaningless — do not count them, and do not report a result.** Throughout this phase the expected status is **1**, because `OBJ class` and `TYPE1 proc-types` stay red from start to finish; a `0` would mean something unexpected started passing and is just as much a reason to stop as a `2`.
+  Read the exit status, not just the counts. Issue CR-531 gave `bin/test.bash` a three-value contract: **0** every test passed, **1** the run completed with real test failures, **2** the harness itself did not finish. **Exit 2 means the numbers in the file are meaningless — do not count them, and do not report a result.** Throughout this phase the expected status is **1**, because `OBJ class` and `TYPE1 proc-types` stay red from start to finish; a `0` would mean something unexpected started passing and is just as much a reason to stop as a `2`.
 
   Then count with `grep -c '^ok '` and `grep -c '^not ok '`, and list the failures with `grep '^not ok '`.
 

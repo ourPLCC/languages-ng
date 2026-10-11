@@ -26,7 +26,7 @@
 - Structural fidelity across targets: method names (`eval`, `addBindings`, `addLetrecBindings`, `checkDuplicates`, `extendEnv`, `applyEnv`, `add`) stay identical across Python, Java, and JavaScript.
 - JavaScript: grammar-derived classes get `Node`/`Token`/`LanguageError` auto-injected — never add an `:import` for those three names on them. Requiring genuinely free-standing classes (`Env`, `Binding`, `Bindings`, `ProcVal`, `Val`) from a grammar-derived class is fine and required.
 - Every test case gets one shared `V5.input` / `V5.expected` pair, asserted by one `@test` block per target in a single `.bats` file. Value cases only — no error-path test.
-- Keep every test's recursion depth and integer magnitude small. Python's default 1,000-frame recursion limit (which forced V4 to shrink `Prog/oe`) and the 32-bit Java `IntVal` overflow of open issue [#16](../issues/016-cross-target-integer-divergence.md) are both live constraints. Every expected value in this plan was measured, not predicted — do not scale any of them up.
+- Keep every test's recursion depth and integer magnitude small. Python's default 1,000-frame recursion limit (which forced V4 to shrink `Prog/oe`) and the 32-bit Java `IntVal` overflow of open issue CR-516 are both live constraints. Every expected value in this plan was measured, not predicted — do not scale any of them up.
 - Any change affecting course material gets logged in [dev-docs/course-material-impact.md](../course-material-impact.md) under a `## V5` heading, in the same commit that makes the change.
 - Never run bare `git stash` / `git stash pop` — the stash stack is shared with other worktrees.
 
@@ -71,7 +71,7 @@ them to `../../` when it moves the file into `done/`.)
 
 - [ ] **Step 3: Add the roadmap entry**
 
-Edit `dev-docs/roadmap.md`. Per [issue-conventions.md](../issue-conventions.md), the entry goes under `## Open Issues` beneath the `###` heading matching the issue's type — `Feat`, which does **not** currently exist (V4's entry moved to `done/` when it closed), so create the group. Place it before the existing `### Chore` group. Use this exact two-line format (the `bin/issues/` scripts parse it):
+Edit `dev-docs/roadmap.md`. Per issue-conventions.md, the entry goes under `## Open Issues` beneath the `###` heading matching the issue's type — `Feat`, which does **not** currently exist (V4's entry moved to `done/` when it closed), so create the group. Place it before the existing `### Chore` group. Use this exact two-line format (the `bin/issues/` scripts parse it):
 
 ```markdown
 ### Feat

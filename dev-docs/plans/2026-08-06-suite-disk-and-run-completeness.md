@@ -9,7 +9,7 @@
 **Tech Stack:** bash, bats-core 1.11, awk, sed. No new dependencies.
 
 Design spec: [2026-08-06-suite-disk-and-run-completeness-design.md](../specs/2026-08-06-suite-disk-and-run-completeness-design.md).
-Issue: [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md).
+Issue: CR-531.
 
 ## Global Constraints
 
@@ -644,7 +644,7 @@ echo "exit=$?"
 > running `OBJ` at the pre-wiring commit and after: identical
 > `plccmk: command not found`, status 127, with only the line number shifted
 > by the added `load` line. Open issue
-> [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) documents
+> CR-512 documents
 > this as the local mirror of its CI complaint.
 
 Expected: the run reaches its final test and prints a failure count; `exit=1`;

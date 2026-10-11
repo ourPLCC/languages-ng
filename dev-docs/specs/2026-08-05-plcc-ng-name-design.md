@@ -298,10 +298,10 @@ the spike confirms work in all three targets. This keeps the one-shared-expected
 model clean, the same call V3–V6, SET, and REF made.
 
 Magnitudes and recursion depths stay small, clear of the 32-bit Java `IntVal`
-overflow of issue [#16](../issues/016-cross-target-integer-divergence.md).
+overflow of issue CR-516.
 `jensen-device/` is the deepest case at ten iterations; `Prog/countdown`, at a
 hundred, was run in all three targets during the spike and clears the Python
-recursion ceiling of issue [#19](../issues/019-python-recursion-ceiling.md)
+recursion ceiling of issue CR-519
 with room.
 
 ## Example Programs (`src/NAME/Prog/`)
@@ -387,9 +387,9 @@ starting point:
 - Error-path and diagnostic tests, including the `ThunkRef.setRef` throw.
 - Making `let` lazy, or any other extension of call-by-name beyond operands —
   a language change, not a port.
-- Issue [#16](../issues/016-cross-target-integer-divergence.md), issue
-  [#19](../issues/019-python-recursion-ceiling.md), and issue
-  [#22](../issues/022-plcc-rep-parses-each-source-independently.md) — all
+- Issue CR-516, issue
+  CR-519, and issue
+  CR-522 — all
   repo-wide and inherited.
 - Any unification of the Env variants, or of the per-language
   `Val`/`IntVal`/`Prim`/`Ref` duplication — ruled out repo-wide by the

@@ -25,7 +25,7 @@
   bin/test.bash > /tmp/type1-<task>.txt 2>&1; echo "EXIT=$?"
   ```
 
-  Read the exit status, not just the counts. `bin/test.bash` has a three-value contract from issue [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md): **0** every test passed, **1** the run completed with real test failures, **2** the harness itself did not finish. **Exit 2 means the numbers in the file are meaningless — do not count them, and do not report a result.** Throughout this phase the expected status is **1**, because `OBJ class` stays red from start to finish; a `0` would mean something unexpected started passing and is just as much a reason to stop as a `2`.
+  Read the exit status, not just the counts. `bin/test.bash` has a three-value contract from issue CR-531: **0** every test passed, **1** the run completed with real test failures, **2** the harness itself did not finish. **Exit 2 means the numbers in the file are meaningless — do not count them, and do not report a result.** Throughout this phase the expected status is **1**, because `OBJ class` stays red from start to finish; a `0` would mean something unexpected started passing and is just as much a reason to stop as a `2`.
 
   Then count with `grep -c '^ok '` and `grep -c '^not ok '`, and list the failures with `grep '^not ok '`.
 
@@ -4651,7 +4651,7 @@ git rm src/TYPE1/grammar src/TYPE1/code src/TYPE1/prim src/TYPE1/envRef \
 
 None of these collides with a new path — `src/TYPE1/grammar` versus `src/TYPE1/grammar.plcc` — which is why the deletion comes last, following the REF, NAME, NEED, and TYPE0 ordering rather than SET's.
 
-**Keep `src/TYPE1/Prog/` and `src/TYPE1/J/EO.java`.** `Prog/` is course material that every migrated language retains, and all four of its programs were confirmed running in Tasks 2 through 4. `J/EO.java` is a tracked Java illustration accompanying `Prog/oe`; issue [#15](../issues/015-gitignore-java-pattern-shadows-source-dirs.md) names it explicitly as a real source file. It is the repository's only `J/` directory, which is a pre-existing oddity and not this phase's to resolve.
+**Keep `src/TYPE1/Prog/` and `src/TYPE1/J/EO.java`.** `Prog/` is course material that every migrated language retains, and all four of its programs were confirmed running in Tasks 2 through 4. `J/EO.java` is a tracked Java illustration accompanying `Prog/oe`; issue CR-515 names it explicitly as a real source file. It is the repository's only `J/` directory, which is a pre-existing oddity and not this phase's to resolve.
 
 - [ ] **Step 2: Confirm nothing referenced them**
 

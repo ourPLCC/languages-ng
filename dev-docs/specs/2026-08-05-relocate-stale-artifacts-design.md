@@ -1,6 +1,6 @@
 # relocate: stop copying stale build artifacts — Design
 
-Addresses issue [#25](../issues/025-relocate-copies-stale-build-artifacts.md).
+Addresses issue CR-525.
 
 ## Background
 
@@ -211,7 +211,7 @@ replaces the three ad-hoc `find` commands the REF migration ran by hand.
 ### 7. Closing
 
 Final commit is `bin/issues/close.bash 025`, per
-[issue-conventions.md](../issue-conventions.md).
+issue-conventions.md.
 
 No `dev-docs/course-material-impact.md` entry: this is repository
 tooling, and nothing an instructor's slides or handouts reference. The

@@ -34,7 +34,7 @@ If reality contradicts this plan, assume the plan is wrong. That happened three 
   bin/test.bash > /tmp/obj-<task>.txt 2>&1; echo "EXIT=$?"
   ```
 
-  Read the exit status, not just the counts. `bin/test.bash` has a three-value contract from issue [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md): **0** every test passed, **1** the run completed with real test failures, **2** the harness itself did not finish. **Exit 2 means the numbers in the file are meaningless — do not count them, and do not report a result.**
+  Read the exit status, not just the counts. `bin/test.bash` has a three-value contract from issue CR-531: **0** every test passed, **1** the run completed with real test failures, **2** the harness itself did not finish. **Exit 2 means the numbers in the file are meaningless — do not count them, and do not report a result.**
 
   Then count with `grep -c '^ok '` and `grep -c '^not ok '`, and list failures with `grep '^not ok '`.
 
@@ -56,7 +56,7 @@ If reality contradicts this plan, assume the plan is wrong. That happened three 
 
 - **These five things are deliberately dropped.** Do not port them, and do not "restore" them on the grounds that the old file had them: `src/OBJ/list` (not `%include`d by the grammar — dead), `ValRORef`/`setRORef` (no callers), `Val.zero` (never read), `Env.empty` (canonical `envRef` inlines `EnvNull()`), and `Bindings(int capacity)` / `Bindings(List<Binding>)` (no callers, already trimmed in the shipped `envRef`).
 
-- **Grammar conventions, unchanged since V0:** identifier token is `SYMBOL` (never `VAR`); nonterminals are PascalCase; multi-capture alt-names are camelCase (`<Exp:testExp>`, `<Exp:vExp>`), not the obsolete lowercase workaround from issue [#6](../issues/006-multi-capture-alt-name-case-mismatch.md). **`SYMBOL` keeps OBJ's own broader regex** `[A-Za-z\&\?\$][\w\?\&\$]*` — not the V-languages' `[A-Za-z][\w?]*`. `$`, `&`, and `?` are legal identifier starts in OBJ and appear in its examples.
+- **Grammar conventions, unchanged since V0:** identifier token is `SYMBOL` (never `VAR`); nonterminals are PascalCase; multi-capture alt-names are camelCase (`<Exp:testExp>`, `<Exp:vExp>`), not the obsolete lowercase workaround from issue CR-506. **`SYMBOL` keeps OBJ's own broader regex** `[A-Za-z\&\?\$][\w\?\&\$]*` — not the V-languages' `[A-Za-z][\w?]*`. `$`, `&`, and `?` are legal identifier starts in OBJ and appear in its examples.
 
 - **Input and expected files carry no trailing newline.** Use `printf`, never `echo` or a bare heredoc.
 
@@ -431,9 +431,9 @@ The wrapper puts a non-nullable nonterminal next to `<Ext>`, and
 `FIRST(ClassBody) = {STATIC, FIELD, METHOD, END}`. The accepted language
 is unchanged; the only visible effect is one extra tree node. Filed
 upstream as issue
-[#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md) with a
+CR-538 with a
 suggested patch; revert the wrapper when it lands, as issue
-[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) was reverted.
+CR-506 was reverted.
 
 Consequence for Tasks 3 and 4: `ClassDecl.eval` reads
 `self.classBody.statics` / `.fields` / `.methods` rather than
@@ -1264,7 +1264,7 @@ Refs #NN"
 **Amended (2026-08-12, inserted between Tasks 4 and 5):** this task did not
 exist when the plan was written. Task 2's amendment worked around a
 plcc-ng 2.0.1 FOLLOW-set defect (issue
-[#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md), filed
+CR-538, filed
 upstream as `ourPLCC/plcc-ng` #188) by splitting `<ClassBody>` out of
 `<ClassDecl>`. The devcontainer now pins plcc-ng 2.0.2, which contains the
 fix. Issue #38 itself says to revert the workaround when this happens, on
@@ -1515,7 +1515,7 @@ For each `DIVERGE`, the three targets disagree — that is always a porting bug 
 For each `NONZERO`, determine which of three causes applies before doing anything:
 
 1. The example needs input the harness does not supply, or is a fragment rather than a whole program — expected, record it.
-2. It hits a known inherited issue: [#16](../issues/016-cross-target-integer-divergence.md) (Java 32-bit overflow), [#19](../issues/019-python-recursion-ceiling.md) (Python recursion ceiling), [#22](../issues/022-plcc-rep-parses-each-source-independently.md) (multi-file programs). Record which.
+2. It hits a known inherited issue: CR-516 (Java 32-bit overflow), CR-519 (Python recursion ceiling), CR-522 (multi-file programs). Record which.
 3. A real defect in the port. Fix it.
 
 **Do not edit any file under `Prog/`, `Examples/`, `PPP/`, or `BST/` to make it pass.** They are course material and the point of the exercise is that they run unmodified. If one genuinely cannot, that is a finding to record, not to paper over.
@@ -1613,4 +1613,4 @@ grep -c '^not ok ' /tmp/obj-final.txt
 
 Expected: `EXIT=0`, `186`, `0`.
 
-Every language in the keep list is now on plcc-ng and the repository contains no old-PLCC sources. Note in the closing commit or the issue that this unblocks issue [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md), which was explicitly deferred until every language had migrated, and that issue [#27](../issues/027-use-spec-flag-instead-of-copying-tree.md)'s "3 legacy `plccmk` languages" is now zero, so `relocate` could be retired entirely rather than coexisting with `plcc-rep -s`.
+Every language in the keep list is now on plcc-ng and the repository contains no old-PLCC sources. Note in the closing commit or the issue that this unblocks issue CR-512, which was explicitly deferred until every language had migrated, and that issue CR-527's "3 legacy `plccmk` languages" is now zero, so `relocate` could be retired entirely rather than coexisting with `plcc-rep -s`.

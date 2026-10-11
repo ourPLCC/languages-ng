@@ -1,6 +1,6 @@
 # CI on the pinned devcontainer image, and a PR workflow
 
-Design for issue [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md).
+Design for issue CR-512.
 Date: 2026-08-12.
 
 ## Why now

@@ -158,7 +158,7 @@ class a second list alongside the first, in the same way `<LetDecls>`'s
    disagreement in a course that teaches the two back to back.
 
 The camelCase `<Exp:testExp>`/`<Exp:trueExp>`/`<Exp:falseExp>` alt-names carry
-over untouched; issue [#6](../issues/006-multi-capture-alt-name-case-mismatch.md)
+over untouched; issue CR-506
 was fixed in plcc-ng 2.0.0 and the lowercase workaround must not be
 reintroduced.
 
@@ -453,9 +453,9 @@ three targets.
 
 Magnitudes and depths stay small: the largest value anywhere is `120`, far below
 the 32-bit Java `IntVal` overflow of issue
-[#16](../issues/016-cross-target-integer-divergence.md), and no case recurses
+CR-516, and no case recurses
 deeply enough to approach the Python ceiling of issue
-[#19](../issues/019-python-recursion-ceiling.md).
+CR-519.
 
 ## Example Programs — None
 
@@ -528,7 +528,7 @@ A plain `bin/test.bash` run now completes unaided in one invocation.
 > passing and 3 failing**" for the baseline and "**141 tests** … **139
 > passing and 2 failing**" after the phase, measured using the split-`TMPDIR`
 > workaround from issue
-> [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md)
+> CR-531
 > and a claim that "a plain `bin/test.bash` run exhausts the disk on this
 > container." Both premises expired: #31 landed on `main` and added
 > `bin/bats-tmpdir.bash`, a teardown that empties each passing test's
@@ -579,10 +579,10 @@ A plain `bin/test.bash` run now completes unaided in one invocation.
   `count` — see [above](#example-programs--none).
 - Reordering the lexical section — longest match makes it unnecessary, see
   [above](#plcc-ng-resolves-tokens-by-longest-match-not-by-declaration-order).
-- Issue [#16](../issues/016-cross-target-integer-divergence.md), issue
-  [#19](../issues/019-python-recursion-ceiling.md), issue
-  [#22](../issues/022-plcc-rep-parses-each-source-independently.md), and issue
-  [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md) — all
+- Issue CR-516, issue
+  CR-519, issue
+  CR-522, and issue
+  CR-531 — all
   repo-wide and inherited.
 - Any unification of the Env variants, or of the per-language
   `Val`/`IntVal`/`Prim`/`Ref` duplication — ruled out repo-wide by the

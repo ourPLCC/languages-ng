@@ -250,9 +250,9 @@ unbound-variable path, both of which the spike confirms still work. This keeps
 the one-shared-expected model clean, the same call V3–V6 and SET made.
 
 Magnitudes and recursion depths stay small, clear of the 32-bit Java `IntVal`
-overflow of issue [#16](../issues/016-cross-target-integer-divergence.md) and
+overflow of issue CR-516 and
 the Python recursion ceiling of issue
-[#19](../issues/019-python-recursion-ceiling.md).
+CR-519.
 
 ## Example Programs (`src/REF/Prog/`)
 
@@ -357,9 +357,9 @@ against REF rather than SET:
 - Error-path and diagnostic tests.
 - Repairing `Prog/counter1` and `Prog/counter3` (see
   [Example Programs](#example-programs-srcrefprog)).
-- Issue [#16](../issues/016-cross-target-integer-divergence.md), issue
-  [#19](../issues/019-python-recursion-ceiling.md), and issue
-  [#22](../issues/022-plcc-rep-parses-each-source-independently.md) — all
+- Issue CR-516, issue
+  CR-519, and issue
+  CR-522 — all
   repo-wide and inherited.
 - Any unification of the Env variants, or of the per-language
   `Val`/`IntVal`/`Prim`/`Ref` duplication — ruled out repo-wide by the

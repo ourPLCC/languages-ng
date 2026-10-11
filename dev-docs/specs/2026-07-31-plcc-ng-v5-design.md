@@ -190,7 +190,7 @@ same call V3 and V4 made.
 Recursion depths and magnitudes stay small in every case. Two live constraints
 make this a rule rather than a preference: Python's recursion ceiling (which
 forced V4 to shrink `Prog/oe`), and the 32-bit Java `IntVal` overflow of open
-issue [#16](../issues/016-cross-target-integer-divergence.md). `.fact(5)` →
+issue CR-516. `.fact(5)` →
 `120` is comfortably inside the safe range for both.
 
 On the first of those: this design originally cited "Python's default
@@ -199,7 +199,7 @@ number. Measured during the whole-branch review, a V5 `letrec` self-recursion
 dies in Python at roughly **N=330**, not 1,000 — each language-level call costs
 several Python interpreter frames — while Java and JavaScript survive past
 N=2,700. That threefold divergence is now tracked as open issue
-[#19](../issues/019-python-recursion-ceiling.md), a sibling of #16: inherited
+CR-519, a sibling of #16: inherited
 from V0/V4 rather than introduced here, but `letrec` is what makes deep
 recursion the natural thing for a student to write.
 
@@ -253,7 +253,7 @@ before may fail after.
 - V6, including `define`, its `Prog/` directory, and the unvalidated
   `plcc-rep`-loop persistent-state question the overarching design flagged for
   it.
-- Issue [#16](../issues/016-cross-target-integer-divergence.md) — repo-wide and
+- Issue CR-516 — repo-wide and
   inherited from V0, not V5's to fix.
 - Error-path / diagnostic tests.
 - Any change to `envVal`, including adding the capacity-taking `Bindings`

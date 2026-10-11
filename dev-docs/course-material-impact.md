@@ -212,7 +212,7 @@ headings are added in the order each language is migrated.
   assignment pushes recursion depth into the hundreds on the Python
   target, expect a `RecursionError` there well before the other two
   targets show any trouble — see
-  [issue #19](issues/019-python-recursion-ceiling.md).
+  CR-519.
 - V5's four placeholder strings were normalized to the
   `" ...ClassName... "` spelling V6 and the seven not-yet-ported
   languages (Phases 3-5) use.
@@ -532,7 +532,7 @@ headings are added in the order each language is migrated.
   pulling the two programs' numbers in opposite directions.
 - **`Prog/nn` runs in Java and JavaScript but not Python**, dying with
   `RecursionError: maximum recursion depth exceeded` at `.nth(1000,natno)` —
-  [issue #19](issues/019-python-recursion-ceiling.md)'s recursion ceiling.
+  CR-519's recursion ceiling.
   This is inherited, not introduced by the port: the identical file run
   against NAME's own shipped Python spec (`src/NAME/python`) fails the same
   way (Task 5 confirms this live). An instructor should demo `nn` in Java or
@@ -731,14 +731,14 @@ headings are added in the order each language is migrated.
   the only alternative is writing to stdout, which deadlocks the tool
   (below). A supported output record kind would fix it; that is recorded
   as a second symptom on issue
-  [#37](issues/037-plcc-rep-lacks-output-and-clean-exit-records.md).
+  CR-537.
   Anyone extending OBJ with a new output form has to append to
   `Program.out` rather than print. The reason is
   `plcc-rep`: it runs the generated program as a subprocess and uses
   that program's stdout as a private line-oriented JSON channel, so a
   partial line written by a semantic action merges with the result
   record and deadlocks the tool with no diagnostic at all (issue
-  [#36](issues/036-plcc-rep-deadlocks-on-partial-stdout-line.md)). A
+  CR-536). A
   student who puts a stray `print` in a semantic action gets a hang, not
   an error message — this is the single most useful thing to say out
   loud before an OBJ assignment that adds an output form.
@@ -750,7 +750,7 @@ headings are added in the order each language is migrated.
   semantics are unchanged — evaluation stops, nothing after `exit` runs,
   and output already produced survives — but a deliberate quit now reads
   as a crash. A clean-exit record kind is requested upstream in issue
-  [#37](issues/037-plcc-rep-lacks-output-and-clean-exit-records.md); no
+  CR-537; no
   example program or test uses `exit`.
 - **The reserved-ID check moved out of `Env`.** Rejecting `self`,
   `myclass`, `superclass`, `this`, and `super` as user-bound

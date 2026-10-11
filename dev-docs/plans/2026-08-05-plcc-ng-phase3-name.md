@@ -1033,7 +1033,7 @@ Refs #NN"
 bin/issues/close.bash NN
 ```
 
-This fills in the issue's `closed` date, removes its Open Issues roadmap entry (and the `### Feat` heading, now that it is empty), and runs `bin/issues/check.bash`. Review the staged roadmap diff before committing — `close.bash` does not edit milestone prose, and this repo has seen it rewrite plan prose before (issue [#18](../issues/018-close-bash-rewrites-plan-prose.md)).
+This fills in the issue's `closed` date, removes its Open Issues roadmap entry (and the `### Feat` heading, now that it is empty), and runs `bin/issues/check.bash`. Review the staged roadmap diff before committing — `close.bash` does not edit milestone prose, and this repo has seen it rewrite plan prose before (issue CR-518).
 
 - [ ] **Step 6: Commit the close**
 

@@ -9,7 +9,7 @@
 **Tech Stack:** GitHub Actions, bash, bats-core 1.11.0, sed. No new dependencies. Nothing in `src/` changes.
 
 Design spec: [2026-08-12-ci-container-and-pr-workflow-design.md](../specs/2026-08-12-ci-container-and-pr-workflow-design.md).
-Issue: [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md).
+Issue: CR-512.
 
 ## Global Constraints
 
@@ -910,7 +910,7 @@ bin/issues/close.bash 12
 ```
 
 This fills in the issue's `closed` date and updates
-[dev-docs/roadmap.md](../roadmap.md). Never edit either by hand. Then
+dev-docs/roadmap.md. Never edit either by hand. Then
 verify and commit:
 
 ```bash

@@ -1,7 +1,7 @@
 # Devcontainer stale-toolchain diagnosis (issue #11)
 
 **Date:** 2026-07-30
-**Issue:** [#11](../issues/011-devcontainer-image-stale-plcc-ng-version.md)
+**Issue:** CR-511
 **Type:** chore
 
 ## Problem
@@ -52,7 +52,7 @@ exactly the non-reproducibility the pin exists to prevent. It also adds a
 network dependency and latency to every create.
 
 That is the entire case for removal, and it stands on its own.
-[dev-docs/issue-conventions.md](../issue-conventions.md) does have a rule
+dev-docs/issue-conventions.md does have a rule
 making workaround-removal a precondition of closing, but it does not
 apply here: it is scoped to "when an **upstream defect** forces a local
 workaround in shipped **`src/`**," and this branch's own conclusion is
@@ -133,7 +133,7 @@ to `issues/done/`, removes the Open Issues entry, and rewrites links.
 
 ### Not changed
 
-[dev-docs/issues/done/010-*.md](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md)
+dev-docs/issues/done/010-*.md (CR-510)
 is accurate as written: the fix did land in plcc-ng 2.0.1, no local
 workaround was committed for it, and it closed once the devcontainer ran
 2.0.1. No `src/` change, so no
@@ -158,7 +158,7 @@ commit message is immutable; the revert's message carries the correction.
   still drive old PLCC (`grep -rl plccmk src/` returns precisely that
   set), and the plcc-ng image does not ship `plccmk`. They are
   pre-existing and unrelated to this work. They are also the *inverse* of
-  the gap tracked by [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md),
+  the gap tracked by CR-512,
   which is about CI lacking plcc-ng so migrated languages fail *there*;
   here it is the local container lacking old PLCC. This suite already
   exercises the image's plcc-ng 2.0.1 across V0–V3.
@@ -171,5 +171,5 @@ the root `.devcontainer`, not the branch's. Per the maintainer's decision,
 #11 closes in this branch anyway — the evidence above already establishes
 that the removed command was inert, so a rebuild could only confirm a
 known result. The "close on verification" exception in
-[issue-conventions.md](../issue-conventions.md) was considered and
+issue-conventions.md was considered and
 declined for this reason.

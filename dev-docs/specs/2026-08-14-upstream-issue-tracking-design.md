@@ -1,6 +1,6 @@
 # Upstream issue tracking: local issues track local work
 
-**Issue:** [#52](../issues/052-upstream-issues-track-local-work-only.md)
+**Issue:** CR-552
 **Date:** 2026-08-14
 
 Extends [Issue status as frontmatter, not
@@ -17,7 +17,7 @@ revisit them.
 > demand, never recorded.
 
 This generalizes the reasoning that closed
-[#22](../issues/022-plcc-rep-parses-each-source-independently.md) while
+CR-522 while
 upstream #185 was still open: "what remains is a documentation task in
 someone else's tracker, so tracking it as an open issue here overstated
 what was outstanding."
@@ -45,21 +45,21 @@ reproduction detail permanently — issues never move, so links to it never
 break.
 
 This is the case that #22 discovered and that
-[#36](../issues/036-plcc-rep-deadlocks-on-partial-stdout-line.md) turns
+CR-536 turns
 out to be in (see *Data fixes*).
 
 ### B — reported; local workaround lives in `src/`
 
 The issue stays **open**, and its subject is *the revert*. It closes when
 the workaround is gone. This is the
-[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) lifecycle,
+CR-506 lifecycle,
 unchanged: workaround ships, upstream fixes the root cause, workaround is
 reverted with an impact-log note.
 
 ### C — the defect straddles both repositories
 
-[#39](../issues/039-putc-puts-diverge-across-targets.md) and
-[#19](../issues/019-python-recursion-ceiling.md) are both this shape: part
+CR-539 and
+CR-519 are both this shape: part
 of the defect is in this repo's specs, part is in plcc-ng's error
 reporting. **Split by repository.** The local half is an ordinary local
 issue with `target: this repo`; the upstream half follows A1/A2. There is
@@ -143,7 +143,7 @@ against it:
 - **Branch-scoped issue state would be lost.** A worktree's branch can
   open and close issues independently, and `list.bash` deliberately reads
   the tree it lives in
-  ([issue-conventions.md](../issue-conventions.md), §"Listing open
+  (issue-conventions.md, §"Listing open
   issues"). GitHub Issues are global; there is no per-branch issue state.
 - **Atomicity would be lost.** Closing in the branch's final commit means
   work and bookkeeping merge — and revert — together.
@@ -159,9 +159,9 @@ own decision.
 
 | File | Change |
 |---|---|
-| [issue-conventions.md](../issue-conventions.md) | Replace §"The `target` field" with §"Upstream defects": the principle, the three cases, the field format, the never-cache rule. Preserve the existing "reported upstream manually, with explicit go-ahead" norm. |
-| [issues/TEMPLATE.md](../issues/TEMPLATE.md) | Add the `upstream:` key, plus a **one-line** pointer to §"Upstream defects" in the comment block — not a full explanation. See *The TEMPLATE.md comment block* below. |
-| [bin/issues/check.bash](../../bin/issues/check.bash) | Validate `upstream:` **when present and non-empty**: each comma-separated ref is `owner/repo` plus a filename. Never required, so no backfill across the local issues. Slots in after the existing `for key in type target opened closed` loop. |
+| issue-conventions.md | Replace §"The `target` field" with §"Upstream defects": the principle, the three cases, the field format, the never-cache rule. Preserve the existing "reported upstream manually, with explicit go-ahead" norm. |
+| issues/TEMPLATE.md | Add the `upstream:` key, plus a **one-line** pointer to §"Upstream defects" in the comment block — not a full explanation. See *The TEMPLATE.md comment block* below. |
+| bin/issues/check.bash | Validate `upstream:` **when present and non-empty**: each comma-separated ref is `owner/repo` plus a filename. Never required, so no backfill across the local issues. Slots in after the existing `for key in type target opened closed` loop. |
 | [bin/tests/issues-check.bats](../../bin/tests/issues-check.bats) | Extend (the file now exists, added by #49) with coverage for a malformed ref and the absent-field case. |
 | `src/OBJ/{python,java,javascript}/spec.plcc` | Reattribute the `Program.out` buffering comment to #37. |
 
@@ -169,7 +169,7 @@ own decision.
 
 ### The TEMPLATE.md comment block
 
-Issue [#50](../issues/050-head-idiom-coupled-to-template-comment.md)
+Issue CR-550
 records that four documents promise `bin/issues/list.bash | xargs head -n
 50` shows an issue's frontmatter, title, and summary — and that the number
 holds only while TEMPLATE.md's HTML comment block stays its current
@@ -180,7 +180,7 @@ Explaining `upstream:` at the same length as `type`, `target`, and
 `closed` would add roughly six lines and be that fourth drift. So the
 template gets a **one-line pointer** to §"Upstream defects" instead, and
 the full explanation lives in
-[issue-conventions.md](../issue-conventions.md), which is already the
+issue-conventions.md, which is already the
 authoritative home for the upstream rules.
 
 Measured: `## Summary` sits at TEMPLATE.md line 34 today, so one added
@@ -228,11 +228,11 @@ is local. Reporting the wording upstream needs the reporter's go-ahead.
 Two issues close on this branch. #36 closes as *work product* — case A2
 applied to it is part of the change — while #52 closes last as the
 branch's own bookkeeping, per
-[issue-conventions.md](../issue-conventions.md).
+issue-conventions.md.
 
 ## What #49 changed under this design
 
-[#49](../issues/049-retire-roadmap-open-issues-section.md) landed on
+CR-549 landed on
 `main` while this spec was being written, and it settled three things this
 design had treated as open.
 

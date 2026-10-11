@@ -384,9 +384,9 @@ parse without it.
 
 Magnitudes and depths stay small: the largest value is `100`, well clear of the
 32-bit Java `IntVal` overflow of issue
-[#16](../issues/016-cross-target-integer-divergence.md), and the deepest
+CR-516, and the deepest
 recursion is `infinite-stream/`'s hundred levels, which clears the Python
-recursion ceiling of issue [#19](../issues/019-python-recursion-ceiling.md) with
+recursion ceiling of issue CR-519 with
 room.
 
 ## Example Programs (`src/NEED/Prog/`)
@@ -402,7 +402,7 @@ that is how it stands pre-migration and is not a porting artifact.
 **`Prog/nn` is the exception**, and it is kept as-is. It runs
 `.nth(1000,natno)` twice, which succeeds in Java and JavaScript but dies in
 Python with `RecursionError` — issue
-[#19](../issues/019-python-recursion-ceiling.md), and **inherited, not
+CR-519, and **inherited, not
 introduced**: the same file fails the same way against NAME's own shipped Python
 spec. Two facts are logged rather than acted on:
 
@@ -498,9 +498,9 @@ genuine regression rather than expected churn.
   [The Jensen Device Diverges](#the-jensen-device-diverges).
 - Making `let` lazy, or any other extension of call-by-need beyond operands — a
   language change, not a port.
-- Issue [#16](../issues/016-cross-target-integer-divergence.md), issue
-  [#19](../issues/019-python-recursion-ceiling.md), and issue
-  [#22](../issues/022-plcc-rep-parses-each-source-independently.md) — all
+- Issue CR-516, issue
+  CR-519, and issue
+  CR-522 — all
   repo-wide and inherited.
 - Any unification of the Env variants, or of the per-language
   `Val`/`IntVal`/`Prim`/`Ref` duplication — ruled out repo-wide by the

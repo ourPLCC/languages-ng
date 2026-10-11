@@ -6,8 +6,7 @@
   // (exact cache-key behavior unconfirmed), so a plain rebuild may
   // silently keep the old toolchain.
   // Do not "fix" a stale container with `pipx upgrade plcc-ng`; that
-  // defeats this pin. See
-  // dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md
+  // defeats this pin. See CR-511 in the ourPLCC/dev tracker.
   "image": "ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.2@sha256:ebab585854e2c2dd5133db9616b398f6ede19702b514a5f4ace14757ae63dc9a",
   "features": {
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},

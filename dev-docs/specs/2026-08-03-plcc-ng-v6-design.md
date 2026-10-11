@@ -105,7 +105,7 @@ Note for anyone diffing against the pre-migration `src/V6/grammar`: the port
 uses `SYMBOL` where the original used `VAR` (the JS reserved-word fix, adopted
 repo-wide), and camelCase alt-names `<Exp:testExp>` rather than the lowercase
 workaround the overarching design still describes — issue
-[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) was fixed in
+CR-506 was fixed in
 plcc-ng 2.0.0.
 
 ## Semantics
@@ -343,9 +343,9 @@ it for a coverage gap and go hunting for the test that would exercise it.
 
 Magnitudes and recursion depths stay small in every case, clear of the two live
 constraints: the 32-bit Java `IntVal` overflow of open issue
-[#16](../issues/016-cross-target-integer-divergence.md), and the Python
+CR-516, and the Python
 recursion ceiling of open issue
-[#19](../issues/019-python-recursion-ceiling.md). Nothing in these four cases
+CR-519. Nothing in these four cases
 comes close to either.
 
 ## Example Programs (`src/V6/Prog/`)
@@ -420,9 +420,9 @@ pointing at the design or issue that superseded it:
 
 | Where | Stale claim | Reality |
 |---|---|---|
-| Phasing, V2 bullets | Spell alt-names entirely lowercase (`<Exp:testexp>`) to dodge issue [#6](../issues/006-multi-capture-alt-name-case-mismatch.md) | Fixed in 2.0.0; V3–V5 all ship camelCase `<Exp:testExp>` |
+| Phasing, V2 bullets | Spell alt-names entirely lowercase (`<Exp:testexp>`) to dodge issue CR-506 | Fixed in 2.0.0; V3–V5 all ship camelCase `<Exp:testExp>` |
 | Addendum | Python and Java `_run()` should `print()`; only JavaScript returns | All three return a string; `print()` plus `None` is a hard error |
-| Addendum | Returning a plain string from Python's `_run()` prints it quoted | Issue [#3](../issues/003-python-run-return-value-quoted.md), closed 2026-07-28 |
+| Addendum | Returning a plain string from Python's `_run()` prints it quoted | Issue CR-503, closed 2026-07-28 |
 | Addendum | Rename the *capture* (`<VAR:name>`) for the JS reserved word | The port renamed the *token* to `SYMBOL` |
 
 This is in scope for V6 specifically because V6 is the last phase before
@@ -477,8 +477,8 @@ regressed.
 
 - Phases 3–5 — SET, REF, NAME, NEED, TYPE0, TYPE1, OBJ — and the `envRef` port
   they share.
-- Issue [#16](../issues/016-cross-target-integer-divergence.md) and issue
-  [#19](../issues/019-python-recursion-ceiling.md) — both repo-wide and
+- Issue CR-516 and issue
+  CR-519 — both repo-wide and
   inherited from V0, not V6's to fix.
 - Error-path and diagnostic tests, including the behavior of a parse failure
   partway through a program stream.

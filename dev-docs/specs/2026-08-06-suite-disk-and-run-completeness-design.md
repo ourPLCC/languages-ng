@@ -1,6 +1,6 @@
 # Bound the suite's disk use, and never report a dead run as a test failure — Design
 
-Addresses issue [#31](../issues/031-suite-exhausts-disk-and-reports-spurious-failure.md).
+Addresses issue CR-531.
 
 ## Background
 
@@ -16,8 +16,8 @@ fixes:
   not the cost of one.
 - **The silence.** A run that dies for any reason — disk, OOM, a stray
   `SIGKILL` — produces output that reads like an ordinary result. This is the
-  same class as issues [#25](../issues/025-relocate-copies-stale-build-artifacts.md)
-  and [#28](../issues/028-relocate-filter-hides-permission-errors.md): the
+  same class as issues CR-525
+  and CR-528: the
   harness fails in a way that looks like a test result.
 
 ### Why the footprint is a sum, not a maximum
@@ -43,7 +43,7 @@ up.
 
 ### Why issue #27 is not sufficient on its own
 
-Issue [#27](../issues/027-use-spec-flag-instead-of-copying-tree.md) proposes
+Issue CR-527 proposes
 `plcc-rep -s <abs spec path>`, which needs no copied tree. Issue #31 treats
 that as the structural fix. Measurement says otherwise: `-s` removes the
 1.5 MB copy but **not** the build output, which still lands in
@@ -341,7 +341,7 @@ rather than asserting it works.
   nothing here touches a language, a grammar symbol, a field name, or program
   output. It is all test harness, invisible to slides and handouts.
 - **CI.** Unaffected today for the reason in issue
-  [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) — the job is
+  CR-512 — the job is
   `on: pull_request` and no PRs are open — and unaffected afterwards, since a
   fresh runner has room either way. The exit-2 distinction is what will matter
   there once CI does run.

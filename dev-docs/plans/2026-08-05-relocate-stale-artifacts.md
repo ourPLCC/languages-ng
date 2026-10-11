@@ -15,7 +15,7 @@ Add a bats suite under `bin/tests/` and wire it into `bin/test.bash`.
 **Tech Stack:** Bash, bats-core 1.11, git, GNU tar. No new dependencies.
 
 **Spec:** [dev-docs/specs/2026-08-05-relocate-stale-artifacts-design.md](../specs/2026-08-05-relocate-stale-artifacts-design.md)
-**Issue:** [#25](../issues/025-relocate-copies-stale-build-artifacts.md)
+**Issue:** CR-525
 
 ## Global Constraints
 

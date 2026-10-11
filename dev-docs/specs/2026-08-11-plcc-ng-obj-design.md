@@ -76,7 +76,7 @@ and the measurement that produced it could not have caught the problem.**
 `unexpected 'FIELD', no production for 'Ext'`.
 
 The cause is a plcc-ng FOLLOW-set defect, filed as issue
-[#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md):
+CR-538:
 `build_follow_sets.py` adds FIRST of the *single* next symbol and then
 skips to the "entire remainder nullable" case, never walking forward
 through nullable symbols in between. `<Statics>` is nullable, so
@@ -107,8 +107,8 @@ gained one node and `ClassDecl.eval` reached through `self.classBody`.
 **Resolved 2026-08-12 — the workaround is no longer in the grammar.**
 plcc-ng 2.0.2 contains the upstream fix (`ourPLCC/plcc-ng` issue #188),
 so the split was reverted on the issue
-[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) precedent and
-issue [#38](../issues/038-plcc-ng-follow-set-omits-nullable-tail.md) was
+CR-506 precedent and
+issue CR-538 was
 closed. The shipped grammar is back to the single production this document
 originally specified:
 
@@ -299,7 +299,7 @@ is the same reasoning that kept `Val.isTrue()` raising in TYPE1.
 
 The correct fix is the protocol extension in enhancement issue 2 above. OBJ does
 not block on it: that is the pattern issue
-[#6](../issues/006-multi-capture-alt-name-case-mismatch.md) set, where a
+CR-506 set, where a
 workaround shipped, plcc-ng 2.0.0 fixed the root cause, and the workaround was
 then reverted. When a clean-exit record kind lands, `ExitExp` becomes a two-line
 change and the impact-log entry gets a `Superseded` note.
@@ -337,7 +337,7 @@ conventions, and nothing else:
    `[A-Za-z][\w?]*` the V-languages use.
 4. Multi-capture alt-names in camelCase: `<Exp:testExp>`, `<Exp:trueExp>`,
    `<Exp:falseExp>`, `<Exp:vExp>`, `<Exp:eExp>`. The lowercase workaround for
-   issue [#6](../issues/006-multi-capture-alt-name-case-mismatch.md) was fixed
+   issue CR-506 was fixed
    in plcc-ng 2.0.0 and must not be reintroduced.
 
 The `%include code` / `prim` / `envRef` / `val` / `listVal` / `listPrim` /
@@ -563,7 +563,7 @@ diverged. One exited nonzero on one target:**
 
 | file | python | java | js | cause |
 |---|---|---|---|---|
-| `Prog/oe` | exit 1, `RecursionError: maximum recursion depth exceeded` | exit 0, `1` | exit 0, `1` | known issue [#19](../issues/019-python-recursion-ceiling.md) (Python recursion ceiling) |
+| `Prog/oe` | exit 1, `RecursionError: maximum recursion depth exceeded` | exit 0, `1` | exit 0, `1` | known issue CR-519 (Python recursion ceiling) |
 
 `Prog/oe` defines mutually-recursive statics `odd?`/`even?` and calls
 `.<c>even?(1000)` — about 1,000 language-level calls, comfortably inside
@@ -622,10 +622,10 @@ factor rather than anything in the port.
 
 ## What This Phase Unblocks But Does Not Do
 
-- Issue [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md) (CI) is
+- Issue CR-512 (CI) is
   explicitly "deferred until every language has migrated." That becomes true
   here, so #12 is actionable immediately after this phase.
-- Issue [#27](../issues/027-use-spec-flag-instead-of-copying-tree.md) states
+- Issue CR-527 states
   "the 3 legacy `plccmk` languages still need `relocate`." That is already stale
    — measured, exactly **one** `.bats` file still references `plccmk`
   (`src/OBJ/tests/class/OBJtest.bats`) — and after this phase it is zero, so
@@ -644,9 +644,9 @@ factor rather than anything in the port.
   explicit confirmation, per the Defect Tracking process.
 - Any unification of the per-language `Val`/`IntVal`/`Prim`/`Ref` duplication —
   ruled out repo-wide by the overarching design.
-- Issues [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md),
-  [#16](../issues/016-cross-target-integer-divergence.md),
-  [#19](../issues/019-python-recursion-ceiling.md),
-  [#22](../issues/022-plcc-rep-parses-each-source-independently.md), and
-  [#27](../issues/027-use-spec-flag-instead-of-copying-tree.md) — all repo-wide
+- Issues CR-512,
+  CR-516,
+  CR-519,
+  CR-522, and
+  CR-527 — all repo-wide
   and inherited.

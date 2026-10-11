@@ -29,7 +29,7 @@
 - JavaScript: grammar-derived classes get `Node`/`Token`/`LanguageError` auto-injected — never add an `:import` for those three names on them. A grammar-derived subclass also gets its **base class** auto-injected, so `Define`/`Eval` never need to import `Program`.
 - Java needs no `:import` blocks for same-directory, package-less classes. `Define` needs none at all.
 - Every test case gets one shared `V6.input` / `V6.expected` pair, asserted by one `@test` block per target in a single `.bats` file. Value cases only — no error-path test.
-- Keep every test's recursion depth and integer magnitude small — issues [#16](../issues/016-cross-target-integer-divergence.md) and [#19](../issues/019-python-recursion-ceiling.md) are live. Every expected value in this plan was measured; do not scale any of them up.
+- Keep every test's recursion depth and integer magnitude small — issues CR-516 and CR-519 are live. Every expected value in this plan was measured; do not scale any of them up.
 - Any change affecting course material gets logged in [dev-docs/course-material-impact.md](../course-material-impact.md), in the same commit that makes the change — under `## V6`, except Task 2's V5 half, which goes under V5's existing heading.
 - Never run bare `git stash` / `git stash pop` — the stash stack is shared with other worktrees.
 
@@ -91,7 +91,7 @@ and [dev-docs/plans/2026-08-03-plcc-ng-phase2-v6.md](../plans/2026-08-03-plcc-ng
 
 - [ ] **Step 3: Add the roadmap entry**
 
-Edit `dev-docs/roadmap.md`. Per [issue-conventions.md](../issue-conventions.md), the entry goes under `## Open Issues` beneath the `###` heading matching the issue's type — `Feat`, which does **not** currently exist, so create the group. Place it **before** the existing `### Chore` group; that is the order the roadmap used when a `Feat` group last existed (commit `25c247f`: Feat, Chore, Docs).
+Edit `dev-docs/roadmap.md`. Per issue-conventions.md, the entry goes under `## Open Issues` beneath the `###` heading matching the issue's type — `Feat`, which does **not** currently exist, so create the group. Place it **before** the existing `### Chore` group; that is the order the roadmap used when a `Feat` group last existed (commit `25c247f`: Feat, Chore, Docs).
 
 Use this exact two-line format (the `bin/issues/` scripts parse it):
 
@@ -396,7 +396,7 @@ token SYMBOL '[A-Za-z][\w?]*'
 
 Notes on what is deliberately **not** carried from the pre-migration `src/V6/grammar`:
 - The token is `SYMBOL`, not `VAR` — the JS reserved-word fix, adopted repo-wide.
-- `IfExp` alt-names are camelCase (`testExp`), not the lowercase workaround the overarching design still describes; issue [#6](../issues/006-multi-capture-alt-name-case-mismatch.md) was fixed in plcc-ng 2.0.0.
+- `IfExp` alt-names are camelCase (`testExp`), not the lowercase workaround the overarching design still describes; issue CR-506 was fixed in plcc-ng 2.0.0.
 - The stale header comment about `?` in variable names (that widening happened at V4) is dropped, matching V5.
 
 - [ ] **Step 2: Verify the grammar scans and the new token is recognized**
@@ -1414,7 +1414,7 @@ This fills in the issue's `closed` date, removes its Open Issues entry, removes 
 
 Run: `git diff --cached dev-docs/roadmap.md`
 
-Confirm the `#21` entry and the `### Feat` heading are both gone, and that the `### Chore` and `### Docs` groups — including the `#22` entry added in Task 8 — are untouched. Per [issue #20](../issues/020-close-bash-roadmap-awk-edge-cases.md), `close.bash`'s awk has two dormant edge cases around blank-line collapsing; neither fires against the roadmap's current shape, but eyeball the diff rather than trusting it blind.
+Confirm the `#21` entry and the `### Feat` heading are both gone, and that the `### Chore` and `### Docs` groups — including the `#22` entry added in Task 8 — are untouched. Per CR-520, `close.bash`'s awk has two dormant edge cases around blank-line collapsing; neither fires against the roadmap's current shape, but eyeball the diff rather than trusting it blind.
 
 - [ ] **Step 5: Verify consistency**
 
