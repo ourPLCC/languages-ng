@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(backlog:*)"
+    ]
+  },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
   }
