@@ -13,5 +13,22 @@
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
     "ghcr.io/devcontainers-extra/features/shellcheck:1": {}
   },
-  "postCreateCommand": "bin/install/bats.bash"
+  // The change-request tracker and org developer docs live in ourPLCC/dev,
+  // cloned beside this repo on the host and mounted at /workspaces/dev.
+  // ~/.claude is a named volume so assistant memory and settings survive
+  // a rebuild.
+  "initializeCommand": "test -d ../dev || git clone https://github.com/ourPLCC/dev ../dev; git -C ../dev config core.hooksPath .githooks",
+  "mounts": [
+    "source=${localWorkspaceFolder}/../dev,target=/workspaces/dev,type=bind",
+    "source=languages-ng-claude,target=/home/vscode/.claude,type=volume"
+  ],
+  "containerEnv": {
+    "BACKLOG_CWD": "/workspaces/dev",
+    "GIT_CONFIG_COUNT": "2",
+    "GIT_CONFIG_KEY_0": "safe.directory",
+    "GIT_CONFIG_VALUE_0": "/workspaces/dev",
+    "GIT_CONFIG_KEY_1": "safe.directory",
+    "GIT_CONFIG_VALUE_1": "/workspaces/languages-ng"
+  },
+  "postCreateCommand": "${containerWorkspaceFolder}/bin/install/bats.bash && sudo chown vscode:vscode /home/vscode/.claude && npm i -g backlog.md@$(cat /workspaces/dev/.backlog-version) && git -C /workspaces/dev status >/dev/null && git -C ${containerWorkspaceFolder} status >/dev/null && ${containerWorkspaceFolder}/bin/install/claude-imports.bash"
 }

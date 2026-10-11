@@ -3,3 +3,6 @@ plcc-ng/
 __pycache__/
 .claude/worktrees/
 .superpowers/
+
+# Implementation plans live in the worktree and are never committed
+.plans/
