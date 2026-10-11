@@ -9,7 +9,7 @@ happened in the repo"; this answers "what do I need to update in my
 course materials."
 
 Entries are added under the relevant language's heading, in the same
-commit that makes the change (see [CLAUDE.md](../CLAUDE.md)). Language
+commit that makes the change (see [CONTRIBUTING.md](../CONTRIBUTING.md#course-material-impact-log)). Language
 headings are added in the order each language is migrated.
 
 ## V0

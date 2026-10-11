@@ -990,7 +990,7 @@ EOF
 
 **Interfaces:**
 - Consumes: everything above.
-- Produces: the branch's final commit, per [CLAUDE.md](../../CLAUDE.md).
+- Produces: the branch's final commit, per CLAUDE.md.
 
 This is the acceptance test for the whole branch: the original bug was `close.bash` editing plans. If any file under `dev-docs/plans/` appears in this diff, the branch has failed.
 

@@ -134,7 +134,7 @@ The two test files added by this work are the standing exceptions to
 ### Verified behavior
 
 Each of these was checked empirically before being written down, per
-[CLAUDE.md](../../CLAUDE.md):
+CLAUDE.md:
 
 | Claim | Result |
 |---|---|

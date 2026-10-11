@@ -172,7 +172,7 @@ One time, reviewed by hand.
    `done/` path) is history and is left alone. Doing this once by hand,
    with eyes on the diff, is the point — it is the judgment #18 shows a
    permanent script cannot be trusted with.
-4. Update the docs that describe the move: [CLAUDE.md](../../CLAUDE.md)
+4. Update the docs that describe the move: CLAUDE.md
    ("It moves the file to `done/`"), and
    issue-conventions.md — the opening
    paragraph, the roadmap section's reference to `issues/done/` as an

@@ -380,7 +380,7 @@ cd ../../..
 
 - [ ] **Step 7: Log the letrec semantics in the course-material impact log**
 
-This lands here, in the commit that first implements the semantics, because [CLAUDE.md](../../CLAUDE.md) requires impact entries in the same commit as the change they describe — not batched into a later docs commit. Tasks 4 and 5 implement the *same* semantics in two more targets and add no further entry.
+This lands here, in the commit that first implements the semantics, because CLAUDE.md requires impact entries in the same commit as the change they describe — not batched into a later docs commit. Tasks 4 and 5 implement the *same* semantics in two more targets and add no further entry.
 
 Append these bullets to the end of the `## V5` section created in Task 2:
 

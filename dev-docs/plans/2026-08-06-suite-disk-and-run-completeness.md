@@ -18,7 +18,7 @@ Issue: CR-531.
 - **`set -euo pipefail` goes before any `cd`,** never after — the issue #25 defect.
 - **Do not run the full suite before Task 2 is complete.** This machine has ~220 MB free and today's suite needs ~312 MB; it will die partway. Run individual test files with `bats <file>` until then.
 - **Every `.bats` file loads `bin/bats-tmpdir.bash`** except `bin/tests/bats-tmpdir.bats`, which cannot — the teardown would delete the fixtures it generates.
-- **The issue is closed with `bin/issues/close.bash`** as the final commit of the branch, per [CLAUDE.md](../../CLAUDE.md). Never edit the `closed:` field or `roadmap.md` by hand.
+- **The issue is closed with `bin/issues/close.bash`** as the final commit of the branch, per CLAUDE.md. Never edit the `closed:` field or `roadmap.md` by hand.
 
 ## File Structure
 

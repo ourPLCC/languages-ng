@@ -162,7 +162,7 @@ own decision.
 | issue-conventions.md | Replace §"The `target` field" with §"Upstream defects": the principle, the three cases, the field format, the never-cache rule. Preserve the existing "reported upstream manually, with explicit go-ahead" norm. |
 | issues/TEMPLATE.md | Add the `upstream:` key, plus a **one-line** pointer to §"Upstream defects" in the comment block — not a full explanation. See *The TEMPLATE.md comment block* below. |
 | bin/issues/check.bash | Validate `upstream:` **when present and non-empty**: each comma-separated ref is `owner/repo` plus a filename. Never required, so no backfill across the local issues. Slots in after the existing `for key in type target opened closed` loop. |
-| [bin/tests/issues-check.bats](../../bin/tests/issues-check.bats) | Extend (the file now exists, added by #49) with coverage for a malformed ref and the absent-field case. |
+| bin/tests/issues-check.bats | Extend (the file now exists, added by #49) with coverage for a malformed ref and the absent-field case. |
 | `src/OBJ/{python,java,javascript}/spec.plcc` | Reattribute the `Program.out` buffering comment to #37. |
 
 `bin/issues/new.bash` needs no change — it copies the template.
