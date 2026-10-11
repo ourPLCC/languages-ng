@@ -66,7 +66,7 @@ and [dev-docs/plans/2026-07-30-plcc-ng-phase2-v4.md](../plans/2026-07-30-plcc-ng
 
 - [ ] **Step 3: Add the roadmap entry**
 
-Edit `dev-docs/roadmap.md`. Per [issue-conventions.md](../issue-conventions.md), the entry goes under `## Open Issues` beneath the `###` heading matching the issue's type — `Feat`, which does not exist yet, so create the group. Place it before the existing `### Chore` group. Use this exact two-line format (the `bin/issues/` scripts parse it):
+Edit `dev-docs/roadmap.md`. Per issue-conventions.md, the entry goes under `## Open Issues` beneath the `###` heading matching the issue's type — `Feat`, which does not exist yet, so create the group. Place it before the existing `### Chore` group. Use this exact two-line format (the `bin/issues/` scripts parse it):
 
 ```markdown
 ### Feat
@@ -187,7 +187,7 @@ Program
         LIT '3' [-:1:8]
 ```
 
-It MUST NOT print `unexpected 'SEMI'` or `no production for 'Exp'` — that is the [issue #10](../issues/010-plcc-ng-arbno-drops-mid-body-terminal.md) symptom in leading position, which would mean 2.0.1's fix did not cover it. If it does, **stop**: file an issue with `bin/issues/new.bash arbno-drops-leading-body-terminal chore` (set `**Target:** ourPLCC/plcc-ng`), record the exact output, and report back. Do not restructure the grammar around it — V3 set the precedent of keeping the faithful shape and waiting for the upstream fix.
+It MUST NOT print `unexpected 'SEMI'` or `no production for 'Exp'` — that is the CR-510 symptom in leading position, which would mean 2.0.1's fix did not cover it. If it does, **stop**: file an issue with `bin/issues/new.bash arbno-drops-leading-body-terminal chore` (set `**Target:** ourPLCC/plcc-ng`), record the exact output, and report back. Do not restructure the grammar around it — V3 set the precedent of keeping the faithful shape and waiting for the upstream fix.
 
 If `plcc-parse` reports a genuine LL(1) conflict on any rule, stop and file an issue the same way.
 

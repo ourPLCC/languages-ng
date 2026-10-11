@@ -12,7 +12,7 @@
 
 - Spec of record: [dev-docs/specs/2026-07-30-devcontainer-cache-diagnosis-design.md](../specs/2026-07-30-devcontainer-cache-diagnosis-design.md). Do not re-litigate its conclusions.
 - The `image` value in `.devcontainer/devcontainer.json` must not change. It stays exactly `ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.1@sha256:a50898fdf863e9792d8a62d79d0f5f664a1e89634397f1498a7ccc0c29fc2d24`.
-- Never edit `dev-docs/roadmap.md` by hand for this work; `bin/issues/close.bash` does it (per [dev-docs/issue-conventions.md](../issue-conventions.md)).
+- Never edit `dev-docs/roadmap.md` by hand for this work; `bin/issues/close.bash` does it (per dev-docs/issue-conventions.md).
 - Never assign or renumber issue IDs by hand.
 - Commit message types: `chore` for the devcontainer change, `docs(issues)` for both issue-file commits. `fix`/`feat` are reserved for `src/` changes because they bump the release version (see `.releaserc.yaml`) — do not use them here.
 - End every commit message with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
@@ -335,7 +335,7 @@ EOF
 
 ### Task 3: Close issue #11
 
-Runs the repo's close script as the branch's final commit, so the work and its bookkeeping merge atomically ([dev-docs/issue-conventions.md](../issue-conventions.md)).
+Runs the repo's close script as the branch's final commit, so the work and its bookkeeping merge atomically (dev-docs/issue-conventions.md).
 
 **Files:**
 - Move (by script): `dev-docs/issues/011-…md` → `dev-docs/issues/done/011-…md`
@@ -427,13 +427,13 @@ EOF
 
 ## Out of scope
 
-- The ten failing `plccmk: command not found` tests (V4, V5, V6, NAME, NEED, OBJ, REF, SET, TYPE0, TYPE1) — the local inverse of the gap tracked by [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md), which records CI's image lacking plcc-ng rather than this container lacking old PLCC.
+- The ten failing `plccmk: command not found` tests (V4, V5, V6, NAME, NEED, OBJ, REF, SET, TYPE0, TYPE1) — the local inverse of the gap tracked by CR-512, which records CI's image lacking plcc-ng rather than this container lacking old PLCC.
 - Any upstream report to `ourPLCC/devcontainers` — there is no defect to report.
 - Rewriting `1831a79`'s commit message.
 - Bumping the image digest or plcc-ng version.
 
 ## Accepted limitation
 
-A rebuild-without-cache against the reverted config cannot be run from this session: this worktree lives under `.claude/worktrees/`, so a rebuild reads the root `.devcontainer`, not the branch's. The maintainer decided to close #11 in this branch regardless, since the mtime evidence already establishes the removed command was inert — a rebuild could only confirm a known result. The "close on verification" exception in [dev-docs/issue-conventions.md](../issue-conventions.md) was considered and declined.
+A rebuild-without-cache against the reverted config cannot be run from this session: this worktree lives under `.claude/worktrees/`, so a rebuild reads the root `.devcontainer`, not the branch's. The maintainer decided to close #11 in this branch regardless, since the mtime evidence already establishes the removed command was inert — a rebuild could only confirm a known result. The "close on verification" exception in dev-docs/issue-conventions.md was considered and declined.
 
 After this branch merges, a no-cache rebuild on `main` is still the natural confirmation: `plcc-version` should report `plcc-ng 2.0.1` with no `pipx upgrade` in `postCreateCommand`.

@@ -1,6 +1,6 @@
 # Plan — Replace the TOS-blocked release action
 
-Issue: [#045](../issues/045-release-workflow-uses-blocked-action.md) — that
+Issue: CR-545 — that
 issue is the spec this plan argues from. Read it for the diagnosis; this
 plan covers only the change.
 
@@ -25,7 +25,7 @@ third-party-action dependency rather than substituting another one.
   [CONTRIBUTING.md](../../CONTRIBUTING.md), a CI change is `chore`, never
   `fix`/`feat` — those bump the released version.
 - **Do not close issue #045.** It is a "close on verification" case per
-  [issue-conventions.md](../issue-conventions.md#closing-an-issue): only a
+  issue-conventions.md: only a
   real `Release` run on `main` after merge can prove the fix. It closes in
   a follow-up commit.
 - **Only `.github/workflows/release.yaml` changes.** No other file.

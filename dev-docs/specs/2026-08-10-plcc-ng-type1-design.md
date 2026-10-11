@@ -513,9 +513,9 @@ define b = true                 type mismatch: bool != int
 
 Magnitudes stay small — the largest value anywhere is `120`, far below the
 32-bit Java `IntVal` overflow of issue
-[#16](../issues/016-cross-target-integer-divergence.md) — and no case recurses
+CR-516 — and no case recurses
 deeply enough to approach the Python ceiling of issue
-[#19](../issues/019-python-recursion-ceiling.md).
+CR-519.
 
 ### Expected test counts
 
@@ -546,7 +546,7 @@ references one; these are course material carried forward, not test fixtures.
 
 `src/TYPE1/J/EO.java` also stays. It is a Java illustration of mutual recursion
 accompanying `Prog/oe`, it predates the migration, and issue
-[#15](../issues/015-gitignore-java-pattern-shadows-source-dirs.md) treats it as a
+CR-515 treats it as a
 real tracked source file. It is the repository's only `J/` directory, which is a
 pre-existing oddity, not something this phase should resolve.
 
@@ -611,10 +611,10 @@ pre-existing oddity, not something this phase should resolve.
 - Type inference, subtyping, or any relaxation of `checkEquals`'s exact
   structural equality. The invariance is load-bearing for call-by-reference
   soundness; see [above](#call-by-reference-is-type-safe-here-and-that-is-worth-teaching).
-- Issue [#16](../issues/016-cross-target-integer-divergence.md), issue
-  [#19](../issues/019-python-recursion-ceiling.md), issue
-  [#22](../issues/022-plcc-rep-parses-each-source-independently.md), and issue
-  [#27](../issues/027-use-spec-flag-instead-of-copying-tree.md) — all repo-wide
+- Issue CR-516, issue
+  CR-519, issue
+  CR-522, and issue
+  CR-527 — all repo-wide
   and inherited.
 - Any unification of the per-language `Val`/`IntVal`/`Prim`/`Ref` duplication —
   ruled out repo-wide by the overarching design.

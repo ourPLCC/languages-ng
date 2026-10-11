@@ -51,7 +51,7 @@ A run killed this way also leaks its whole scratch tree, since
 bats only removes it in an EXIT trap. Check for stale
 /tmp/bats-run-* directories and remove them.
 
-See dev-docs/issues/031-suite-exhausts-disk-and-reports-spurious-failure.md
+See CR-531 in the ourPLCC/dev tracker (backlog task view 531).
 ADVICE
     printf '%s\n' '================================================================'
   } >&2

@@ -9,7 +9,7 @@
 **Tech Stack:** Bash 5 (`set -euo pipefail`), awk, sed, git. Python 3 is used only for throwaway migration and verification snippets that are never committed.
 
 **Design spec:** [dev-docs/specs/2026-07-31-issue-status-frontmatter-design.md](../specs/2026-07-31-issue-status-frontmatter-design.md)
-**Issue:** [#18](../issues/018-close-bash-rewrites-plan-prose.md)
+**Issue:** CR-518
 
 ## Global Constraints
 
@@ -80,7 +80,7 @@ Expected: `none left`. The four sites were `007-migrate-v2-to-plcc-ng.md:29`, an
 
 - [ ] **Step 4: Fix the one `done/`-prefixed link inside an issue file**
 
-[dev-docs/issues/018-close-bash-rewrites-plan-prose.md:97](../issues/018-close-bash-rewrites-plan-prose.md#L97) links `](done/017-migrate-v5-to-plcc-ng.md)`, which is now a sibling:
+dev-docs/issues/018-close-bash-rewrites-plan-prose.md:97 (CR-518) links `](done/017-migrate-v5-to-plcc-ng.md)`, which is now a sibling:
 
 ```bash
 sed -i 's|](done/017-migrate-v5-to-plcc-ng.md)|](017-migrate-v5-to-plcc-ng.md)|' \
@@ -990,7 +990,7 @@ EOF
 
 **Interfaces:**
 - Consumes: everything above.
-- Produces: the branch's final commit, per [CLAUDE.md](../../CLAUDE.md).
+- Produces: the branch's final commit, per CLAUDE.md.
 
 This is the acceptance test for the whole branch: the original bug was `close.bash` editing plans. If any file under `dev-docs/plans/` appears in this diff, the branch has failed.
 

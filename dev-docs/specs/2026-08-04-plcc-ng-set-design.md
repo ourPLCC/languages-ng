@@ -291,9 +291,9 @@ unbound-variable path, both of which Spike 1 confirms still work. This keeps
 the one-shared-expected model clean, the same call V3–V6 made.
 
 Magnitudes and recursion depths stay small, clear of the 32-bit Java `IntVal`
-overflow of issue [#16](../issues/016-cross-target-integer-divergence.md) and
+overflow of issue CR-516 and
 the Python recursion ceiling of issue
-[#19](../issues/019-python-recursion-ceiling.md).
+CR-519.
 
 ## Example Programs (`src/SET/Prog/`)
 
@@ -357,8 +357,8 @@ debugging an off-by-one expected file.
 - TYPE0, TYPE1, and OBJ, including whether OBJ's reserved-ID extension of
   `envRef` is still wanted — Phase 5's call.
 - Error-path and diagnostic tests.
-- Issue [#16](../issues/016-cross-target-integer-divergence.md) and issue
-  [#19](../issues/019-python-recursion-ceiling.md) — both repo-wide and
+- Issue CR-516 and issue
+  CR-519 — both repo-wide and
   inherited from V0.
 - Any unification of the Env variants, or of the per-language
   `Val`/`IntVal`/`Prim`/`Ref` duplication — ruled out repo-wide by the

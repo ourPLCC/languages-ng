@@ -1,6 +1,6 @@
 # Issue status as frontmatter, not location
 
-**Issue:** [#18](../issues/018-close-bash-rewrites-plan-prose.md)
+**Issue:** CR-518
 **Date:** 2026-07-31
 
 ## Problem
@@ -24,7 +24,7 @@ The same substitution also matches **too little**: it only knows the
 `issues/NNN-slug.md` spelling, never the `../NNN-slug.md` form used by
 files already inside `done/`, so each close dangles the links pointing at
 it from previously-closed issues. That is fix direction 3 of
-[#13](../issues/013-dev-docs-link-checker-not-fence-aware.md), and the
+CR-513, and the
 source of the four genuinely broken links that issue inventories.
 
 Both defects are the same root cause: **the file's location encodes the
@@ -172,9 +172,9 @@ One time, reviewed by hand.
    `done/` path) is history and is left alone. Doing this once by hand,
    with eyes on the diff, is the point — it is the judgment #18 shows a
    permanent script cannot be trusted with.
-4. Update the docs that describe the move: [CLAUDE.md](../../CLAUDE.md)
+4. Update the docs that describe the move: CLAUDE.md
    ("It moves the file to `done/`"), and
-   [issue-conventions.md](../issue-conventions.md) — the opening
+   issue-conventions.md — the opening
    paragraph, the roadmap section's reference to `issues/done/` as an
    owner of the past, the milestone rule about repointing checked links,
    and the `close.bash` description. Add a short subsection documenting

@@ -9,13 +9,13 @@
 **Tech Stack:** GitHub Actions, bash, bats-core 1.11.0, sed. No new dependencies. Nothing in `src/` changes.
 
 Design spec: [2026-08-12-ci-container-and-pr-workflow-design.md](../specs/2026-08-12-ci-container-and-pr-workflow-design.md).
-Issue: [#12](../issues/012-ci-cannot-run-plcc-ng-migrated-languages.md).
+Issue: CR-512.
 
 ## Global Constraints
 
 - **Commit types are `chore`, `test`, or `docs` only.** Nothing in `src/` changes, so the release version must not spin (`.releaserc.yaml` bumps on `fix`/`feat`). Issue #12 is itself `type: chore`.
 - **Every commit message ends with** `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
-- **The branch is `worktree-ci-plcc-ng-migrated-languages`,** in the worktree at `/workspaces/languages-ng/.claude/worktrees/ci-plcc-ng-migrated-languages`. Confirm with `git branch --show-current` before every commit. Never `cd` to `/workspaces/languages-ng`. See [CLAUDE.md](../../CLAUDE.md), "Verifying a subagent's commits".
+- **The branch is `worktree-ci-plcc-ng-migrated-languages`,** in the worktree at `/workspaces/languages-ng/.claude/worktrees/ci-plcc-ng-migrated-languages`. Confirm with `git branch --show-current` before every commit. Never `cd` to `/workspaces/languages-ng`. See CLAUDE.md, "Verifying a subagent's commits".
 - **`set -euo pipefail` goes before any `cd`,** never after — the issue #25 defect.
 - **The pinned image reference, verbatim, everywhere it appears:**
   `ghcr.io/ourplcc/devcontainers/plcc-ng:2.0.2@sha256:ebab585854e2c2dd5133db9616b398f6ede19702b514a5f4ace14757ae63dc9a`
@@ -910,7 +910,7 @@ bin/issues/close.bash 12
 ```
 
 This fills in the issue's `closed` date and updates
-[dev-docs/roadmap.md](../roadmap.md). Never edit either by hand. Then
+dev-docs/roadmap.md. Never edit either by hand. Then
 verify and commit:
 
 ```bash
@@ -931,7 +931,7 @@ Push, and merge the pull request.
 ## Notes for the implementer
 
 **If reality contradicts this plan, reality wins.** Per
-[CLAUDE.md](../../CLAUDE.md), when someone implementing a plan reports
+CLAUDE.md, when someone implementing a plan reports
 being blocked because the plan is wrong, the plan is assumed wrong until
 shown otherwise — that happened three times on issue #25 and the
 implementer was right every time. Report the contradiction rather than

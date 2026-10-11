@@ -969,7 +969,7 @@ Two of these need explaining before someone reports them as bugs.
 
 `jeh` produces only its `define` names and no result. That is correct: every one of its example applications is commented out in the source. It is how the file stands pre-migration, not a porting artifact.
 
-**`nn` under Python stops after `0 1 2` with `Specification error: RecursionError: maximum recursion depth exceeded`.** This is expected. `.nth(1000,natno)` is a thousand levels of language-level recursion, and each level costs several Python interpreter frames — issue [#19](../issues/019-python-recursion-ceiling.md), repo-wide and **inherited, not introduced**. Confirm that for yourself rather than taking the plan's word for it:
+**`nn` under Python stops after `0 1 2` with `Specification error: RecursionError: maximum recursion depth exceeded`.** This is expected. `.nth(1000,natno)` is a thousand levels of language-level recursion, and each level costs several Python interpreter frames — issue CR-519, repo-wide and **inherited, not introduced**. Confirm that for yourself rather than taking the plan's word for it:
 
 ```bash
 ( cd src/NAME/python && plcc-rep < ../../NEED/Prog/nn 2>&1 ) | tail -2
@@ -1100,7 +1100,7 @@ Refs #NN"
 bin/issues/close.bash NN
 ```
 
-This fills in the issue's `closed` date, removes its Open Issues roadmap entry (and the `### Feat` heading, now that it is empty), and runs `bin/issues/check.bash`. Review the staged roadmap diff before committing — `close.bash` does not edit milestone prose, and this repo has seen it rewrite plan prose before (issue [#18](../issues/018-close-bash-rewrites-plan-prose.md)).
+This fills in the issue's `closed` date, removes its Open Issues roadmap entry (and the `### Feat` heading, now that it is empty), and runs `bin/issues/check.bash`. Review the staged roadmap diff before committing — `close.bash` does not edit milestone prose, and this repo has seen it rewrite plan prose before (issue CR-518).
 
 - [ ] **Step 6: Commit the close**
 

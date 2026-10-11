@@ -39,9 +39,9 @@ plcc-ng spec files. No new dependencies.
 - **TEMPLATE.md's comment block is length-coupled.** Four documents
   promise `bin/issues/list.bash | xargs head -n 50` shows frontmatter,
   title, and summary. `## Summary` sits at template line 34; keep it well
-  under 50. See [#50](../issues/050-head-idiom-coupled-to-template-comment.md).
+  under 50. See CR-550.
 
-**Out of scope, pending a decision:** [#19](../issues/019-python-recursion-ceiling.md)'s
+**Out of scope, pending a decision:** CR-519's
 upstream half (the "Specification error: RecursionError" wording belongs
 to plcc-ng). Reporting it upstream is a public action needing explicit
 go-ahead, so no task here touches #19.
@@ -213,7 +213,7 @@ run before this plan was written:
   is the last statement in the loop body, so a bare `[[ ... ]] && ...`
   here would leave the body at status 1 and abort the run under `set -e`
   — the defect class recorded in
-  [#25](../issues/025-relocate-copies-stale-build-artifacts.md).
+  CR-525.
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
@@ -361,7 +361,7 @@ in dev-docs/issue-conventions.md. Leave it empty otherwise.
 
 Keep it to these two lines. A full explanation here would push
 `## Summary` past the `head -n 50` the documents promise; see
-[#50](../issues/050-head-idiom-coupled-to-template-comment.md).
+CR-550.
 
 - [ ] **Step 4: Verify the template did not outgrow the head idiom**
 

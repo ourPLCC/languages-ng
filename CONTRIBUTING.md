@@ -1,15 +1,12 @@
-# Contributing
+# Contributing to languages-ng
 
-This document is the practical guide for working in this repository: how
-a change gets from a worktree to `main`, and the commands you run along
-the way. Read it before making changes.
+This builds on the [ourPLCC developer guide](https://github.com/ourPLCC/dev/blob/main/CONTRIBUTING.md); read that first. Below is what's specific to this repo, and where it differs.
 
-Conventions that have their own documents are linked, not duplicated:
-the issue workflow is in
-[dev-docs/issue-conventions.md](dev-docs/issue-conventions.md), open work
-is listed by [bin/issues/list.bash](bin/issues/list.bash), and changes an
-instructor's materials must track are logged in
-[dev-docs/course-material-impact.md](dev-docs/course-material-impact.md).
+## Where this repo differs from the org guide
+
+Nowhere at present. One leftover from before the org guide is history, not
+a deviation: [dev-docs/plans/](dev-docs/plans/) holds kept plans. Merged
+plans are frozen, so they stay; add no new ones.
 
 ## Development environment
 
@@ -17,7 +14,31 @@ Open the repository in its devcontainer. It runs a digest-pinned image
 carrying Java, Python, Node, and `plcc-ng`; `postCreateCommand` adds
 bats. Do not install toolchain pieces by hand — see the warning in
 [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json) and
-[issue #11](dev-docs/issues/011-devcontainer-image-stale-plcc-ng-version.md).
+CR-511.
+
+Before the container is created, it clones the
+[ourPLCC/dev](https://github.com/ourPLCC/dev) repo beside this one, as
+`../dev`, unless that folder already exists. The container mounts it at
+`/workspaces/dev`, points the `backlog` CLI at it through `BACKLOG_CWD`,
+and installs the pinned `backlog` version. In the tracker, this repo's
+`project` value is `languages-ng`. Old languages-ng issue numbers still
+resolve at +500: `#12` is `CR-512`.
+
+[AGENTS.md](AGENTS.md) imports files from `../dev`. Claude Code loads
+imports from outside the repo only once they are approved, and until then
+skips them without an error, so agents never load the org guide. It does
+not reliably ask for that approval, and the approval lives in
+`~/.claude.json`, which a rebuild discards. So the container approves them
+when it is created, by running
+[bin/install/claude-imports.bash](bin/install/claude-imports.bash). To
+check, run `/memory` in a session and confirm it lists `ORG-AGENTS.md` and
+both `CONTRIBUTING.md` files. If they are missing, quit every Claude Code
+session, since a running one can overwrite `~/.claude.json`, then run the
+script and start a new session.
+
+Keep each import in `AGENTS.md` on its own line with nothing after the
+path: Claude Code reads an import up to the next whitespace, so
+`@file.md,` looks for a file named `file.md,` and silently skips it.
 
 ## The workflow
 
@@ -40,10 +61,20 @@ bats. Do not install toolchain pieces by hand — see the warning in
 | [bin/test.bash](bin/test.bash) | Run the whole bats suite over `src/` and `bin/`. Exit 0 means every test passed, 1 means real failures, 2 means the harness itself did not finish. |
 | [bin/clean.bash](bin/clean.bash) | Remove build output left under `src/`. |
 | [bin/install/bats.bash](bin/install/bats.bash) | Install the pinned bats under `~/.local`. Idempotent; run by `postCreateCommand` and by CI. |
-| [bin/issues/new.bash](bin/issues/new.bash) | Create an issue. Never assign issue numbers by hand. |
-| [bin/issues/close.bash](bin/issues/close.bash) | Close an issue, as the final commit of the branch that does the work. |
-| [bin/issues/check.bash](bin/issues/check.bash) | Verify issue-file consistency. |
-| [bin/issues/list.bash](bin/issues/list.bash) | Print the path of every open issue, one per line. Pipe it: `\| xargs head -n 50`. |
+| [bin/install/claude-imports.bash](bin/install/claude-imports.bash) | Approve [AGENTS.md](AGENTS.md)'s imports from `../dev` in `~/.claude.json`. Run by the devcontainer on creation. Idempotent. |
+
+## Course-material impact log
+
+Some changes made while porting a language don't just change internals —
+they change something an instructor's slides, handouts, or lecture notes
+would need to match (a renamed field referenced in a semantics
+walkthrough, a changed output format, a renamed grammar symbol). Log
+these in [dev-docs/course-material-impact.md](dev-docs/course-material-impact.md),
+one entry per change, filed under that language's heading, **in the same
+commit that makes the change** — not batched up for later, since the
+reasoning is freshest right when the change is made. This is distinct
+from the CR history: it's curated specifically to answer "what do I need
+to update in my course materials," not "what happened in the repo."
 
 ## Continuous integration
 

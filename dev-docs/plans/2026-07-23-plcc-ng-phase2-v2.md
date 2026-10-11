@@ -17,9 +17,9 @@
 - Structural fidelity across targets: method names (`eval`, `apply`, `evalRands`, `isTrue`, `intVal`, `applyEnv`) stay identical across Python, Java, and JavaScript, same as V1.
 - JavaScript: grammar-derived classes (anything that's an alternative of a grammar nonterminal — `IfExp` included) get `Node`/`Token`/`LanguageError` auto-injected already; an explicit `:import` for those three names on such a class fails with `Identifier 'X' has already been declared`. `IfExp` itself needs no `:import` block at all — it never references `Val`/`IntVal`/`LanguageError` by name, only through polymorphic `.eval()`/`.isTrue()` calls.
 - Every test case gets one shared `<LANG>.input` / `<LANG>.expected` pair, asserted against by one `@test` block per target in a single `.bats` file.
-- Any genuine `plcc-ng` bug or migration-guide gap discovered gets filed as an issue in **this** repo (`bin/issues/new.bash`), `Target: ourPLCC/plcc-ng`, no upstream filing without explicit go-ahead. Per the recently-clarified convention ([dev-docs/issue-conventions.md](../issue-conventions.md)), such issues stay open until upstream actually fixes the defect and the local workaround is reverted — not merely reported.
+- Any genuine `plcc-ng` bug or migration-guide gap discovered gets filed as an issue in **this** repo (`bin/issues/new.bash`), `Target: ourPLCC/plcc-ng`, no upstream filing without explicit go-ahead. Per the recently-clarified convention (dev-docs/issue-conventions.md), such issues stay open until upstream actually fixes the defect and the local workaround is reverted — not merely reported.
 - Any change affecting course material (renamed fields, changed casing conventions) gets logged in [dev-docs/course-material-impact.md](../course-material-impact.md) under V2's heading, in the same commit that makes the change.
-- Full design context: [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../specs/2026-07-22-plcc-ng-migration-design.md) (see its Phase 2 notes for the `IfExp` alt-name casing finding this plan relies on) and issue [006](../issues/006-multi-capture-alt-name-case-mismatch.md).
+- Full design context: [dev-docs/specs/2026-07-22-plcc-ng-migration-design.md](../specs/2026-07-22-plcc-ng-migration-design.md) (see its Phase 2 notes for the `IfExp` alt-name casing finding this plan relies on) and issue CR-506.
 
 ---
 

@@ -24,7 +24,7 @@ plugins:
     - - "@semantic-release/release-notes-generator"
       # Renders ${nextRelease.notes} from those same commits. Without it
       # nothing implements generateNotes and every release body is empty
-      # -- see dev-docs/issues/046-release-notes-generator-not-loaded.md.
+      # -- see CR-546 in the ourPLCC/dev tracker.
       # The preset must match commit-analyzer's, or the notes would be
       # grouped by Angular's conventions while the version was computed
       # by conventionalcommits'.
@@ -34,11 +34,10 @@ plugins:
       # Creates GitHub release entry and uploads specified assets.
       #
       # Both writes to issues and pull requests are off. This project
-      # tracks issues as files under dev-docs/issues/ and refers to them
-      # in commit messages with the same #NNN syntax GitHub uses for its
-      # own issues, so the plugin resolves "Closes #26" against GitHub's
-      # numbering and fails the run with NOT_FOUND -- see
-      # dev-docs/issues/048-release-success-step-resolves-file-issue-refs.md.
+      # tracked issues as files and referred to them in commit messages
+      # with the same #NNN syntax GitHub uses for its own issues, so the
+      # plugin resolved "Closes #26" against GitHub's numbering and failed
+      # the run with NOT_FOUND -- see CR-548 in the ourPLCC/dev tracker.
       #
       # successCommentCondition takes an early branch that skips the
       # GraphQL lookups entirely. failCommentCondition suppresses the
