@@ -697,8 +697,12 @@ headings are added in the order each language is migrated.
   declared parameter and return types:
   `letrec f = proc(n : int) : int .f(true) in 0` gives
   `type mismatch: bool != int`. Declaration order inside `letrec` is
-  unchanged — a name used before its declaration has run is still
-  unbound. The textbook's TYPE1 chapter (`textbook/20-type1.md` in
+  unchanged at runtime — a name used before its declaration has run is
+  still unbound — but one such case moves from check time to runtime:
+  a non-proc that calls a proc declared later in the same `letrec`
+  (`letrec y = .f() f = proc() : int 3 in y`) used to be rejected by
+  the checker with `no type binding for f`, and now passes the checker
+  and fails at runtime with `no binding for f`. The textbook's TYPE1 chapter (`textbook/20-type1.md` in
   course-materials-ng) describes this approach in prose but shows the
   old single-pass loop, and needs the same correction. See `letrec/`.
 

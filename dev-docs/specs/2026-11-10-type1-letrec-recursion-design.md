@@ -62,13 +62,17 @@ a proc's body is not evaluated until the proc is first applied, after it has
 captured the `letrec` environment. A name used before its declaration has
 run is unbound — at runtime, and for a non-proc, at check time. This is the
 same in every language in the repository that has `letrec`, is not a typing
-question, and is out of scope. In particular, these keep their behavior
-under the fix:
+question, and is out of scope. Two programs show where the line falls:
 
-- `letrec f = proc() : int y  y = 3 in .f()` is rejected by the checker with
-  `no type binding for y` (`y` is not a proc, so pass 1 does not bind it).
-- `letrec y = .f() f = proc() : int 3 in y` passes the checker and fails at
-  runtime with `no binding for f`.
+- `letrec f = proc() : int y  y = 3 in .f()` is still rejected by the checker
+  with `no type binding for y` (`y` is not a proc, so pass 1 does not bind
+  it). Unchanged.
+- `letrec y = .f() f = proc() : int 3 in y` **changes**. The checker used to
+  reject it with `no type binding for f`; because pass 1 now binds `f` before
+  `y`'s right-hand side is typed, the checker accepts it, and it fails at
+  runtime with `no binding for f`. This is the declaration-order behavior
+  above surfacing at runtime instead of at check time, and is accepted as a
+  consequence of binding procs first.
 
 Neither gets a test; they are recorded here so that no one "fixes" them as
 part of this change.
