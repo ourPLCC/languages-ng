@@ -41,10 +41,18 @@ jobs:
           node-version: '24'
       -
         name: Tag
+        # The preset's major must match the conventional-changelog-writer
+        # that semantic-release's own release-notes-generator loads.
+        # semantic-release@25 ships release-notes-generator@14, which loads
+        # writer@8, and preset@10 needs writer@9 or newer: generateNotes
+        # fails with "Missing helper". Preset@9 is the major built for
+        # writer@8. Raise both pins together, to @26 and preset@10, once
+        # semantic-release@26 (release-notes-generator@15, writer@9) is
+        # stable.
         run: >
           npx --yes
           -p semantic-release@25
-          -p conventional-changelog-conventionalcommits@10
+          -p conventional-changelog-conventionalcommits@9
           semantic-release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
