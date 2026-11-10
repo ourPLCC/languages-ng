@@ -694,9 +694,19 @@ public TypeEnv addTypeBindings(TypeEnv tenv) {
 
 public TypeEnv addLetrecTypeBindings(TypeEnv tenv) {
     tenv = tenv.extendTypeEnv(new TypeBindings());
+    // a proc's type comes from its annotations alone,
+    // so bind the procs first, before checking any body
     for (int i = 0; i < symbolList.size(); i++) {
-        Type typ = expList.get(i).evalType(tenv);
-        tenv.add(new TypeBinding(symbolList.get(i).lexeme, typ));
+        Exp e = expList.get(i);
+        if (e instanceof ProcExp)
+            tenv.add(new TypeBinding(symbolList.get(i).lexeme,
+                                     ((ProcExp) e).proc.definedType()));
+    }
+    for (int i = 0; i < symbolList.size(); i++) {
+        Exp e = expList.get(i);
+        Type typ = e.evalType(tenv);
+        if (!(e instanceof ProcExp))
+            tenv.add(new TypeBinding(symbolList.get(i).lexeme, typ));
     }
     return tenv;
 }
@@ -737,6 +747,11 @@ public Type evalType(TypeEnv tenv) {
     // and check that the declared return type matches the body's
     declaredReturnType.checkEquals(expType);
     return new ProcType(formals.formalTypeList(), declaredReturnType);
+}
+
+public ProcType definedType() {
+    // the type from the annotations alone; the body is not checked
+    return new ProcType(formals.formalTypeList(), typeExp.toType());
 }
 %%%
 
