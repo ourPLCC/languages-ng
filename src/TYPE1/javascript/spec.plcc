@@ -770,10 +770,21 @@ addTypeBindings(tenv) {
 }
 
 addLetrecTypeBindings(tenv) {
+    const { ProcExp } = require('./ProcExp');
     tenv = tenv.extendTypeEnv(new TypeBindings());
+    // a proc's type comes from its annotations alone,
+    // so bind the procs first, before checking any body
     for (let i = 0; i < this.symbolList.length; i++) {
-        const typ = this.expList[i].evalType(tenv);
-        tenv.add(new TypeBinding(this.symbolList[i].lexeme, typ));
+        const e = this.expList[i];
+        if (e instanceof ProcExp)
+            tenv.add(new TypeBinding(this.symbolList[i].lexeme,
+                                     e.proc.definedType()));
+    }
+    for (let i = 0; i < this.symbolList.length; i++) {
+        const e = this.expList[i];
+        const typ = e.evalType(tenv);
+        if (!(e instanceof ProcExp))
+            tenv.add(new TypeBinding(this.symbolList[i].lexeme, typ));
     }
     return tenv;
 }
@@ -820,6 +831,11 @@ evalType(tenv) {
     // and check that the declared return type matches the body's
     declaredReturnType.checkEquals(expType);
     return new ProcType(this.formals.formalTypeList(), declaredReturnType);
+}
+
+definedType() {
+    // the type from the annotations alone; the body is not checked
+    return new ProcType(this.formals.formalTypeList(), this.typeExp.toType());
 }
 %%%
 
