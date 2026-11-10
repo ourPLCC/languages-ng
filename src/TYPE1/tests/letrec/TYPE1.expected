@@ -1,0 +1,10 @@
+120
+true
+false
+type mismatch: bool != int
+type mismatch: int != bool
+3
+4
+0
+argument number mismatch
+type mismatch: int != bool

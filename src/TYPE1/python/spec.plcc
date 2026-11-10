@@ -640,10 +640,17 @@ def addTypeBindings(self, tenv):
     return tenv.extendTypeEnv(TypeBindings(self.symbolList, typeList))
 
 def addLetrecTypeBindings(self, tenv):
+    from ProcExp import ProcExp
     tenv = tenv.extendTypeEnv(TypeBindings())
+    # a proc's type comes from its annotations alone,
+    # so bind the procs first, before checking any body
+    for sym, e in zip(self.symbolList, self.expList):
+        if isinstance(e, ProcExp):
+            tenv.add(TypeBinding(sym.lexeme, e.proc.definedType()))
     for sym, e in zip(self.symbolList, self.expList):
         typ = e.evalType(tenv)
-        tenv.add(TypeBinding(sym.lexeme, typ))
+        if not isinstance(e, ProcExp):
+            tenv.add(TypeBinding(sym.lexeme, typ))
     return tenv
 
 def __str__(self):
@@ -683,6 +690,10 @@ def evalType(self, tenv):
     # and check that the declared return type matches the body's
     declaredReturnType.checkEquals(expType)
     return ProcType(self.formals.formalTypeList(), declaredReturnType)
+
+def definedType(self):
+    # the type from the annotations alone; the body is not checked
+    return ProcType(self.formals.formalTypeList(), self.typeExp.toType())
 %%%
 
 Formals:import
