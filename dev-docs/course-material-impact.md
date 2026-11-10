@@ -686,6 +686,21 @@ headings are added in the order each language is migrated.
   zero, unbound identifier, duplicate ID, `not an Int`,
   `formals/args number mismatch`) — those belong to languages that
   already shipped.
+- **Recursive `letrec` now type-checks**, in all three targets. A
+  `letrec` whose procs refer to themselves or to each other used to be
+  rejected with `no type binding for …` — `fact`, `even`/`odd`, any
+  recursion not written with `declare`/`define`. The bug predates the
+  port. `LetDecls.addLetrecTypeBindings` now binds each proc's name to
+  its type *before* checking any body, then checks every right-hand
+  side; the type comes from the annotations alone, through `Proc`'s new
+  `definedType()`. So recursive calls are now checked against the
+  declared parameter and return types:
+  `letrec f = proc(n : int) : int .f(true) in 0` gives
+  `type mismatch: bool != int`. Declaration order inside `letrec` is
+  unchanged — a name used before its declaration has run is still
+  unbound. The textbook's TYPE1 chapter (`textbook/20-type1.md` in
+  course-materials-ng) describes this approach in prose but shows the
+  old single-pass loop, and needs the same correction. See `letrec/`.
 
 ## OBJ
 

@@ -1,0 +1,10 @@
+letrec fact = proc(n : int) : int if zero?(n) then 1 else *(n, .fact(sub1(n))) in .fact(5)
+letrec even = proc(n : int) : bool if zero?(n) then true else .odd(sub1(n)) odd = proc(n : int) : bool if zero?(n) then false else .even(sub1(n)) in .even(4)
+letrec odd? = proc(n : int) : bool if zero?(n) then false else .even?(sub1(n)) even? = proc(n : int) : bool if zero?(n) then true else .odd?(sub1(n)) fact = proc(n : int) : int if zero?(n) then 1 else *(n, .fact(sub1(n))) in .odd?(.fact(3))
+letrec f = proc(n : int) : int .f(true) in 0
+letrec f = proc(n : int) : bool add1(n) in .f(3)
+letrec f = proc(n : int) : int n in .f(3)
+letrec x = 3 y = add1(x) in y
+let f = true in letrec f = proc(n : int) : int if zero?(n) then 0 else .f(sub1(n)) in .f(3)
+letrec f = proc(n : int) : int .f() in 0
+letrec f = proc(n : int) : int if .f(n) then 1 else 2 in 0
